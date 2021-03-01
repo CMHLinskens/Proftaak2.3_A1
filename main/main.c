@@ -58,43 +58,8 @@ static uint8_t _wait_for_user(void)
     return c;
 }
 
-void lcd_init(i2c_lcd1602_info_t * lcd_info)
+i2c_lcd1602_info_t * lcd_init()
 {
-    // i2c_port_t i2c_num = I2C_MASTER_NUM;
-    // uint8_t address = CONFIG_LCD1602_I2C_ADDRESS;
-
-    // // Set up the SMBus
-    // smbus_info_t * smbus_info = smbus_malloc();
-    // smbus_init(smbus_info, i2c_num, address);
-    // smbus_set_timeout(smbus_info, 1000 / portTICK_RATE_MS);
-
-    // // Set up the LCD1602 device with backlight off
-    // lcd_info = i2c_lcd1602_malloc();
-    // i2c_lcd1602_init(lcd_info, smbus_info, true, LCD_NUM_ROWS, LCD_NUM_COLUMNS, LCD_NUM_VIS_COLUMNS);
-
-    // // turn off backlight
-    // ESP_LOGI(MENUTAG, "backlight off");
-    // _wait_for_user();
-    // i2c_lcd1602_set_backlight(lcd_info, false);
-
-    // // turn on backlight
-    // ESP_LOGI(MENUTAG, "backlight on");
-    // //_wait_for_user();
-    // i2c_lcd1602_set_backlight(lcd_info, true);
-
-    // ESP_LOGI(MENUTAG, "cursor on");
-    // _wait_for_user();
-    // i2c_lcd1602_set_cursor(lcd_info, true);
-
-    
-}
-
-void menu_task(void * pvParameter)
-{
-    i2c_master_init();
-    // i2c_lcd1602_info_t * lcd_info = NULL;
-    // lcd_init(lcd_info);
-
     i2c_port_t i2c_num = I2C_MASTER_NUM;
     uint8_t address = CONFIG_LCD1602_I2C_ADDRESS;
 
@@ -121,10 +86,28 @@ void menu_task(void * pvParameter)
     _wait_for_user();
     i2c_lcd1602_set_cursor(lcd_info, true);
 
-    ESP_LOGI(MENUTAG, "display welcome message");  // should overflow to second line at "ABC..."
-    _wait_for_user();   
-    i2c_lcd1602_home(lcd_info);
+    return lcd_info;
+}
+
+void display_welcome_message(i2c_lcd1602_info_t * lcd_info)
+{
+    i2c_lcd1602_set_cursor(lcd_info, false);
+    i2c_lcd1602_move_cursor(lcd_info, 6, 1);
+
     i2c_lcd1602_write_string(lcd_info, "Welcome");
+    i2c_lcd1602_move_cursor(lcd_info, 8, 2);
+    i2c_lcd1602_write_string(lcd_info, "User");
+
+    vTaskDelay(2500 / portTICK_RATE_MS);
+    i2c_lcd1602_clear(lcd_info);
+}
+
+void menu_task(void * pvParameter)
+{
+    i2c_master_init();
+    i2c_lcd1602_info_t * lcd_info = lcd_init();
+
+    display_welcome_message(lcd_info);
 
     while(1)
     {
