@@ -10,6 +10,7 @@
 
 #include "smbus.h"
 #include "i2c-lcd1602.h"
+#include "lcd-menu.h"
 
 #undef USE_STDIN
 
@@ -23,7 +24,7 @@
 #define LCD_NUM_COLUMNS			 40
 #define LCD_NUM_VIS_COLUMNS		 20
 
-#define MENUTAG "menu"
+#define MAINTAG "main"
 
 static void i2c_master_init(void)
 {
@@ -73,17 +74,15 @@ i2c_lcd1602_info_t * lcd_init()
     i2c_lcd1602_init(lcd_info, smbus_info, true, LCD_NUM_ROWS, LCD_NUM_COLUMNS, LCD_NUM_VIS_COLUMNS);
 
     // turn off backlight
-    ESP_LOGI(MENUTAG, "backlight off");
-    _wait_for_user();
+    ESP_LOGI(MAINTAG, "backlight off");
     i2c_lcd1602_set_backlight(lcd_info, false);
 
     // turn on backlight
-    ESP_LOGI(MENUTAG, "backlight on");
-    //_wait_for_user();
+    ESP_LOGI(MAINTAG, "backlight on");
     i2c_lcd1602_set_backlight(lcd_info, true);
 
-    ESP_LOGI(MENUTAG, "cursor on");
-    _wait_for_user();
+    // turn on cursor 
+    ESP_LOGI(MAINTAG, "cursor on");
     i2c_lcd1602_set_cursor(lcd_info, true);
 
     return lcd_info;
@@ -105,9 +104,9 @@ void display_welcome_message(i2c_lcd1602_info_t * lcd_info)
 void menu_task(void * pvParameter)
 {
     i2c_master_init();
-    i2c_lcd1602_info_t * lcd_info = lcd_init();
-
-    display_welcome_message(lcd_info);
+    menu_t *menu = menu_createMenu(lcd_init());
+    
+    menu_displayWelcomeMessage(menu);
 
     while(1)
     {
