@@ -21,7 +21,7 @@ menu_t *menu_createMenu(i2c_lcd1602_info_t *lcd_info)
         menu_t menu = { 
             lcd_info,
             menuItems,
-            menuItems[MENU_MAIN_ID_0]
+            menuItems[0]
         };
 
         *menuPointer = menu;
