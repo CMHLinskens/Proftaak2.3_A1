@@ -58,9 +58,10 @@ static uint8_t _wait_for_user(void)
     return c;
 }
 
+i2c_port_t i2c_num;
+
 i2c_lcd1602_info_t * lcd_init()
 {
-    i2c_port_t i2c_num = I2C_MASTER_NUM;
     uint8_t address = CONFIG_LCD1602_I2C_ADDRESS;
 
     // Set up the SMBus
@@ -102,23 +103,55 @@ void display_welcome_message(i2c_lcd1602_info_t * lcd_info)
     i2c_lcd1602_clear(lcd_info);
 }
 
+void display_counter_rotary(i2c_lcd1602_info_t * lcd_info, int number)
+{
+    i2c_lcd1602_set_cursor(lcd_info, false);
+    i2c_lcd1602_move_cursor(lcd_info, 6, 1);
+
+    i2c_lcd1602_write_char(lcd_info, number);
+
+    // vTaskDelay(2500 / portTICK_RATE_MS);
+    // i2c_lcd1602_clear(lcd_info);
+}
+
 void menu_task(void * pvParameter)
 {
-    i2c_master_init();
     i2c_lcd1602_info_t * lcd_info = lcd_init();
-
     display_welcome_message(lcd_info);
 
-    while(1)
-    {
-        vTaskDelay(100 / portTICK_RATE_MS);
-    }
+    // while(1)
+    // {
+    //     vTaskDelay(100 / portTICK_RATE_MS);
+    // }
 
     vTaskDelete(NULL);
 }
 
+
+
+void rotary_test_task(void * pvParameter)
+{
+    vTaskDelay(5000/ portTICK_RATE_MS);
+   
+    smbus_info_t * smbus_info_rotairy = smbus_malloc();
+    ESP_ERROR_CHECK(smbus_init(smbus_info_rotairy, i2c_num, 0x3F));
+    ESP_ERROR_CHECK(smbus_set_timeout(smbus_info_rotairy, 1000 / portTICK_RATE_MS));
+    smbus_write_byte(smbus_info_rotairy, 0x0D, 255);
+    smbus_write_byte(smbus_info_rotairy, 0x0E, 255);
+    smbus_write_byte(smbus_info_rotairy, 0x0F, 255);
+
+    
+
+    
+    vTaskDelete(NULL);
+}
+
+
 void app_main()
 {
+    i2c_master_init();
+    i2c_num = I2C_MASTER_NUM;
     xTaskCreate(&menu_task, "menu_task", 4096, NULL, 5, NULL);
+    xTaskCreate(&rotary_test_task, "rotary_test_task", 4096, NULL, 5, NULL);
 }
 
