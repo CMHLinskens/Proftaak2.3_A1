@@ -108,10 +108,19 @@ void menu_task(void * pvParameter)
     menu_t *menu = menu_createMenu(lcd_init());
 
     menu_displayWelcomeMessage(menu);
+    menu_displayMenuItem(menu, menu->currentMenuItemId);
+    vTaskDelay(2500 / portTICK_RATE_MS);
+    
+    menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
+    vTaskDelay(2500 / portTICK_RATE_MS);
+    menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
+    vTaskDelay(2500 / portTICK_RATE_MS);
+    menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
+    vTaskDelay(2500 / portTICK_RATE_MS);
 
     while(1)
     {
-        vTaskDelay(100 / portTICK_RATE_MS);
+        vTaskDelay(1000 / portTICK_RATE_MS);
     }
 
     vTaskDelete(NULL);

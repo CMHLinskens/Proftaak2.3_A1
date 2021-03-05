@@ -30,11 +30,13 @@ typedef struct {
 typedef struct {
     i2c_lcd1602_info_t *lcd_info;
     menu_item_t *menuItems;
-    menu_item_t currentMenuItem;
+    // menu_item_t currentMenuItem;
+    unsigned int currentMenuItemId;
 } menu_t;
 
 menu_t *menu_createMenu(i2c_lcd1602_info_t *lcd_info);
 void menu_displayWelcomeMessage(menu_t *menu);//menu_t *menu);
-// void menu_handleKeyEvent(menu_t *menu, int key);
+void menu_displayMenuItem(menu_t *menu, int menuItemId);
+void menu_handleKeyEvent(menu_t *menu, int key);
 
 #endif // lcd-menu
