@@ -9,6 +9,7 @@
 #include "esp32/rom/uart.h"
 
 #include "smbus.h"
+#include "qwiic_twist.h"
 #include "i2c-lcd1602.h"
 
 #undef USE_STDIN
@@ -140,7 +141,7 @@ void rotary_test_task(void * pvParameter)
     smbus_write_byte(smbus_info_rotary, 0x0E, 255);
     smbus_write_byte(smbus_info_rotary, 0x0F, 255);
 
-    smbus_read_byte(smbus_info_rotary, );
+    //smbus_read_byte(smbus_info_rotary, );
 
     
     vTaskDelete(NULL);
