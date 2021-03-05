@@ -9,11 +9,13 @@
 menu_t *menu_createMenu(i2c_lcd1602_info_t *lcd_info)
 {
     menu_t *menuPointer = malloc(sizeof(*menuPointer));
+    ESP_LOGI(MENUTAG, "malloc menu_t %p", menuPointer);
     menu_item_t menuItems[MAX_MENU_ITEMS] = {
-            {MENU_MAIN_ID_0, {MENU_MAIN_ID_0, MENU_MAIN_ID_2, MENU_MAIN_ID_1}, {"MAIN MENU"}},
-            {MENU_MAIN_ID_1, {MENU_MAIN_ID_1, MENU_MAIN_ID_0, MENU_MAIN_ID_2}, {"RADIO"}},
-            {MENU_MAIN_ID_2, {MENU_MAIN_ID_2, MENU_MAIN_ID_1, MENU_MAIN_ID_0}, {"SETTINGS"}}
-        };
+        {MENU_MAIN_ID_0, {MENU_MAIN_ID_0, MENU_MAIN_ID_2, MENU_MAIN_ID_1}, {"MAIN MENU"}},
+        {MENU_MAIN_ID_1, {MENU_MAIN_ID_1, MENU_MAIN_ID_0, MENU_MAIN_ID_2}, {"RADIO"}},
+        {MENU_MAIN_ID_2, {MENU_MAIN_ID_2, MENU_MAIN_ID_1, MENU_MAIN_ID_0}, {"SETTINGS"}}
+    };
+    
     if(menuPointer != NULL)
     {
         memset(menuPointer, 0, sizeof(*menuPointer));
@@ -21,15 +23,16 @@ menu_t *menu_createMenu(i2c_lcd1602_info_t *lcd_info)
         menu_t menu = { 
             lcd_info,
             menuItems,
-            menuItems[0]
+            menuItems[2]
         };
 
         *menuPointer = menu;
-        ESP_LOGD(MENUTAG, "malloc menu_t %p", menuPointer);
+        ESP_LOGI(MENUTAG, "malloc menu_t %p", menuPointer);
+        ESP_LOGI(MENUTAG, "malloc menu_t %d", menuPointer->currentMenuItem.id);
     }
     else 
     {
-        ESP_LOGD(MENUTAG, "malloc menu_t failed");
+        ESP_LOGI(MENUTAG, "malloc menu_t failed");
     }
     return menuPointer;
 }

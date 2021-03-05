@@ -107,7 +107,6 @@ void menu_task(void * pvParameter)
     // i2c_lcd1602_info_t *lcd_info = lcd_init();
     menu_t *menu = menu_createMenu(lcd_init());
 
-    
     menu_displayWelcomeMessage(menu);
 
     while(1)

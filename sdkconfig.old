@@ -121,6 +121,14 @@ CONFIG_PARTITION_TABLE_MD5=y
 # end of Partition Table
 
 #
+# esp32-i2c-lcd1602-example Configuration
+#
+CONFIG_I2C_MASTER_SCL=23
+CONFIG_I2C_MASTER_SDA=18
+CONFIG_LCD1602_I2C_ADDRESS=0x27
+# end of esp32-i2c-lcd1602-example Configuration
+
+#
 # Audio HAL
 #
 # CONFIG_AUDIO_BOARD_CUSTOM is not set
