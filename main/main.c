@@ -133,14 +133,14 @@ void rotary_test_task(void * pvParameter)
 {
     vTaskDelay(5000/ portTICK_RATE_MS);
    
-    smbus_info_t * smbus_info_rotairy = smbus_malloc();
-    ESP_ERROR_CHECK(smbus_init(smbus_info_rotairy, i2c_num, 0x3F));
-    ESP_ERROR_CHECK(smbus_set_timeout(smbus_info_rotairy, 1000 / portTICK_RATE_MS));
-    smbus_write_byte(smbus_info_rotairy, 0x0D, 255);
-    smbus_write_byte(smbus_info_rotairy, 0x0E, 255);
-    smbus_write_byte(smbus_info_rotairy, 0x0F, 255);
+    smbus_info_t * smbus_info_rotary = smbus_malloc();
+    ESP_ERROR_CHECK(smbus_init(smbus_info_rotary, i2c_num, 0x3F));
+    ESP_ERROR_CHECK(smbus_set_timeout(smbus_info_rotary, 1000 / portTICK_RATE_MS));
+    smbus_write_byte(smbus_info_rotary, 0x0D, 255);
+    smbus_write_byte(smbus_info_rotary, 0x0E, 255);
+    smbus_write_byte(smbus_info_rotary, 0x0F, 255);
 
-    
+    smbus_read_byte(smbus_info_rotary, );
 
     
     vTaskDelete(NULL);
