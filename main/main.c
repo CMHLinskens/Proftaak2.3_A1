@@ -42,22 +42,22 @@ static void i2c_master_init(void)
                        I2C_MASTER_TX_BUF_LEN, 0);
 }
 
-static uint8_t _wait_for_user(void)
-{
-    uint8_t c = 0;
-#ifdef USE_STDIN
-    while (!c)
-    {
-       STATUS s = uart_rx_one_char(&c);
-       if (s == OK) {
-          printf("%c", c);
-       }
-    }
-#else
-    vTaskDelay(1000 / portTICK_RATE_MS);
-#endif
-    return c;
-}
+// static uint8_t _wait_for_user(void)
+// {
+//     uint8_t c = 0;
+// #ifdef USE_STDIN
+//     while (!c)
+//     {
+//        STATUS s = uart_rx_one_char(&c);
+//        if (s == OK) {
+//           printf("%c", c);
+//        }
+//     }
+// #else
+//     vTaskDelay(1000 / portTICK_RATE_MS);
+// #endif
+//     return c;
+// }
 
 i2c_lcd1602_info_t * lcd_init()
 {
@@ -104,7 +104,9 @@ void display_welcome_message(i2c_lcd1602_info_t * lcd_info)
 void menu_task(void * pvParameter)
 {
     i2c_master_init();
+    // i2c_lcd1602_info_t *lcd_info = lcd_init();
     menu_t *menu = menu_createMenu(lcd_init());
+
     
     menu_displayWelcomeMessage(menu);
 
