@@ -33,6 +33,19 @@
 #include "sdcard_list.h"
 #include "sdcard_scan.h"
 
+typedef struct sdcard_list {
+    char *save_file_name;                /*!< Name of file to save URLs */
+    char *offset_file_name;              /*!< Name of file to save offset */
+    FILE *save_file;                     /*!< File to save urls */
+    FILE *offset_file;                   /*!< File to save offset of urls */
+    char *cur_url;                       /*!< Point to current URL */
+    uint16_t url_num;                    /*!< Number of URLs */
+    uint16_t cur_url_id;                 /*!< Current url ID */
+    uint32_t total_size_save_file;       /*!< Size of file to save URLs */
+    uint32_t total_size_offset_file;     /*!< Size of file to save offset */
+} sdcard_list_t;
+
+
 static const char *TAG = "SDCARD_MP3_CONTROL_EXAMPLE";
 
 audio_pipeline_handle_t pipeline;
@@ -41,7 +54,7 @@ playlist_operator_handle_t sdcard_list_handle = NULL;
 
 static esp_err_t input_key_service_cb(periph_service_handle_t handle, periph_service_event_t *evt, void *ctx)
 {
-    // Handle touch pad events to start, pause, resume, finish current song and adjust volume
+    //Handle touch pad events to start, pause, resume, finish current song and adjust volume
     audio_board_handle_t board_handle = (audio_board_handle_t) ctx;
     int player_volume;
     audio_hal_get_volume(board_handle->audio_hal, &player_volume);
@@ -53,6 +66,7 @@ static esp_err_t input_key_service_cb(periph_service_handle_t handle, periph_ser
 
             //Play button
             case INPUT_KEY_USER_ID_PLAY:
+                ;
                 audio_element_state_t el_state = audio_element_get_state(i2s_stream_writer);
                 //Looks at the state of the play button
                 switch (el_state) {
@@ -115,7 +129,6 @@ static esp_err_t input_key_service_cb(periph_service_handle_t handle, periph_ser
                 break;
         }
     }
-
     return ESP_OK;
 }
 
@@ -128,9 +141,21 @@ void sdcard_url_save_cb(void *user_data, char *url)
     }
 }
 
+void get_all_song_url(char *return_url){
+
+    sdcard_list_t *playlist = sdcard_list_handle->playlist;
+    char* url = NULL;
+
+    for(int i = 0; i < playlist->url_num; i++){
+         sdcard_list_next(sdcard_list_handle, 1, &url);
+         ESP_LOGE(TAG, "%s", url);
+         return_url[i] = url;
+    }
+}
+
 void app_main(void)
 {
-    #pragma region configuration
+    
     //Configuration
     esp_log_level_set("*", ESP_LOG_WARN);
     esp_log_level_set(TAG, ESP_LOG_INFO);
@@ -146,7 +171,6 @@ void app_main(void)
     ESP_LOGI(TAG, "[1.2] Set up a sdcard playlist and scan sdcard music save to it");
     sdcard_list_create(&sdcard_list_handle);
     sdcard_scan(sdcard_url_save_cb, "/sdcard", 0, (const char *[]) {"mp3"}, 1, sdcard_list_handle);
-    sdcard_list_show(sdcard_list_handle);
 
     ESP_LOGI(TAG, "[ 2 ] Start codec chip");
     audio_board_handle_t board_handle = audio_board_init();
@@ -205,12 +229,17 @@ void app_main(void)
     audio_pipeline_set_listener(pipeline, evt);
 
     //End of configuration
-    #pragma endregion
+
+    //Makes array of songs on the sd
+    sdcard_list_t *playlist = sdcard_list_handle->playlist;
+    char* song_list = (char *)malloc(playlist->url_num * 80);
+    get_all_song_url(song_list);
+    
+    ESP_LOGE(TAG, "This is the url %s", song_list[0]);
 
     while (1) {
-        /* Handle event interface messages from pipeline
-           to set music info and to advance to the next song
-        */
+
+        // Handle event interface messages from pipeline to set music info and to advance to the next song
         audio_event_iface_msg_t msg;
         esp_err_t ret = audio_event_iface_listen(evt, &msg, portMAX_DELAY);
         if (ret != ESP_OK) {
@@ -219,8 +248,8 @@ void app_main(void)
         }
         if (msg.source_type == AUDIO_ELEMENT_TYPE_ELEMENT) {
             // Set music info for a new song to be played
-            if (msg.source == (void *) mp3_decoder
-                && msg.cmd == AEL_MSG_CMD_REPORT_MUSIC_INFO) {
+            if (msg.source == (void *) mp3_decoder && msg.cmd == AEL_MSG_CMD_REPORT_MUSIC_INFO) {
+
                 audio_element_info_t music_info = {0};
                 audio_element_getinfo(mp3_decoder, &music_info);
                 ESP_LOGI(TAG, "Received music info from mp3 decoder, sample_rates=%d, bits=%d, ch=%d",
@@ -228,11 +257,13 @@ void app_main(void)
                 audio_element_setinfo(i2s_stream_writer, &music_info);
                 rsp_filter_set_src_info(rsp_handle, music_info.sample_rates, music_info.channels);
                 continue;
+
             }
             // Advance to the next song when previous finishes
-            if (msg.source == (void *) i2s_stream_writer
-                && msg.cmd == AEL_MSG_CMD_REPORT_STATUS) {
+            if (msg.source == (void *) i2s_stream_writer && msg.cmd == AEL_MSG_CMD_REPORT_STATUS) {
+
                 audio_element_state_t el_state = audio_element_get_state(i2s_stream_writer);
+
                 if (el_state == AEL_STATE_FINISHED) {
                     ESP_LOGI(TAG, "Finished, advancing to the next song");
                     sdcard_list_next(sdcard_list_handle, 1, &url);
@@ -252,7 +283,6 @@ void app_main(void)
         }
     }
 
-    #pragma region stops the pipeline
     ESP_LOGI(TAG, "[ 7 ] Stop audio_pipeline");
     audio_pipeline_stop(pipeline);
     audio_pipeline_wait_for_stop(pipeline);
@@ -279,5 +309,4 @@ void app_main(void)
     audio_element_deinit(rsp_handle);
     esp_periph_set_destroy(set);
     periph_service_destroy(input_ser);
-    #pragma endregion
 }
