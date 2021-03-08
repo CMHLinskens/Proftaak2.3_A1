@@ -90,6 +90,10 @@ static esp_err_t input_key_service_cb(periph_service_handle_t handle, periph_ser
             ESP_LOGI(BUTTONTAG, "[ * ] [volume up] %s",btn_states[evt->type]);
         default:
             break;
+
+    return ESP_OK;
+}
+
 void menu_task(void * pvParameter)
 {
     i2c_master_init();
@@ -107,7 +111,6 @@ void menu_task(void * pvParameter)
         menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
         vTaskDelay(2500 / portTICK_RATE_MS);
     }
-    return ESP_OK;
 }
 
 
