@@ -22,12 +22,17 @@ esp_err_t qwiic_twist_init(qwiic_twist_t* config) {
 
     // Set up the SMBus
     config->smbus_info = smbus_malloc();
+	config->i2c_addr = QWIIC_TWIST_ADDRESS;
+    config->xMutex = xSemaphoreCreateMutex();
+    config->task_enabled = true;
+    config->task_time = 0;
+
     smbus_init(config->smbus_info, config->port, config->i2c_addr);
     smbus_set_timeout(config->smbus_info, 1000 / portTICK_RATE_MS);
 	i2c_set_timeout(I2C_NUM_0, 20000);
 	
 	// Initialize Mutex
-	config->xMutex = xSemaphoreCreateMutex();
+	//config->xMutex = xSemaphoreCreateMutex();
 	return ESP_OK;
 }
 
@@ -295,5 +300,4 @@ esp_err_t qwiic_twist_stop_task(qwiic_twist_t* config) {
 	
 	ESP_LOGI(TAG, "Stopping task");
 	return ESP_OK;
-	
 }

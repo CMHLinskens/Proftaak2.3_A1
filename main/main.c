@@ -26,6 +26,15 @@
 
 #define MENUTAG "menu"
 
+static const char *TAG = "MAIN";
+
+i2c_port_t i2c_num;
+i2c_lcd1602_info_t *lcd_info;
+qwiic_twist_t *qwiic_twist_rotary;
+
+void pressed(void);
+void onMove(int16_t);
+
 static void i2c_master_init(void)
 {
     int i2c_master_port = I2C_MASTER_NUM;
@@ -41,6 +50,7 @@ static void i2c_master_init(void)
                        I2C_MASTER_RX_BUF_LEN,
                        I2C_MASTER_TX_BUF_LEN, 0);
 }
+
 
 static uint8_t _wait_for_user(void)
 {
@@ -59,10 +69,7 @@ static uint8_t _wait_for_user(void)
     return c;
 }
 
-i2c_port_t i2c_num;
-
-i2c_lcd1602_info_t * lcd_init()
-{
+i2c_lcd1602_info_t * lcd_init(){
     uint8_t address = CONFIG_LCD1602_I2C_ADDRESS;
 
     // Set up the SMBus
@@ -91,8 +98,23 @@ i2c_lcd1602_info_t * lcd_init()
     return lcd_info;
 }
 
+
+static void component_init(void){
+    //INIT lcd
+    lcd_info = lcd_init();
+
+    //INIT rotary encoder
+    qwiic_twist_rotary = (qwiic_twist_t*)malloc(sizeof(*qwiic_twist_rotary));
+    qwiic_twist_rotary->port = i2c_num;
+    qwiic_twist_rotary->onButtonClicked = &pressed;
+    qwiic_twist_rotary->onMoved = &onMove;
+    qwiic_twist_init(qwiic_twist_rotary);
+}
+
+
 void display_welcome_message(i2c_lcd1602_info_t * lcd_info)
 {
+
     i2c_lcd1602_set_cursor(lcd_info, false);
     i2c_lcd1602_move_cursor(lcd_info, 6, 1);
 
@@ -102,6 +124,37 @@ void display_welcome_message(i2c_lcd1602_info_t * lcd_info)
 
     vTaskDelay(2500 / portTICK_RATE_MS);
     i2c_lcd1602_clear(lcd_info);
+}
+
+char * toString(int number) {
+    int length = snprintf(NULL, 0, "%d", number + 1);
+    char *str = malloc(length + 1);
+    snprintf(str, length + 1, "%d", number + 1);
+    return str;
+}
+
+void display_number(i2c_lcd1602_info_t * lcd_info, int number){
+    i2c_lcd1602_set_cursor(lcd_info, false);
+    i2c_lcd1602_write_string(lcd_info, toString(number));
+}
+
+void pressed(void){
+    ESP_LOGI(TAG, "pressed rotary encoder");
+    display_welcome_message(lcd_info);
+}
+
+void onMove(int16_t move_value){
+    static int counter = 0;
+    ESP_LOGI(TAG, "rotary encoder moved");
+    ESP_LOGI(TAG, "rotary value: %d", move_value);
+    if(move_value > 0){
+        counter++;
+    }
+    else if(move_value < 0){
+        counter--;
+    }
+    i2c_lcd1602_clear(lcd_info);
+    display_number(lcd_info, counter);
 }
 
 void display_counter_rotary(i2c_lcd1602_info_t * lcd_info, int number)
@@ -117,42 +170,46 @@ void display_counter_rotary(i2c_lcd1602_info_t * lcd_info, int number)
 
 void menu_task(void * pvParameter)
 {
-    i2c_lcd1602_info_t * lcd_info = lcd_init();
     display_welcome_message(lcd_info);
 
-    // while(1)
-    // {
-    //     vTaskDelay(100 / portTICK_RATE_MS);
-    // }
+    while(1)
+    {
+        vTaskDelay(100 / portTICK_RATE_MS);
+    }
 
     vTaskDelete(NULL);
 }
-
-
 
 void rotary_test_task(void * pvParameter)
 {
-    vTaskDelay(5000/ portTICK_RATE_MS);
-   
-    smbus_info_t * smbus_info_rotary = smbus_malloc();
-    ESP_ERROR_CHECK(smbus_init(smbus_info_rotary, i2c_num, 0x3F));
-    ESP_ERROR_CHECK(smbus_set_timeout(smbus_info_rotary, 1000 / portTICK_RATE_MS));
-    smbus_write_byte(smbus_info_rotary, 0x0D, 255);
-    smbus_write_byte(smbus_info_rotary, 0x0E, 255);
-    smbus_write_byte(smbus_info_rotary, 0x0F, 255);
+    //COLOR TEST WITH THE ROTARY ENCODER
+    //smbus_info_t * smbus_info_rotary = smbus_malloc();
+    // ESP_ERROR_CHECK(smbus_init(smbus_info_rotary, i2c_num, 0x3F));
+    // ESP_ERROR_CHECK(smbus_set_timeout(smbus_info_rotary, 1000 / portTICK_RATE_MS));
+    // smbus_write_byte(smbus_info_rotary, 0x0D, 255);
+    // smbus_write_byte(smbus_info_rotary, 0x0E, 255);
+    // smbus_write_byte(smbus_info_rotary, 0x0F, 255);
 
-    //smbus_read_byte(smbus_info_rotary, );
+    qwiic_twist_start_task(qwiic_twist_rotary);
+    while(1){
+        vTaskDelay(100 / portTICK_RATE_MS);
+    }
 
-    
     vTaskDelete(NULL);
 }
+
 
 
 void app_main()
 {
+    //I^2C initialization + the I^2C port
     i2c_master_init();
     i2c_num = I2C_MASTER_NUM;
-    xTaskCreate(&menu_task, "menu_task", 4096, NULL, 5, NULL);
+
+    //initialize the components
+    component_init();
+
+    //TaskCreate(&menu_task, "menu_task", 4096, NULL, 5, NULL);
     xTaskCreate(&rotary_test_task, "rotary_test_task", 4096, NULL, 5, NULL);
 }
 
