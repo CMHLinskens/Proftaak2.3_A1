@@ -42,23 +42,6 @@ static void i2c_master_init(void)
                        I2C_MASTER_TX_BUF_LEN, 0);
 }
 
-// static uint8_t _wait_for_user(void)
-// {
-//     uint8_t c = 0;
-// #ifdef USE_STDIN
-//     while (!c)
-//     {
-//        STATUS s = uart_rx_one_char(&c);
-//        if (s == OK) {
-//           printf("%c", c);
-//        }
-//     }
-// #else
-//     vTaskDelay(1000 / portTICK_RATE_MS);
-// #endif
-//     return c;
-// }
-
 i2c_lcd1602_info_t * lcd_init()
 {
     i2c_port_t i2c_num = I2C_MASTER_NUM;
@@ -98,12 +81,51 @@ void menu_task(void * pvParameter)
     menu_displayScrollMenu(menu);
     vTaskDelay(2500 / portTICK_RATE_MS);
     
+    // Menu auto navigation demo code 
+    menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
+    vTaskDelay(2500 / portTICK_RATE_MS);
+    menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
+    vTaskDelay(2500 / portTICK_RATE_MS);
+    menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
+    vTaskDelay(2500 / portTICK_RATE_MS);
+    menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
+    vTaskDelay(2500 / portTICK_RATE_MS);
+
+    menu_handleKeyEvent(menu, MENU_KEY_OK);
+    vTaskDelay(2500 / portTICK_RATE_MS);
+    menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
+    vTaskDelay(2500 / portTICK_RATE_MS);
+
+    menu_handleKeyEvent(menu, MENU_KEY_OK);
+    vTaskDelay(2500 / portTICK_RATE_MS);
+    menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
+    vTaskDelay(2500 / portTICK_RATE_MS);
+    menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
+    vTaskDelay(2500 / portTICK_RATE_MS);
+    menu_handleKeyEvent(menu, MENU_KEY_LEFT);
+    vTaskDelay(2500 / portTICK_RATE_MS);
+    menu_handleKeyEvent(menu, MENU_KEY_OK);
+    vTaskDelay(2500 / portTICK_RATE_MS);
+
+    menu_handleKeyEvent(menu, MENU_KEY_OK);
+    vTaskDelay(2500 / portTICK_RATE_MS);
+    menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
+    vTaskDelay(2500 / portTICK_RATE_MS);
+    menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
+    vTaskDelay(2500 / portTICK_RATE_MS);
+    menu_handleKeyEvent(menu, MENU_KEY_OK);
+    vTaskDelay(2500 / portTICK_RATE_MS);
+
+    menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
+    vTaskDelay(2500 / portTICK_RATE_MS);
+    menu_handleKeyEvent(menu, MENU_KEY_OK);
+    vTaskDelay(2500 / portTICK_RATE_MS);
+
+    // End of menu auto navigation demo code 
+
     while(1)
     {
-        // menu_handleKeyEvent(menu, MENU_KEY_OK);
-        // vTaskDelay(2500 / portTICK_RATE_MS);
-        menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
-        vTaskDelay(2500 / portTICK_RATE_MS);
+        vTaskDelay(1000 / portTICK_RATE_MS);
     }
 
     menu_freeMenu(menu);
