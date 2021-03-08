@@ -10,10 +10,6 @@
 // Menu events functions
 void enterMenuItem(void);
 void exitMenuItem(void);
-void okPressRadioEvent(void);
-void okPressSettingsEvent(void);
-void leftPressEvent(void);
-void rightPressEvent(void);
 
 menu_t *menu_createMenu(i2c_lcd1602_info_t *lcd_info)
 {
@@ -21,9 +17,10 @@ menu_t *menu_createMenu(i2c_lcd1602_info_t *lcd_info)
 
     // Temporary array of menu items to copy from
     menu_item_t menuItems[MAX_MENU_ITEMS] = {
-        {MENU_MAIN_ID_0, {MENU_MAIN_ID_0, MENU_MAIN_ID_2, MENU_MAIN_ID_1}, {"MAIN MENU"}, {NULL, leftPressEvent, rightPressEvent}, enterMenuItem, exitMenuItem},
-        {MENU_MAIN_ID_1, {MENU_MAIN_ID_1, MENU_MAIN_ID_0, MENU_MAIN_ID_2}, {"RADIO"}, {okPressRadioEvent, leftPressEvent, rightPressEvent}, enterMenuItem, exitMenuItem},
-        {MENU_MAIN_ID_2, {MENU_MAIN_ID_2, MENU_MAIN_ID_1, MENU_MAIN_ID_0}, {"SETTINGS"}, {okPressSettingsEvent, leftPressEvent, rightPressEvent}, enterMenuItem, exitMenuItem}
+        {MENU_MAIN_ID_0, {MENU_MAIN_ID_0, MENU_MAIN_ID_3, MENU_MAIN_ID_1}, {"MAIN MENU", "Radio"}, {NULL, NULL, NULL}, enterMenuItem, exitMenuItem},
+        {MENU_MAIN_ID_1, {MENU_MAIN_ID_1, MENU_MAIN_ID_0, MENU_MAIN_ID_2}, {"MAIN MENU", "Lights"}, {NULL, NULL, NULL}, enterMenuItem, exitMenuItem},
+        {MENU_MAIN_ID_2, {MENU_MAIN_ID_2, MENU_MAIN_ID_1, MENU_MAIN_ID_3}, {"MAIN MENU", "Agenda"}, {NULL, NULL, NULL}, enterMenuItem, exitMenuItem},
+        {MENU_MAIN_ID_3, {MENU_MAIN_ID_3, MENU_MAIN_ID_2, MENU_MAIN_ID_0}, {"MAIN MENU", "Settings"}, {NULL, NULL, NULL}, enterMenuItem, exitMenuItem}
     };
     
     if(menuPointer != NULL)
@@ -74,6 +71,35 @@ void menu_displayMenuItem(menu_t *menu, int menuItemId)
     i2c_lcd1602_write_string(menu->lcd_info, menuText);
 }
 
+void menu_displayScrollMenu(menu_t *menu)
+{
+    i2c_lcd1602_clear(menu->lcd_info);
+    char *menuText = menu->menuItems[menu->currentMenuItemId].menuText[0];
+    int textPosition = 10 - ((strlen(menuText) + 1) / 2);
+    i2c_lcd1602_move_cursor(menu->lcd_info, textPosition, 0);
+    i2c_lcd1602_write_string(menu->lcd_info, menuText);
+
+    menuText = menu->menuItems[menu->menuItems[menu->currentMenuItemId].otherIds[MENU_KEY_LEFT]].menuText[1];
+    textPosition = 10 - ((strlen(menuText) + 1) / 2);
+    i2c_lcd1602_move_cursor(menu->lcd_info, textPosition, 1);
+    i2c_lcd1602_write_string(menu->lcd_info, menuText);
+
+    menuText = menu->menuItems[menu->currentMenuItemId].menuText[1];
+    textPosition = 10 - ((strlen(menuText) + 1) / 2);
+    i2c_lcd1602_move_cursor(menu->lcd_info, textPosition, 2);
+    i2c_lcd1602_write_string(menu->lcd_info, menuText);
+
+    menuText = menu->menuItems[menu->menuItems[menu->currentMenuItemId].otherIds[MENU_KEY_RIGHT]].menuText[1];
+    textPosition = 10 - ((strlen(menuText) + 1) / 2);
+    i2c_lcd1602_move_cursor(menu->lcd_info, textPosition, 3);
+    i2c_lcd1602_write_string(menu->lcd_info, menuText);
+
+    const char *cursor = "<";
+    i2c_lcd1602_move_cursor(menu->lcd_info, 17, 2);
+    i2c_lcd1602_write_string(menu->lcd_info, cursor);
+
+}
+
 void menu_handleKeyEvent(menu_t *menu, int key)
 {
     // If key press leads to the same ID as the currentMenuItemId
@@ -98,7 +124,8 @@ void menu_handleKeyEvent(menu_t *menu, int key)
         }
 
         // Display menu on LCD
-        menu_displayMenuItem(menu, menu->currentMenuItemId);
+        // menu_displayMenuItem(menu, menu->currentMenuItemId);
+        menu_displayScrollMenu(menu);
     }
 }
 

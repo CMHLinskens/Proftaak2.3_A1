@@ -88,19 +88,6 @@ i2c_lcd1602_info_t * lcd_init()
     return lcd_info;
 }
 
-void display_welcome_message(i2c_lcd1602_info_t * lcd_info)
-{
-    i2c_lcd1602_set_cursor(lcd_info, false);
-    i2c_lcd1602_move_cursor(lcd_info, 6, 1);
-
-    i2c_lcd1602_write_string(lcd_info, "Welcome");
-    i2c_lcd1602_move_cursor(lcd_info, 8, 2);
-    i2c_lcd1602_write_string(lcd_info, "User");
-
-    vTaskDelay(2500 / portTICK_RATE_MS);
-    i2c_lcd1602_clear(lcd_info);
-}
-
 void menu_task(void * pvParameter)
 {
     i2c_master_init();
@@ -108,13 +95,13 @@ void menu_task(void * pvParameter)
     menu_t *menu = menu_createMenu(lcd_init());
 
     menu_displayWelcomeMessage(menu);
-    menu_displayMenuItem(menu, menu->currentMenuItemId);
+    menu_displayScrollMenu(menu);
     vTaskDelay(2500 / portTICK_RATE_MS);
     
     while(1)
     {
-        menu_handleKeyEvent(menu, MENU_KEY_OK);
-        vTaskDelay(2500 / portTICK_RATE_MS);
+        // menu_handleKeyEvent(menu, MENU_KEY_OK);
+        // vTaskDelay(2500 / portTICK_RATE_MS);
         menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
         vTaskDelay(2500 / portTICK_RATE_MS);
     }
