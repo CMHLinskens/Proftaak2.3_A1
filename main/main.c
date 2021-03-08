@@ -36,7 +36,7 @@
 #define AudioVolMinus 13
 //End
 
-#define MENUTAG "menu"
+#define MAINTAG "menu"
 #define BUTTONTAG "button"
 
 static void i2c_master_init(void)
@@ -83,21 +83,19 @@ i2c_lcd1602_info_t * lcd_init()
     smbus_set_timeout(smbus_info, 1000 / portTICK_RATE_MS);
 
     // Set up the LCD1602 device with backlight off
-    lcd_info = i2c_lcd1602_malloc();
+    i2c_lcd1602_info_t * lcd_info = i2c_lcd1602_malloc();
     i2c_lcd1602_init(lcd_info, smbus_info, true, LCD_NUM_ROWS, LCD_NUM_COLUMNS, LCD_NUM_VIS_COLUMNS);
 
     // turn off backlight
-    ESP_LOGI(MENUTAG, "backlight off");
-    _wait_for_user();
+    ESP_LOGI(MAINTAG, "backlight off");
     i2c_lcd1602_set_backlight(lcd_info, false);
 
     // turn on backlight
-    ESP_LOGI(MENUTAG, "backlight on");
-    //_wait_for_user();
+    ESP_LOGI(MAINTAG, "backlight on");
     i2c_lcd1602_set_backlight(lcd_info, true);
 
-    ESP_LOGI(MENUTAG, "cursor on");
-    _wait_for_user();
+    // turn on cursor 
+    ESP_LOGI(MAINTAG, "cursor on");
     i2c_lcd1602_set_cursor(lcd_info, true);
 
     return lcd_info;
@@ -106,61 +104,27 @@ i2c_lcd1602_info_t * lcd_init()
 void menu_task(void * pvParameter)
 {
     i2c_master_init();
-    i2c_lcd1602_info_t * lcd_info = lcd_init();
+    // i2c_lcd1602_info_t *lcd_info = lcd_init();
+    menu_t *menu = menu_createMenu(lcd_init());
+
+    menu_displayWelcomeMessage(menu);
+    menu_displayScrollMenu(menu);
+    vTaskDelay(2500 / portTICK_RATE_MS);
     
-
-    i2c_port_t i2c_num = I2C_MASTER_NUM;
-    uint8_t address = CONFIG_LCD1602_I2C_ADDRESS;
-
-    // Set up the SMBus
-    smbus_info_t * smbus_info = smbus_malloc();
-    smbus_init(smbus_info, i2c_num, address);
-    smbus_set_timeout(smbus_info, 1000 / portTICK_RATE_MS);
-
-    // Set up the LCD1602 device with backlight off
-    i2c_lcd1602_info_t * lcd_info = i2c_lcd1602_malloc();
-    i2c_lcd1602_init(lcd_info, smbus_info, true, LCD_NUM_ROWS, LCD_NUM_COLUMNS, LCD_NUM_VIS_COLUMNS);
-
-    // turn off backlight
-    ESP_LOGI(MENUTAG, "backlight off");
-    _wait_for_user();
-    i2c_lcd1602_set_backlight(lcd_info, false);
-
-    // turn on backlight
-    ESP_LOGI(MENUTAG, "backlight on");
-    //_wait_for_user();
-    i2c_lcd1602_set_backlight(lcd_info, true);
-
-    ESP_LOGI(MENUTAG, "cursor on");
-    _wait_for_user();
-    i2c_lcd1602_set_cursor(lcd_info, true);
-
-    ESP_LOGI(MENUTAG, "display welcome message");  // should overflow to second line at "ABC..."
-    _wait_for_user();   
-    i2c_lcd1602_home(lcd_info);
-    i2c_lcd1602_write_string(lcd_info, "Welcome");
-
     while(1)
     {
-        vTaskDelay(100 / portTICK_RATE_MS);
+        // menu_handleKeyEvent(menu, MENU_KEY_OK);
+        // vTaskDelay(2500 / portTICK_RATE_MS);
+        menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
+        vTaskDelay(2500 / portTICK_RATE_MS);
     }
 
+    menu_freeMenu(menu);
     vTaskDelete(NULL);
 }
 
-void button_test_task(void * pvParameter)
-{
-
-
-
-}
-
-
-
-
 // void app_main()
 // {
-//     //xTaskCreate(&menu_task, "menu_task", 4096, NULL, 5, NULL);
 //     xTaskCreate(&menu_task, "menu_task", 4096, NULL, 5, NULL);
 // }
 
