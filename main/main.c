@@ -10,7 +10,12 @@
 
 #include "smbus.h"
 #include "i2c-lcd1602.h"
-#include "lcd-menu.h"
+
+//button
+#include "esp_peripherals.h"
+#include "periph_adc_button.h"
+
+//#include "touch_pad.h"
 
 #undef USE_STDIN
 
@@ -24,7 +29,15 @@
 #define LCD_NUM_COLUMNS			 40
 #define LCD_NUM_VIS_COLUMNS		 20
 
-#define MAINTAG "main"
+//Start touch pad buttons
+#define AudioSetPin 32
+#define AudioPlayPin 33
+#define AudioVolPlus 27
+#define AudioVolMinus 13
+//End
+
+#define MENUTAG "menu"
+#define BUTTONTAG "button"
 
 static void i2c_master_init(void)
 {
@@ -70,61 +83,166 @@ i2c_lcd1602_info_t * lcd_init()
     smbus_set_timeout(smbus_info, 1000 / portTICK_RATE_MS);
 
     // Set up the LCD1602 device with backlight off
-    i2c_lcd1602_info_t * lcd_info = i2c_lcd1602_malloc();
+    lcd_info = i2c_lcd1602_malloc();
     i2c_lcd1602_init(lcd_info, smbus_info, true, LCD_NUM_ROWS, LCD_NUM_COLUMNS, LCD_NUM_VIS_COLUMNS);
 
     // turn off backlight
-    ESP_LOGI(MAINTAG, "backlight off");
+    ESP_LOGI(MENUTAG, "backlight off");
+    _wait_for_user();
     i2c_lcd1602_set_backlight(lcd_info, false);
 
     // turn on backlight
-    ESP_LOGI(MAINTAG, "backlight on");
+    ESP_LOGI(MENUTAG, "backlight on");
+    //_wait_for_user();
     i2c_lcd1602_set_backlight(lcd_info, true);
 
-    // turn on cursor 
-    ESP_LOGI(MAINTAG, "cursor on");
+    ESP_LOGI(MENUTAG, "cursor on");
+    _wait_for_user();
     i2c_lcd1602_set_cursor(lcd_info, true);
 
     return lcd_info;
 }
 
-void display_welcome_message(i2c_lcd1602_info_t * lcd_info)
-{
-    i2c_lcd1602_set_cursor(lcd_info, false);
-    i2c_lcd1602_move_cursor(lcd_info, 6, 1);
-
-    i2c_lcd1602_write_string(lcd_info, "Welcome");
-    i2c_lcd1602_move_cursor(lcd_info, 8, 2);
-    i2c_lcd1602_write_string(lcd_info, "User");
-
-    vTaskDelay(2500 / portTICK_RATE_MS);
-    i2c_lcd1602_clear(lcd_info);
-}
-
 void menu_task(void * pvParameter)
 {
     i2c_master_init();
-    // i2c_lcd1602_info_t *lcd_info = lcd_init();
-    menu_t *menu = menu_createMenu(lcd_init());
-
-    menu_displayWelcomeMessage(menu);
-    menu_displayMenuItem(menu, menu->currentMenuItemId);
-    vTaskDelay(2500 / portTICK_RATE_MS);
+    i2c_lcd1602_info_t * lcd_info = lcd_init();
     
+
+    i2c_port_t i2c_num = I2C_MASTER_NUM;
+    uint8_t address = CONFIG_LCD1602_I2C_ADDRESS;
+
+    // Set up the SMBus
+    smbus_info_t * smbus_info = smbus_malloc();
+    smbus_init(smbus_info, i2c_num, address);
+    smbus_set_timeout(smbus_info, 1000 / portTICK_RATE_MS);
+
+    // Set up the LCD1602 device with backlight off
+    i2c_lcd1602_info_t * lcd_info = i2c_lcd1602_malloc();
+    i2c_lcd1602_init(lcd_info, smbus_info, true, LCD_NUM_ROWS, LCD_NUM_COLUMNS, LCD_NUM_VIS_COLUMNS);
+
+    // turn off backlight
+    ESP_LOGI(MENUTAG, "backlight off");
+    _wait_for_user();
+    i2c_lcd1602_set_backlight(lcd_info, false);
+
+    // turn on backlight
+    ESP_LOGI(MENUTAG, "backlight on");
+    //_wait_for_user();
+    i2c_lcd1602_set_backlight(lcd_info, true);
+
+    ESP_LOGI(MENUTAG, "cursor on");
+    _wait_for_user();
+    i2c_lcd1602_set_cursor(lcd_info, true);
+
+    ESP_LOGI(MENUTAG, "display welcome message");  // should overflow to second line at "ABC..."
+    _wait_for_user();   
+    i2c_lcd1602_home(lcd_info);
+    i2c_lcd1602_write_string(lcd_info, "Welcome");
+
     while(1)
     {
-        menu_handleKeyEvent(menu, MENU_KEY_OK);
-        vTaskDelay(2500 / portTICK_RATE_MS);
-        menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
-        vTaskDelay(2500 / portTICK_RATE_MS);
+        vTaskDelay(100 / portTICK_RATE_MS);
     }
 
-    menu_freeMenu(menu);
     vTaskDelete(NULL);
 }
 
-void app_main()
+void button_test_task(void * pvParameter)
 {
-    xTaskCreate(&menu_task, "menu_task", 4096, NULL, 5, NULL);
+
+
+
+}
+
+
+
+
+// void app_main()
+// {
+//     //xTaskCreate(&menu_task, "menu_task", 4096, NULL, 5, NULL);
+//     xTaskCreate(&menu_task, "menu_task", 4096, NULL, 5, NULL);
+// }
+
+
+/* Check operation of ADC button peripheral in ESP32-LyraTD-MSC board
+
+   This example code is in the Public Domain (or CC0 licensed, at your option.)
+
+   Unless required by applicable law or agreed to in writing, this
+   software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+   CONDITIONS OF ANY KIND, either express or implied.
+*/
+
+
+
+//static const char *BUTTONTAG = "CHECK_MSC_ADC_BUTTON";
+
+
+void app_main(void)
+{
+    ESP_LOGI(BUTTONTAG, "[ 1 ] Initialize peripherals");
+    esp_periph_config_t periph_cfg = DEFAULT_ESP_PERIPH_SET_CONFIG();
+    esp_periph_set_handle_t set = esp_periph_set_init(&periph_cfg);
+
+    ESP_LOGI(BUTTONTAG, "[1.1] Initialize ADC Button peripheral");
+    periph_adc_button_cfg_t adc_button_cfg = PERIPH_ADC_BUTTON_DEFAULT_CONFIG();
+    adc_arr_t adc_btn_tag = ADC_DEFAULT_ARR();
+    adc_button_cfg.arr = &adc_btn_tag;
+    adc_button_cfg.arr_size = 1;
+
+    ESP_LOGI(BUTTONTAG, "[1.2] Start ADC Button peripheral");
+    esp_periph_handle_t adc_button_periph = periph_adc_button_init(&adc_button_cfg);
+    esp_periph_start(set, adc_button_periph);
+
+    ESP_LOGI(BUTTONTAG, "[ 2 ] Set up  event listener");
+    audio_event_iface_cfg_t evt_cfg = AUDIO_EVENT_IFACE_DEFAULT_CFG();
+    audio_event_iface_handle_t evt = audio_event_iface_init(&evt_cfg);
+    audio_event_iface_set_listener(esp_periph_set_get_event_iface(set), evt);
+
+    ESP_LOGW(BUTTONTAG, "[ 3 ] Waiting for a button to be pressed ...");
+
+
+    while (1) {
+        char *btn_states[] = {"idle", "click", "click released", "press", "press released"};
+
+        audio_event_iface_msg_t msg;
+        esp_err_t ret = audio_event_iface_listen(evt, &msg, portMAX_DELAY);
+        if (ret != ESP_OK) {
+            ESP_LOGE(BUTTONTAG, "[ * ] Event interface error : %d", ret);
+            continue;
+        }
+
+        if (msg.source_type == PERIPH_ID_ADC_BTN) {
+            int button_id = (int)msg.data;  // button id is sent as data_len
+            int state     = msg.cmd;       // button state is sent as cmd
+            switch (button_id) {
+                case USER_KEY_ID0:
+                    ESP_LOGI(BUTTONTAG, "[ * ] Button SET %s", btn_states[state]);
+                    break;
+                case USER_KEY_ID1:
+                    ESP_LOGI(BUTTONTAG, "[ * ] Button PLAY %s", btn_states[state]);
+                    break;
+                case USER_KEY_ID2:
+                    ESP_LOGI(BUTTONTAG, "[ * ] Button REC %s", btn_states[state]);
+                    break;
+                case USER_KEY_ID3:
+                    ESP_LOGI(BUTTONTAG, "[ * ] Button MODE %s", btn_states[state]);
+                    break;
+                case USER_KEY_ID4:
+                    ESP_LOGI(BUTTONTAG, "[ * ] Button VOL- %s", btn_states[state]);
+                    break;
+                case USER_KEY_ID5:
+                    ESP_LOGI(BUTTONTAG, "[ * ] Button VOL+ %s", btn_states[state]);
+                    break;
+                default:
+                    ESP_LOGE(BUTTONTAG, "[ * ] Not supported button id: %d)", button_id);
+            }
+        }
+    }
+
+    ESP_LOGI(BUTTONTAG, "[ 4 ] Stop & destroy all peripherals and event interface");
+    esp_periph_set_destroy(set);
+    audio_event_iface_destroy(evt);
 }
 
