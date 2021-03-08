@@ -35,6 +35,7 @@ typedef struct {
 } menu_t;
 
 menu_t *menu_createMenu(i2c_lcd1602_info_t *lcd_info);
+void menu_freeMenu(menu_t *menu);
 void menu_displayWelcomeMessage(menu_t *menu);//menu_t *menu);
 void menu_displayMenuItem(menu_t *menu, int menuItemId);
 void menu_handleKeyEvent(menu_t *menu, int key);

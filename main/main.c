@@ -111,18 +111,19 @@ void menu_task(void * pvParameter)
     menu_displayMenuItem(menu, menu->currentMenuItemId);
     vTaskDelay(2500 / portTICK_RATE_MS);
     
-    menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
-    vTaskDelay(2500 / portTICK_RATE_MS);
-    menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
-    vTaskDelay(2500 / portTICK_RATE_MS);
-    menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
-    vTaskDelay(2500 / portTICK_RATE_MS);
+    ESP_LOGI(MAINTAG, "current id: %u", menu->currentMenuItemId);
+    ESP_LOGI(MAINTAG, "stored ids: %u, %u, %u", menu->menuItems[menu->currentMenuItemId].otherIds[MENU_KEY_OK], menu->menuItems[menu->currentMenuItemId].otherIds[MENU_KEY_LEFT], menu->menuItems[menu->currentMenuItemId].otherIds[MENU_KEY_RIGHT]);
+    ESP_LOGI(MAINTAG, "stored id: %p", &menu->menuItems[menu->currentMenuItemId].otherIds[MENU_KEY_RIGHT]);
+    ESP_LOGI(MAINTAG, "menuItems address: %p", menu->menuItems);
+    ESP_LOGI(MAINTAG, "menuItem Ids: %u, %u, %u", menu->menuItems[MENU_MAIN_ID_0].id, menu->menuItems[MENU_MAIN_ID_1].id, menu->menuItems[MENU_MAIN_ID_2].id);
 
     while(1)
     {
-        vTaskDelay(1000 / portTICK_RATE_MS);
+        menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
+        vTaskDelay(2500 / portTICK_RATE_MS);
     }
 
+    menu_freeMenu(menu);
     vTaskDelete(NULL);
 }
 
