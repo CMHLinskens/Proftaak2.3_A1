@@ -7,14 +7,13 @@
 
 #define MENUTAG "menu"
 
-// menu_item_t *menu_createMenuItem(unsigned int id, unsigned int otherIds[], char* menuText[])
-// {
-//     menu_item_t *menuItem = malloc(sizeof(menu_item_t));
-//     menuItem.id = id;
-//     menuItem.otherIds = otherIds;
-//     menuItem.menuText = menuText;
-//     return menuItem;
-// }
+// Menu events functions
+void enterMenuItem(void);
+void exitMenuItem(void);
+void okPressRadioEvent(void);
+void okPressSettingsEvent(void);
+void leftPressEvent(void);
+void rightPressEvent(void);
 
 menu_t *menu_createMenu(i2c_lcd1602_info_t *lcd_info)
 {
@@ -22,9 +21,9 @@ menu_t *menu_createMenu(i2c_lcd1602_info_t *lcd_info)
 
     // Temporary array of menu items to copy from
     menu_item_t menuItems[MAX_MENU_ITEMS] = {
-        {MENU_MAIN_ID_0, {MENU_MAIN_ID_0, MENU_MAIN_ID_2, MENU_MAIN_ID_1}, {"MAIN MENU"}},
-        {MENU_MAIN_ID_1, {MENU_MAIN_ID_1, MENU_MAIN_ID_0, MENU_MAIN_ID_2}, {"RADIO"}},
-        {MENU_MAIN_ID_2, {MENU_MAIN_ID_2, MENU_MAIN_ID_1, MENU_MAIN_ID_0}, {"SETTINGS"}}
+        {MENU_MAIN_ID_0, {MENU_MAIN_ID_0, MENU_MAIN_ID_2, MENU_MAIN_ID_1}, {"MAIN MENU"}, {NULL, leftPressEvent, rightPressEvent}, enterMenuItem, exitMenuItem},
+        {MENU_MAIN_ID_1, {MENU_MAIN_ID_1, MENU_MAIN_ID_0, MENU_MAIN_ID_2}, {"RADIO"}, {okPressRadioEvent, leftPressEvent, rightPressEvent}, enterMenuItem, exitMenuItem},
+        {MENU_MAIN_ID_2, {MENU_MAIN_ID_2, MENU_MAIN_ID_1, MENU_MAIN_ID_0}, {"SETTINGS"}, {okPressSettingsEvent, leftPressEvent, rightPressEvent}, enterMenuItem, exitMenuItem}
     };
     
     if(menuPointer != NULL)
@@ -35,15 +34,11 @@ menu_t *menu_createMenu(i2c_lcd1602_info_t *lcd_info)
         memcpy(menuPointer->menuItems, menuItems, MAX_MENU_ITEMS * sizeof(menu_item_t));
         menuPointer->currentMenuItemId = MENU_MAIN_ID_0;
 
-        ESP_LOGI(MENUTAG, "malloc menu_t %p", menuPointer);
-        ESP_LOGI(MENUTAG, "currentMenuItemId: %d", menuPointer->currentMenuItemId);
-        ESP_LOGI(MENUTAG, "stored ids: %u, %u, %u", menuPointer->menuItems[menuPointer->currentMenuItemId].otherIds[MENU_KEY_OK], menuPointer->menuItems[menuPointer->currentMenuItemId].otherIds[MENU_KEY_LEFT], menuPointer->menuItems[menuPointer->currentMenuItemId].otherIds[MENU_KEY_RIGHT]);
-        ESP_LOGI(MENUTAG, "menuItems address: %p", menuPointer->menuItems);
-        ESP_LOGI(MENUTAG, "menuItem Ids: %u, %u, %u", menuPointer->menuItems[MENU_MAIN_ID_0].id, menuPointer->menuItems[MENU_MAIN_ID_1].id, menuPointer->menuItems[MENU_MAIN_ID_2].id);
+        ESP_LOGD(MENUTAG, "malloc menu_t %p", menuPointer);
     }
     else 
     {
-        ESP_LOGI(MENUTAG, "malloc menu_t failed");
+        ESP_LOGD(MENUTAG, "malloc menu_t failed");
     }
     return menuPointer;
 }
@@ -81,24 +76,48 @@ void menu_displayMenuItem(menu_t *menu, int menuItemId)
 
 void menu_handleKeyEvent(menu_t *menu, int key)
 {
-    ESP_LOGI(MENUTAG, "handleKeyEvent()");
-    ESP_LOGI(MENUTAG, "current id: %u", menu->currentMenuItemId);
-    ESP_LOGI(MENUTAG, "stored ids: %u, %u, %u", menu->menuItems[menu->currentMenuItemId].otherIds[MENU_KEY_OK], menu->menuItems[menu->currentMenuItemId].otherIds[MENU_KEY_LEFT], menu->menuItems[menu->currentMenuItemId].otherIds[MENU_KEY_RIGHT]);
-    ESP_LOGI(MENUTAG, "stored id: %p", &menu->menuItems[menu->currentMenuItemId].otherIds[MENU_KEY_RIGHT]);
-    ESP_LOGI(MENUTAG, "menuItems address: %p", menu->menuItems);
-    ESP_LOGI(MENUTAG, "menuItem Ids: %u, %u, %u", menu->menuItems[MENU_MAIN_ID_0].id, menu->menuItems[MENU_MAIN_ID_1].id, menu->menuItems[MENU_MAIN_ID_2].id);
+    // If key press leads to the same ID as the currentMenuItemId
+    // do not switch to a new menu item, instead call the onKey event
+    if(menu->menuItems[menu->currentMenuItemId].otherIds[key] == menu->currentMenuItemId){
+        // Call the onKey event function if there is one
+        if(menu->menuItems[menu->currentMenuItemId].fpOnKeyEvent[key] != NULL) {
+            (*menu->menuItems[menu->currentMenuItemId].fpOnKeyEvent[key])();
+        }
+    } else {
+        // Call the onMenuExit event function if there is one
+        if(menu->menuItems[menu->currentMenuItemId].fpOnMenuExitEvent != NULL) {
+        (*menu->menuItems[menu->currentMenuItemId].fpOnMenuExitEvent)();
+        }
 
-    switch(key){
-        case MENU_KEY_OK:
-        menu->currentMenuItemId = menu->menuItems[menu->currentMenuItemId].otherIds[MENU_KEY_OK];
-        break;
-        case MENU_KEY_LEFT:
-        menu->currentMenuItemId = menu->menuItems[menu->currentMenuItemId].otherIds[MENU_KEY_LEFT];
-        break;
-        case MENU_KEY_RIGHT:
-        menu->currentMenuItemId = menu->menuItems[menu->currentMenuItemId].otherIds[MENU_KEY_RIGHT];
-        break;
+        menu->currentMenuItemId = menu->menuItems[menu->currentMenuItemId].otherIds[key];
+        ESP_LOGI(MENUTAG, "new id: %u", menu->currentMenuItemId);
+
+        // Call the onMenuEntry event function if there is one
+        if(menu->menuItems[menu->currentMenuItemId].fpOnMenuEntryEvent != NULL) {
+            (*menu->menuItems[menu->currentMenuItemId].fpOnMenuEntryEvent)();
+        }
+
+        // Display menu on LCD
+        menu_displayMenuItem(menu, menu->currentMenuItemId);
     }
-    ESP_LOGI(MENUTAG, "new id: %u", menu->currentMenuItemId);
-    menu_displayMenuItem(menu, menu->currentMenuItemId);
+}
+
+// Defining menu events functions
+void enterMenuItem(void) {
+    ESP_LOGI(MENUTAG, "Entered a menu item");
+}
+void exitMenuItem(void){
+    ESP_LOGI(MENUTAG, "Exited a menu item");
+}
+void okPressRadioEvent(void){
+    ESP_LOGI(MENUTAG, "Ok press on radio");
+}
+void okPressSettingsEvent(void){
+    ESP_LOGI(MENUTAG, "Ok press on settings");
+}
+void leftPressEvent(void){
+    ESP_LOGI(MENUTAG, "Left key pressed");
+}
+void rightPressEvent(void){
+    ESP_LOGI(MENUTAG, "Right key pressed");
 }

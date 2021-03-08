@@ -25,6 +25,9 @@ typedef struct {
     unsigned int id;
     unsigned int otherIds[MAX_MENU_KEYS];
     char *menuText[MAX_LCD_CHARS];
+    void (*fpOnKeyEvent[MAX_MENU_KEYS])(void);
+    void (*fpOnMenuEntryEvent)(void);
+    void (*fpOnMenuExitEvent)(void);
 } menu_item_t;
 
 typedef struct {
