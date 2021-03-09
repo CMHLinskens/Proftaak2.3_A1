@@ -21,6 +21,7 @@
 #include "smbus.h"
 #include "i2c-lcd1602.h"
 #include "lcd-menu.h"
+#include "clock-sync.h"
 
 #undef USE_STDIN
 
@@ -37,40 +38,6 @@
 #define MAINTAG "main"
 
 static const char *TAG = "clock";
-
-static void obtain_time(void);
-static void initialize_sntp(void);
-
-void time_sync_notification_cb(struct timeval *tv)
-{
-    ESP_LOGI(TAG, "Notification of a time synchronization event");
-}
-
-static void obtain_time(void)
-{
-    // wait for time to be set
-    time_t now = 0;
-    struct tm timeinfo = { 0 };
-    int retry = 0;
-    const int retry_count = 10;
-    while (sntp_get_sync_status() == SNTP_SYNC_STATUS_RESET && ++retry < retry_count) {
-        ESP_LOGI(TAG, "Waiting for system time to be set... (%d/%d)", retry, retry_count);
-        vTaskDelay(2000 / portTICK_PERIOD_MS);
-    }
-    time(&now);
-    localtime_r(&now, &timeinfo);
-    
-}
-
-static void initialize_sntp(void)
-{
-    ESP_LOGI(TAG, "Initializing SNTP");
-    sntp_setoperatingmode(SNTP_OPMODE_POLL);
-    sntp_setservername(0, "pool.ntp.org");
-    sntp_set_time_sync_notification_cb(time_sync_notification_cb);
-
-    sntp_init();
-}
 
 void clock_task(void*pvParameter){
     ESP_ERROR_CHECK( nvs_flash_init() );
@@ -90,40 +57,25 @@ void clock_task(void*pvParameter){
     time(&now);
     localtime_r(&now, &timeinfo);
     // Is time set? If not, tm_year will be (1970 - 1900).
-    ESP_LOGI(TAG, "Time is not set yet. Connecting to WiFi and getting time over NTP.");
-    obtain_time();
+    if (timeinfo.tm_year < (2016 - 1900)) {
+        ESP_LOGI(TAG, "Time is not set yet. Connecting to WiFi and getting time over NTP.");
+        obtain_time();
+        // update 'now' variable with current time
+        time(&now);
+    }
     // update 'now' variable with current time
     time(&now);
 
-    // #ifdef CONFIG_SNTP_TIME_SYNC_METHOD_SMOOTH
-    // else {
-    //     // add 500 ms error to the current system time.
-    //     // Only to demonstrate a work of adjusting method!
-    //     {
-    //         ESP_LOGI(TAG, "Add a error for test adjtime");
-    //         struct timeval tv_now;
-    //         gettimeofday(&tv_now, NULL);
-    //         int64_t cpu_time = (int64_t)tv_now.tv_sec * 1000000L + (int64_t)tv_now.tv_usec;
-    //         int64_t error_time = cpu_time + 500 * 1000L;
-    //         struct timeval tv_error = { .tv_sec = error_time / 1000000L, .tv_usec = error_time % 1000000L };
-    //         settimeofday(&tv_error, NULL);
-    //     }
-
-    //     ESP_LOGI(TAG, "Time was set, now just adjusting it. Use SMOOTH SYNC method.");
-    //         obtain_time();
-    //     // update 'now' variable with current time
-    //     time(&now);
-    // }
-    // #endif
-
     char strftime_buf[64];
+    // set timezone
     setenv("TZ", "CET-1", 1);
     tzset();
     localtime_r(&now, &timeinfo);
+    // convert time to string
     strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
     ESP_LOGI(TAG, "The current date/time is: %s", strftime_buf);
 
-    vTaskDelay(5000 / portTICK_PERIOD_MS);
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
     
 }
