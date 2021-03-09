@@ -30,8 +30,8 @@
 static const char *TAG = "MAIN";
 
 i2c_port_t i2c_num;
-i2c_lcd1602_info_t *lcd_info;
 qwiic_twist_t *qwiic_twist_rotary;
+menu_t *menu;
 
 void pressed(void);
 void onMove(int16_t);
@@ -93,13 +93,13 @@ static void component_init(void){
 
 void menu_task(void * pvParameter)
 {
-    i2c_master_init();
-    menu_t *menu = menu_createMenu(lcd_init());
+    menu = menu_createMenu(lcd_init());
 
     menu_displayWelcomeMessage(menu);
     menu_displayScrollMenu(menu);
-    vTaskDelay(2500 / portTICK_RATE_MS);
-    
+
+    xTaskCreate(&rotary_task, "rotary_task", 4096, NULL, 5, NULL);
+
     while(1)
     {
         vTaskDelay(1000 / portTICK_RATE_MS);
@@ -116,42 +116,21 @@ char * toString(int number) {
     return str;
 }
 
-void display_number(i2c_lcd1602_info_t * lcd_info, int number){
-    i2c_lcd1602_set_cursor(lcd_info, false);
-    i2c_lcd1602_write_string(lcd_info, toString(number));
-}
-
 void pressed(void){
     ESP_LOGI(TAG, "pressed rotary encoder");
-    display_welcome_message(lcd_info);
+    menu->handleKeyEvent(MENU_KEY_OK);
 }
 
 void onMove(int16_t move_value){
-    static int counter = 0;
-    ESP_LOGI(TAG, "rotary encoder moved");
-    ESP_LOGI(TAG, "rotary value: %d", move_value);
     if(move_value > 0){
-        counter++;
+        menu->handleKeyEvent(MENU_KEY_RIGHT);
     }
     else if(move_value < 0){
-        counter--;
+        menu->handleKeyEvent(MENU_KEY_LEFT);
     }
-    i2c_lcd1602_clear(lcd_info);
-    display_number(lcd_info, counter);
 }
 
-void display_counter_rotary(i2c_lcd1602_info_t * lcd_info, int number)
-{
-    i2c_lcd1602_set_cursor(lcd_info, false);
-    i2c_lcd1602_move_cursor(lcd_info, 6, 1);
-
-    i2c_lcd1602_write_char(lcd_info, number);
-
-    // vTaskDelay(2500 / portTICK_RATE_MS);
-    // i2c_lcd1602_clear(lcd_info);
-}
-
-void rotary_test_task(void * pvParameter)
+void rotary_task(void * pvParameter)
 {
     //COLOR TEST WITH THE ROTARY ENCODER
     //smbus_info_t * smbus_info_rotary = smbus_malloc();
@@ -180,7 +159,6 @@ void app_main()
     //initialize the components
     component_init();
 
-    //TaskCreate(&menu_task, "menu_task", 4096, NULL, 5, NULL);
-    xTaskCreate(&rotary_test_task, "rotary_test_task", 4096, NULL, 5, NULL);
+    TaskCreate(&menu_task, "menu_task", 4096, NULL, 5, NULL);
 }
 
