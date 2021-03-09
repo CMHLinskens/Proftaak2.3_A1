@@ -146,21 +146,38 @@ void sdcard_url_save_cb(void *user_data, char *url)
 //     sdcard_list_t *playlist = sdcard_list_handle->playlist;
 //     char *url = NULL;
 
-//     for(int i = 0; i < playlist->url_num; i++){
-//          sdcard_list_next(sdcard_list_handle, 1, &url);
+//     for(int i = 0; i < playlist->url_num; i++)
+//      sdcard_list_next(sdcard_list_handle, 1, &url);
 //          return_url[i] = url;
 //     }
 // }
 
-char* get_all_songs_from_SDcard(){
+void get_all_songs_from_SDcard(char* song_list){
     //Makes array of songs on the sd
     sdcard_list_t *playlist = sdcard_list_handle->playlist;
-    char* song_list[playlist->url_num];
+
+    uint32_t pos = 0;
+    uint16_t  size = 0;
+    char* url = calloc(1, 1024 * 2);
+
+    fseek(playlist->save_file, 0, SEEK_SET);
+    fseek(playlist->offset_file, 0, SEEK_SET);
+    
     for(int i = 0; i < playlist->url_num; i++){
-        song_list[i] = (char*)malloc(80);
-        sdcard_list_next(sdcard_list_handle, 1, &song_list[i]);
+        memset(url, 0, 1024 * 2);
+        fread(&pos, 1, sizeof(uint32_t), playlist->offset_file);
+        fread(&size, 1, sizeof(uint16_t), playlist->offset_file);
+        fseek(playlist->save_file, pos, SEEK_SET) ;
+        fread(url, 1, size, playlist->save_file);
+
+        song_list[i] = *url;
+        ESP_LOGE(TAG, "This is songlist %d %s", i, *song_list[i]);
+
     }
-    return *song_list;
+
+    for(int i = 0; i < playlist->url_num; i++){
+        ESP_LOGE(TAG, "This is songlist %d %s", i, *song_list[i]);
+    }
 }
 
 void app_main(void)
@@ -240,8 +257,12 @@ void app_main(void)
 
     //End of configuration
 
-    char* test = get_all_songs_from_SDcard();
-    ESP_LOGE(TAG, "This is the url %s", &test[0]);
+    char* test = (char*) calloc(24, 80);
+    get_all_songs_from_SDcard(test);
+    for(int i = 0; i < 24; i++){
+        ESP_LOGE(TAG, "This is the song %d with url %s", i, *test[i]);
+    }
+    
 
     while (1) {
 
