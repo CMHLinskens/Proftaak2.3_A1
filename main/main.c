@@ -33,6 +33,8 @@ i2c_port_t i2c_num;
 qwiic_twist_t *qwiic_twist_rotary;
 menu_t *menu;
 
+void rotary_task(void *);
+void clicked(void);
 void pressed(void);
 void onMove(int16_t);
 
@@ -86,7 +88,8 @@ static void component_init(void){
     //INIT rotary encoder
     qwiic_twist_rotary = (qwiic_twist_t*)malloc(sizeof(*qwiic_twist_rotary));
     qwiic_twist_rotary->port = i2c_num;
-    qwiic_twist_rotary->onButtonClicked = &pressed;
+    qwiic_twist_rotary->onButtonClicked = &clicked;
+    qwiic_twist_rotary->onButtonPressed = &pressed;
     qwiic_twist_rotary->onMoved = &onMove;
     qwiic_twist_init(qwiic_twist_rotary);
 }
@@ -102,7 +105,7 @@ void menu_task(void * pvParameter)
 
     while(1)
     {
-        vTaskDelay(1000 / portTICK_RATE_MS);
+        vTaskDelay(5000 / portTICK_RATE_MS);
     }
 
     menu_freeMenu(menu);
@@ -116,18 +119,23 @@ char * toString(int number) {
     return str;
 }
 
+void clicked(void){
+    ESP_LOGI(TAG, "clicked rotary encoder");
+    menu_handleKeyEvent(menu, MENU_KEY_OK);
+}
+
 void pressed(void){
     ESP_LOGI(TAG, "pressed rotary encoder");
-    menu->handleKeyEvent(MENU_KEY_OK);
 }
 
 void onMove(int16_t move_value){
     if(move_value > 0){
-        menu->handleKeyEvent(MENU_KEY_RIGHT);
+        menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
     }
     else if(move_value < 0){
-        menu->handleKeyEvent(MENU_KEY_LEFT);
+        menu_handleKeyEvent(menu, MENU_KEY_LEFT);
     }
+    
 }
 
 void rotary_task(void * pvParameter)
@@ -159,6 +167,6 @@ void app_main()
     //initialize the components
     component_init();
 
-    TaskCreate(&menu_task, "menu_task", 4096, NULL, 5, NULL);
+    xTaskCreate(&menu_task, "menu_task", 4096, NULL, 5, NULL);
 }
 
