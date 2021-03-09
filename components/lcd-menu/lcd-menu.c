@@ -23,8 +23,55 @@ static int channel = 0;
 
 static i2c_lcd1602_info_t *_lcd_info;
 
-menu_t *menu_createMenu(i2c_lcd1602_info_t *lcd_info)
+void i2c_master_init(void)
 {
+    int i2c_master_port = I2C_MASTER_NUM;
+    i2c_config_t conf;
+    conf.mode = I2C_MODE_MASTER;
+    conf.sda_io_num = I2C_MASTER_SDA_IO;
+    conf.sda_pullup_en = GPIO_PULLUP_DISABLE;  // GY-2561 provides 10kΩ pullups
+    conf.scl_io_num = I2C_MASTER_SCL_IO;
+    conf.scl_pullup_en = GPIO_PULLUP_DISABLE;  // GY-2561 provides 10kΩ pullups
+    conf.master.clk_speed = I2C_MASTER_FREQ_HZ;
+    i2c_param_config(i2c_master_port, &conf);
+    i2c_driver_install(i2c_master_port, conf.mode,
+                       I2C_MASTER_RX_BUF_LEN,
+                       I2C_MASTER_TX_BUF_LEN, 0);
+}
+
+i2c_lcd1602_info_t * lcd_init()
+{
+    i2c_port_t i2c_num = I2C_MASTER_NUM;
+    uint8_t address = CONFIG_LCD1602_I2C_ADDRESS;
+
+    // Set up the SMBus
+    smbus_info_t * smbus_info = smbus_malloc();
+    smbus_init(smbus_info, i2c_num, address);
+    smbus_set_timeout(smbus_info, 1000 / portTICK_RATE_MS);
+
+    // Set up the LCD1602 device with backlight off
+    i2c_lcd1602_info_t * lcd_info = i2c_lcd1602_malloc();
+    i2c_lcd1602_init(lcd_info, smbus_info, true, LCD_NUM_ROWS, LCD_NUM_COLUMNS, LCD_NUM_VIS_COLUMNS);
+
+    // turn off backlight
+    ESP_LOGI(MENUTAG, "backlight off");
+    i2c_lcd1602_set_backlight(lcd_info, false);
+
+    // turn on backlight
+    ESP_LOGI(MENUTAG, "backlight on");
+    i2c_lcd1602_set_backlight(lcd_info, true);
+
+    // turn on cursor 
+    ESP_LOGI(MENUTAG, "cursor on");
+    i2c_lcd1602_set_cursor(lcd_info, true);
+
+    return lcd_info;
+}
+
+menu_t *menu_createMenu()
+{
+    i2c_master_init();
+
     menu_t *menuPointer = malloc(sizeof(menu_t));
 
     // Temporary array of menu items to copy from
@@ -42,12 +89,12 @@ menu_t *menu_createMenu(i2c_lcd1602_info_t *lcd_info)
         {MENU_RADIO_ID_4, {MENU_RADIO_ID_0, MENU_RADIO_ID_4, MENU_RADIO_ID_4}, {"CHANNEL", " ", "", ""}, {NULL, decreaseChannel, increaseChannel}, enterRadioChannel, NULL}
     };
     
-    _lcd_info = lcd_info;
+    _lcd_info = lcd_init();
 
     if(menuPointer != NULL)
     {
         // Initialize menu with values
-        menuPointer->lcd_info = lcd_info;
+        menuPointer->lcd_info = _lcd_info;
         menuPointer->menuItems = calloc(MAX_MENU_ITEMS, sizeof(menu_item_t));
         memcpy(menuPointer->menuItems, menuItems, MAX_MENU_ITEMS * sizeof(menu_item_t));
         menuPointer->currentMenuItemId = MENU_MAIN_ID_0;
@@ -172,6 +219,7 @@ void enterRadioVolume(void){
     i2c_lcd1602_move_cursor(_lcd_info, 9, 1);
     i2c_lcd1602_write_string(_lcd_info, volumeStr);
 }
+
 void increaseVolume(void){
     volume++;
     if(volume > 100) volume = 100;
@@ -181,6 +229,7 @@ void increaseVolume(void){
     i2c_lcd1602_move_cursor(_lcd_info, 9, 1);
     i2c_lcd1602_write_string(_lcd_info, volumeStr);
 }
+
 void decreaseVolume(void){
     volume--;
     if(volume < 0) volume = 0;
@@ -198,6 +247,7 @@ void enterRadioChannel(void){
     i2c_lcd1602_move_cursor(_lcd_info, 9, 1);
     i2c_lcd1602_write_string(_lcd_info, channelStr);
 }
+
 void increaseChannel(void){
     channel++;
     if(channel > 100) channel = 100;
@@ -207,6 +257,7 @@ void increaseChannel(void){
     i2c_lcd1602_move_cursor(_lcd_info, 9, 1);
     i2c_lcd1602_write_string(_lcd_info, channelStr);
 }
+
 void decreaseChannel(void){
     channel--;
     if(channel < 0) channel = 0;
