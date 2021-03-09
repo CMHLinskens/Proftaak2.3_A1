@@ -23,6 +23,14 @@
 #include "i2c-lcd1602.h"
 #include "lcd-menu.h"
 #include "clock-sync.h"
+#include "esp_wifi.h" 
+
+#include "lwip/err.h"
+#include "lwip/sockets.h"
+#include "lwip/sys.h"
+#include "lwip/netdb.h"
+#include "lwip/dns.h"
+
 
 #undef USE_STDIN
 
@@ -38,21 +46,24 @@
 
 #define MAINTAG "main"
 
-static const char *TAG = "clock";
+static const char *CLOCK = "clock";
 
 menu_t *menu = NULL;
 SemaphoreHandle_t clockMutex;
 
+/* Constants that aren't configurable in menuconfig */
+#define WEB_SERVER "api.openweathermap.org"
+#define WEB_PORT "80"
+#define WEB_PATH "http://api.openweathermap.org/data/2.5/weather?q=Rotterdam&appid=8a844dfb8a5c5fef30713f8ca4fb4aca"
+
+static const char *API = "API";
+
+static const char *REQUEST = "GET " WEB_PATH " HTTP/1.0\r\n"
+    "Host: "WEB_SERVER":"WEB_PORT"\r\n"
+    "User-Agent: esp-idf/1.0 esp32\r\n"
+    "\r\n";
+
 void clock_task(void*pvParameter){
-    ESP_ERROR_CHECK( nvs_flash_init() );
-    ESP_ERROR_CHECK(esp_netif_init());
-    ESP_ERROR_CHECK( esp_event_loop_create_default() );
-    
-    /* This helper function configures Wi-Fi or Ethernet, as selected in menuconfig.
-     * Read "Establishing Wi-Fi or Ethernet Connection" section in
-     * examples/protocols/README.md for more information about this function.
-     */
-    ESP_ERROR_CHECK(example_connect());
     initialize_sntp();
     while(1)
     {
@@ -62,7 +73,7 @@ void clock_task(void*pvParameter){
     localtime_r(&now, &timeinfo);
     // Is time set? If not, tm_year will be (1970 - 1900).
     if (timeinfo.tm_year < (2016 - 1900)) {
-        ESP_LOGI(TAG, "Time is not set yet. Connecting to WiFi and getting time over NTP.");
+        ESP_LOGI(CLOCK, "Time is not set yet. Connecting to WiFi and getting time over NTP.");
         obtain_time();
         // update 'now' variable with current time
         time(&now);
@@ -94,6 +105,91 @@ void clock_task(void*pvParameter){
 
 
     
+}
+
+static void http_get_task(void *pvParameters)
+{
+    const struct addrinfo hints = {
+        .ai_family = AF_INET,
+        .ai_socktype = SOCK_STREAM,
+    };
+    struct addrinfo *res;
+    struct in_addr *addr;
+    int s, r;
+    char recv_buf[64];
+
+    while(1) {
+        int err = getaddrinfo(WEB_SERVER, WEB_PORT, &hints, &res);
+
+        if(err != 0 || res == NULL) {
+            ESP_LOGE(API, "DNS lookup failed err=%d res=%p", err, res);
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
+            continue;
+        }
+
+        /* Code to print the resolved IP.
+
+           Note: inet_ntoa is non-reentrant, look at ipaddr_ntoa_r for "real" code */
+        addr = &((struct sockaddr_in *)res->ai_addr)->sin_addr;
+        ESP_LOGI(API, "DNS lookup succeeded. IP=%s", inet_ntoa(*addr));
+
+        s = socket(res->ai_family, res->ai_socktype, 0);
+        if(s < 0) {
+            ESP_LOGE(API, "... Failed to allocate socket.");
+            freeaddrinfo(res);
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
+            continue;
+        }
+        ESP_LOGI(API, "... allocated socket");
+
+        if(connect(s, res->ai_addr, res->ai_addrlen) != 0) {
+            ESP_LOGE(API, "... socket connect failed errno=%d", errno);
+            close(s);
+            freeaddrinfo(res);
+            vTaskDelay(4000 / portTICK_PERIOD_MS);
+            continue;
+        }
+
+        ESP_LOGI(API, "... connected");
+        freeaddrinfo(res);
+
+        if (write(s, REQUEST, strlen(REQUEST)) < 0) {
+            ESP_LOGE(API, "... socket send failed");
+            close(s);
+            vTaskDelay(4000 / portTICK_PERIOD_MS);
+            continue;
+        }
+        ESP_LOGI(API, "... socket send success");
+
+        struct timeval receiving_timeout;
+        receiving_timeout.tv_sec = 5;
+        receiving_timeout.tv_usec = 0;
+        if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, &receiving_timeout,
+                sizeof(receiving_timeout)) < 0) {
+            ESP_LOGE(API, "... failed to set socket receiving timeout");
+            close(s);
+            vTaskDelay(4000 / portTICK_PERIOD_MS);
+            continue;
+        }
+        ESP_LOGI(API, "... set socket receiving timeout success");
+
+        /* Read HTTP response */
+        do {
+            bzero(recv_buf, sizeof(recv_buf));
+            r = read(s, recv_buf, sizeof(recv_buf)-1);
+            for(int i = 0; i < r; i++) {
+                putchar(recv_buf[i]);
+            }
+        } while(r > 0);
+
+        ESP_LOGI(API, "... done reading from socket. Last read return=%d errno=%d.", r, errno);
+        close(s);
+        for(int countdown = 10; countdown >= 0; countdown--) {
+            ESP_LOGI(API, "%d... ", countdown);
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
+        }
+        ESP_LOGI(API, "Starting again!");
+    }
 }
 
 static void i2c_master_init(void)
@@ -214,8 +310,18 @@ void menu_task(void * pvParameter)
 
 void app_main()
 {
+    ESP_ERROR_CHECK( nvs_flash_init() );
+    ESP_ERROR_CHECK(esp_netif_init());
+    ESP_ERROR_CHECK( esp_event_loop_create_default() );
+    
+    /* This helper function configures Wi-Fi or Ethernet, as selected in menuconfig.
+     * Read "Establishing Wi-Fi or Ethernet Connection" section in
+     * examples/protocols/README.md for more information about this function.
+     */
+    ESP_ERROR_CHECK(example_connect());
     clockMutex = xSemaphoreCreateMutex();
     xTaskCreate(&menu_task, "menu_task", 4096, NULL, 5, NULL);
     xTaskCreate(&clock_task, "clock_task", 4096, NULL, 5, NULL);
+    xTaskCreate(&http_get_task, "http_get_task", 4096, NULL, 5, NULL);
 }
 
