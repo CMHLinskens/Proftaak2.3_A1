@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/event_groups.h"
+#include "freertos/semphr.h"
 #include "esp_system.h"
 #include "driver/gpio.h"
 #include "driver/i2c.h"
@@ -10,7 +12,6 @@
 #include <string.h>
 #include <time.h>
 #include <sys/time.h>
-#include "freertos/event_groups.h"
 #include "esp_event.h"
 #include "esp_attr.h"
 #include "esp_sleep.h"
@@ -39,6 +40,9 @@
 
 static const char *TAG = "clock";
 
+menu_t *menu = NULL;
+SemaphoreHandle_t clockMutex;
+
 void clock_task(void*pvParameter){
     ESP_ERROR_CHECK( nvs_flash_init() );
     ESP_ERROR_CHECK(esp_netif_init());
@@ -50,7 +54,7 @@ void clock_task(void*pvParameter){
      */
     ESP_ERROR_CHECK(example_connect());
     initialize_sntp();
-    while(true)
+    while(1)
     {
     time_t now;
     struct tm timeinfo;
@@ -67,16 +71,28 @@ void clock_task(void*pvParameter){
     time(&now);
 
     char strftime_buf[64];
+    char strftime_buf2[64];
+    
     // set timezone
     setenv("TZ", "CET-1", 1);
     tzset();
     localtime_r(&now, &timeinfo);
     // convert time to string
-    strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-    ESP_LOGI(TAG, "The current date/time is: %s", strftime_buf);
-
+    //strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
+    strftime(strftime_buf, sizeof(strftime_buf), "%X", &timeinfo); // time
+    strftime(strftime_buf2, sizeof(strftime_buf), "%x", &timeinfo); // date
+    
+    //if(menu != NULL){
+    if (xSemaphoreTake(clockMutex, (TickType_t) 10) == pdTRUE && menu != NULL){  
+        menu_displayTime(menu, strftime_buf,strftime_buf2);
+        xSemaphoreGive(clockMutex);
+        ESP_LOGI(TAG, "The current date/time is: %s  %s", strftime_buf,strftime_buf2);
+        printf("Test clock task\n");
+    }
     vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
+
+
     
 }
 
@@ -129,57 +145,65 @@ void menu_task(void * pvParameter)
 {
     i2c_master_init();
     // i2c_lcd1602_info_t *lcd_info = lcd_init();
-    menu_t *menu = menu_createMenu(lcd_init());
+    menu = menu_createMenu(lcd_init());
 
     menu_displayWelcomeMessage(menu);
-    menu_displayScrollMenu(menu);
-    vTaskDelay(2500 / portTICK_RATE_MS);
+
+   
+    // menu_displayScrollMenu(menu);
+    // vTaskDelay(2500 / portTICK_RATE_MS);
     
-    // Menu auto navigation demo code 
-    menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
-    vTaskDelay(2500 / portTICK_RATE_MS);
-    menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
-    vTaskDelay(2500 / portTICK_RATE_MS);
-    menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
-    vTaskDelay(2500 / portTICK_RATE_MS);
-    menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
-    vTaskDelay(2500 / portTICK_RATE_MS);
+    // // Menu auto navigation demo code 
+    // menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
+    // vTaskDelay(2500 / portTICK_RATE_MS);
+    // menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
+    // vTaskDelay(2500 / portTICK_RATE_MS);
+    // menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
+    // vTaskDelay(2500 / portTICK_RATE_MS);
+    // menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
+    // vTaskDelay(2500 / portTICK_RATE_MS);
 
-    menu_handleKeyEvent(menu, MENU_KEY_OK);
-    vTaskDelay(2500 / portTICK_RATE_MS);
-    menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
-    vTaskDelay(2500 / portTICK_RATE_MS);
+    // menu_handleKeyEvent(menu, MENU_KEY_OK);
+    // vTaskDelay(2500 / portTICK_RATE_MS);
+    // menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
+    // vTaskDelay(2500 / portTICK_RATE_MS);
 
-    menu_handleKeyEvent(menu, MENU_KEY_OK);
-    vTaskDelay(2500 / portTICK_RATE_MS);
-    menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
-    vTaskDelay(2500 / portTICK_RATE_MS);
-    menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
-    vTaskDelay(2500 / portTICK_RATE_MS);
-    menu_handleKeyEvent(menu, MENU_KEY_LEFT);
-    vTaskDelay(2500 / portTICK_RATE_MS);
-    menu_handleKeyEvent(menu, MENU_KEY_OK);
-    vTaskDelay(2500 / portTICK_RATE_MS);
+    // menu_handleKeyEvent(menu, MENU_KEY_OK);
+    // vTaskDelay(2500 / portTICK_RATE_MS);
+    // menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
+    // vTaskDelay(2500 / portTICK_RATE_MS);
+    // menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
+    // vTaskDelay(2500 / portTICK_RATE_MS);
+    // menu_handleKeyEvent(menu, MENU_KEY_LEFT);
+    // vTaskDelay(2500 / portTICK_RATE_MS);
+    // menu_handleKeyEvent(menu, MENU_KEY_OK);
+    // vTaskDelay(2500 / portTICK_RATE_MS);
 
-    menu_handleKeyEvent(menu, MENU_KEY_OK);
-    vTaskDelay(2500 / portTICK_RATE_MS);
-    menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
-    vTaskDelay(2500 / portTICK_RATE_MS);
-    menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
-    vTaskDelay(2500 / portTICK_RATE_MS);
-    menu_handleKeyEvent(menu, MENU_KEY_OK);
-    vTaskDelay(2500 / portTICK_RATE_MS);
+    // menu_handleKeyEvent(menu, MENU_KEY_OK);
+    // vTaskDelay(2500 / portTICK_RATE_MS);
+    // menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
+    // vTaskDelay(2500 / portTICK_RATE_MS);
+    // menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
+    // vTaskDelay(2500 / portTICK_RATE_MS);
+    // menu_handleKeyEvent(menu, MENU_KEY_OK);
+    // vTaskDelay(2500 / portTICK_RATE_MS);
 
-    menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
-    vTaskDelay(2500 / portTICK_RATE_MS);
-    menu_handleKeyEvent(menu, MENU_KEY_OK);
-    vTaskDelay(2500 / portTICK_RATE_MS);
+    // menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
+    // vTaskDelay(2500 / portTICK_RATE_MS);
+    // menu_handleKeyEvent(menu, MENU_KEY_OK);
+    // vTaskDelay(2500 / portTICK_RATE_MS);
 
     // End of menu auto navigation demo code 
 
     while(1)
     {
+        while (uxSemaphoreGetCount(clockMutex) == 0)
+        {
+            vTaskDelay(1 / portTICK_PERIOD_MS);
+        }
+        printf("Test menu task\n");
         vTaskDelay(1000 / portTICK_RATE_MS);
+        
     }
 
     menu_freeMenu(menu);
@@ -190,6 +214,7 @@ void menu_task(void * pvParameter)
 
 void app_main()
 {
+    clockMutex = xSemaphoreCreateMutex();
     xTaskCreate(&menu_task, "menu_task", 4096, NULL, 5, NULL);
     xTaskCreate(&clock_task, "clock_task", 4096, NULL, 5, NULL);
 }

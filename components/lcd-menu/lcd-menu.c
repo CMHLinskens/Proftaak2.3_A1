@@ -84,6 +84,14 @@ void menu_displayWelcomeMessage(menu_t *menu)
     i2c_lcd1602_clear(menu->lcd_info);
 }
 
+void menu_displayTime(menu_t *menu, char* time, char* date)
+{
+    i2c_lcd1602_clear(menu->lcd_info);
+    i2c_lcd1602_write_string(menu->lcd_info, time);
+    i2c_lcd1602_move_cursor(menu->lcd_info, 0, 1);
+    i2c_lcd1602_write_string(menu->lcd_info, date);
+}
+
 void menu_displayMenuItem(menu_t *menu, int menuItemId)
 {
     i2c_lcd1602_clear(menu->lcd_info);
