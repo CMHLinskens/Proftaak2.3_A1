@@ -141,19 +141,25 @@ void sdcard_url_save_cb(void *user_data, char *url)
     }
 }
 
-// void get_all_song_url(char **return_url){
+void play_song_with_ID(char* url){
+    //Stops music, terminates current pipeline and looks up the next audio file on the SD card
+    audio_pipeline_stop(pipeline);
+    audio_pipeline_wait_for_stop(pipeline);
+    audio_pipeline_terminate(pipeline);
 
-//     sdcard_list_t *playlist = sdcard_list_handle->playlist;
-//     char *url = NULL;
+    //Resets pipeline and starts the new audio file
+    audio_element_set_uri(fatfs_stream_reader, url);
+    audio_pipeline_reset_ringbuffer(pipeline);
+    audio_pipeline_reset_elements(pipeline);
+    audio_pipeline_run(pipeline);
 
-//     for(int i = 0; i < playlist->url_num; i++)
-//      sdcard_list_next(sdcard_list_handle, 1, &url);
-//          return_url[i] = url;
-//     }
-// }
+    ESP_LOGI(TAG, "Song %s is playing", url);
+    
+}
 
 void get_all_songs_from_SDcard(char** song_list){
     //Makes array of songs on the sd
+    //Uses some code from sdcard_list_show in sdcard_list.c
     sdcard_list_t *playlist = sdcard_list_handle->playlist;
 
     uint32_t pos = 0;
@@ -164,34 +170,23 @@ void get_all_songs_from_SDcard(char** song_list){
     fseek(playlist->offset_file, 0, SEEK_SET);
     
     for(int i = 0; i < playlist->url_num; i++){
+        //Gets songs from the SD
         memset(url, 0, 1024 * 2);
         fread(&pos, 1, sizeof(uint32_t), playlist->offset_file);
         fread(&size, 1, sizeof(uint16_t), playlist->offset_file);
         fseek(playlist->save_file, pos, SEEK_SET) ;
         fread(url, 1, size, playlist->save_file);
 
+        //Copy's the url so the array doesnt point to a pointer.
         char *temp_url = calloc(1, 80);
         strcpy(temp_url, url);
+        //Adds url to array
         song_list[i] = temp_url;
-
-        ESP_LOGE(TAG, "This is songlist %d %s", i, song_list[i]);
-        ESP_LOGE(TAG, "Adress of song_list[i]: %p", &song_list[i]);
-
     }
-
-    ESP_LOGE(TAG, "\n");
-
-    for(int i = 0; i < playlist->url_num; i++){
-        ESP_LOGE(TAG, "This is songlist %d %s", i, song_list[i]);
-        ESP_LOGE(TAG, "Adress of song_list[i]: %p", &song_list[i]);
-    }
-
-    ESP_LOGE(TAG, "\n");
 }
 
 void app_main(void)
 {
-    
     //Configuration
     esp_log_level_set("*", ESP_LOG_WARN);
     esp_log_level_set(TAG, ESP_LOG_INFO);
@@ -266,13 +261,18 @@ void app_main(void)
 
     //End of configuration
 
+    //Test to show all the songs on the SD card
     char** test = calloc(24, 80);
     get_all_songs_from_SDcard(test);
+
+    //Prints all the songs on the SD card
     for(int i = 0; i < 24; i++){
         ESP_LOGE(TAG, "This is the song %d with url %s", i, test[i]);
         ESP_LOGE(TAG, "Adress of test[i]: %p", &test[i]);
     }
-    
+
+    char* avond = "file://sdcard/Avond.mp3";
+    play_song_with_ID(avond);
 
     while (1) {
 
@@ -320,7 +320,7 @@ void app_main(void)
         }
     }
 
-    ESP_LOGI(TAG, "[ 7 ] Stop audio_pipeline");
+    ESP_LOGI(TAG, "Stop audio_pipeline");
     audio_pipeline_stop(pipeline);
     audio_pipeline_wait_for_stop(pipeline);
     audio_pipeline_terminate(pipeline);
