@@ -7,7 +7,17 @@
 #include "esp_log.h"
 #include "sdkconfig.h"
 #include "esp32/rom/uart.h"
-
+#include <string.h>
+#include <time.h>
+#include <sys/time.h>
+#include "freertos/event_groups.h"
+#include "esp_event.h"
+#include "esp_attr.h"
+#include "esp_sleep.h"
+#include "nvs_flash.h"
+#include "protocol_examples_common.h"
+#include "esp_sntp.h"
+#include "esp_task_wdt.h"
 #include "smbus.h"
 #include "i2c-lcd1602.h"
 #include "lcd-menu.h"
@@ -25,6 +35,98 @@
 #define LCD_NUM_VIS_COLUMNS		 20
 
 #define MAINTAG "main"
+
+static const char *TAG = "clock";
+
+static void obtain_time(void);
+static void initialize_sntp(void);
+
+void time_sync_notification_cb(struct timeval *tv)
+{
+    ESP_LOGI(TAG, "Notification of a time synchronization event");
+}
+
+static void obtain_time(void)
+{
+    // wait for time to be set
+    time_t now = 0;
+    struct tm timeinfo = { 0 };
+    int retry = 0;
+    const int retry_count = 10;
+    while (sntp_get_sync_status() == SNTP_SYNC_STATUS_RESET && ++retry < retry_count) {
+        ESP_LOGI(TAG, "Waiting for system time to be set... (%d/%d)", retry, retry_count);
+        vTaskDelay(2000 / portTICK_PERIOD_MS);
+    }
+    time(&now);
+    localtime_r(&now, &timeinfo);
+    
+}
+
+static void initialize_sntp(void)
+{
+    ESP_LOGI(TAG, "Initializing SNTP");
+    sntp_setoperatingmode(SNTP_OPMODE_POLL);
+    sntp_setservername(0, "pool.ntp.org");
+    sntp_set_time_sync_notification_cb(time_sync_notification_cb);
+
+    sntp_init();
+}
+
+void clock_task(void*pvParameter){
+    ESP_ERROR_CHECK( nvs_flash_init() );
+    ESP_ERROR_CHECK(esp_netif_init());
+    ESP_ERROR_CHECK( esp_event_loop_create_default() );
+    
+    /* This helper function configures Wi-Fi or Ethernet, as selected in menuconfig.
+     * Read "Establishing Wi-Fi or Ethernet Connection" section in
+     * examples/protocols/README.md for more information about this function.
+     */
+    ESP_ERROR_CHECK(example_connect());
+    initialize_sntp();
+    while(true)
+    {
+    time_t now;
+    struct tm timeinfo;
+    time(&now);
+    localtime_r(&now, &timeinfo);
+    // Is time set? If not, tm_year will be (1970 - 1900).
+    ESP_LOGI(TAG, "Time is not set yet. Connecting to WiFi and getting time over NTP.");
+    obtain_time();
+    // update 'now' variable with current time
+    time(&now);
+
+    // #ifdef CONFIG_SNTP_TIME_SYNC_METHOD_SMOOTH
+    // else {
+    //     // add 500 ms error to the current system time.
+    //     // Only to demonstrate a work of adjusting method!
+    //     {
+    //         ESP_LOGI(TAG, "Add a error for test adjtime");
+    //         struct timeval tv_now;
+    //         gettimeofday(&tv_now, NULL);
+    //         int64_t cpu_time = (int64_t)tv_now.tv_sec * 1000000L + (int64_t)tv_now.tv_usec;
+    //         int64_t error_time = cpu_time + 500 * 1000L;
+    //         struct timeval tv_error = { .tv_sec = error_time / 1000000L, .tv_usec = error_time % 1000000L };
+    //         settimeofday(&tv_error, NULL);
+    //     }
+
+    //     ESP_LOGI(TAG, "Time was set, now just adjusting it. Use SMOOTH SYNC method.");
+    //         obtain_time();
+    //     // update 'now' variable with current time
+    //     time(&now);
+    // }
+    // #endif
+
+    char strftime_buf[64];
+    setenv("TZ", "CET-1", 1);
+    tzset();
+    localtime_r(&now, &timeinfo);
+    strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
+    ESP_LOGI(TAG, "The current date/time is: %s", strftime_buf);
+
+    vTaskDelay(5000 / portTICK_PERIOD_MS);
+    }
+    
+}
 
 static void i2c_master_init(void)
 {
@@ -132,8 +234,11 @@ void menu_task(void * pvParameter)
     vTaskDelete(NULL);
 }
 
+
+
 void app_main()
 {
     xTaskCreate(&menu_task, "menu_task", 4096, NULL, 5, NULL);
+    xTaskCreate(&clock_task, "clock_task", 4096, NULL, 5, NULL);
 }
 
