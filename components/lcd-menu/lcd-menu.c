@@ -25,22 +25,6 @@ static int channel = 0;
 
 static i2c_lcd1602_info_t *_lcd_info;
 
-void i2c_master_init(void)
-{
-    int i2c_master_port = I2C_MASTER_NUM;
-    i2c_config_t conf;
-    conf.mode = I2C_MODE_MASTER;
-    conf.sda_io_num = I2C_MASTER_SDA_IO;
-    conf.sda_pullup_en = GPIO_PULLUP_DISABLE;  // GY-2561 provides 10kΩ pullups
-    conf.scl_io_num = I2C_MASTER_SCL_IO;
-    conf.scl_pullup_en = GPIO_PULLUP_DISABLE;  // GY-2561 provides 10kΩ pullups
-    conf.master.clk_speed = I2C_MASTER_FREQ_HZ;
-    i2c_param_config(i2c_master_port, &conf);
-    i2c_driver_install(i2c_master_port, conf.mode,
-                       I2C_MASTER_RX_BUF_LEN,
-                       I2C_MASTER_TX_BUF_LEN, 0);
-}
-
 i2c_lcd1602_info_t * lcd_init()
 {
     i2c_port_t i2c_num = I2C_MASTER_NUM;
@@ -72,8 +56,6 @@ i2c_lcd1602_info_t * lcd_init()
 
 menu_t *menu_createMenu()
 {
-    i2c_master_init();
-
     menu_t *menuPointer = malloc(sizeof(menu_t));
 
     // Temporary array of menu items to copy from
