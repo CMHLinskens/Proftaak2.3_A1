@@ -3,6 +3,7 @@
 #include "qwiic_twist.h"
 #include "i2c-lcd1602.h"
 #include "lcd-menu.h"
+#include "sdcard_player.h"
 
 #undef USE_STDIN
 
@@ -93,6 +94,7 @@ void menu_task(void * pvParameter)
     menu_displayScrollMenu(menu);
 
     xTaskCreate(&rotary_task, "rotary_task", 4096, NULL, 5, NULL);
+    xTaskCreate(&sdcard_task, "sdcard player", 4096, NULL, 5, NULL);
 
     while(1)
     {
@@ -100,6 +102,17 @@ void menu_task(void * pvParameter)
     }
 
     menu_freeMenu(menu);
+    vTaskDelete(NULL);
+}
+
+void sdcard_task(void * pvParameter){
+    sdcard_start();
+
+    while(1)
+    {
+        vTaskDelay(1000 / portTICK_RATE_MS);
+    }
+
     vTaskDelete(NULL);
 }
 

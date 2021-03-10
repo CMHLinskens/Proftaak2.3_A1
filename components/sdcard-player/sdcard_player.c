@@ -12,7 +12,6 @@
 #include "freertos/task.h"
 
 #include "esp_log.h"
-#include "nvs_flash.h"
 
 #include "audio_element.h"
 #include "audio_pipeline.h"
@@ -47,7 +46,7 @@ typedef struct sdcard_list {
 } sdcard_list_t;
 
 
-static const char *TAG = "SDCARD_MP3_CONTROL_EXAMPLE";
+static const char *TAG = "SDCard";
 static audio_board_handle_t board_handle;
 
 audio_pipeline_handle_t pipeline;
@@ -208,7 +207,7 @@ void get_all_songs_from_SDcard(char** song_list){
     }
 }
 
-void app_main(void)
+void sdcard_start(void)
 {
     //Configuration
     esp_log_level_set("*", ESP_LOG_WARN);
@@ -284,6 +283,7 @@ void app_main(void)
 
     //End of configuration
     
+    //TEST CODE
 
     //Test to show all the songs on the SD card
     //char** test = calloc(24, 80);
