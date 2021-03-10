@@ -1,4 +1,6 @@
-set(COMPONENT_ADD_INCLUDEDIRS include)
+set(COMPONENT_ADD_INCLUDEDIRS include )
 set(COMPONENT_SRCS "sdcard_player.c")
-set(COMPONENT_PRIV_INCLUDEDIRS $($ENV{ADF_PATH}/components/audio_pipeline/include))
+set(COMPONENT_REQUIRES audio_pipeline audio_stream esp_peripherals input_key_service playlist)
 register_component()
+
+

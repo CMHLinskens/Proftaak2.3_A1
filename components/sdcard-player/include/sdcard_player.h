@@ -1,5 +1,5 @@
-#ifndef sdcard_player.h
-#define sdcard_player.h
+#ifndef sdcard_player_h
+#define sdcard_player_h
 
 #include "sdcard_list.h"
 #include "sdcard_scan.h"
@@ -9,6 +9,7 @@ void pause();
 void resume();
 void play_song_with_ID(char* url);
 void get_all_songs_from_SDcard(char** song_list);
-void sdcard_start(void);
+void sdcard_start(void * pvParameter);
+void start_sdcard_task();
 
 #endif

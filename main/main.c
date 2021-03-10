@@ -93,8 +93,9 @@ void menu_task(void * pvParameter)
     menu_displayWelcomeMessage(menu);
     menu_displayScrollMenu(menu);
 
-    xTaskCreate(&rotary_task, "rotary_task", 4096, NULL, 5, NULL);
-    xTaskCreate(&sdcard_task, "sdcard player", 4096, NULL, 5, NULL);
+    //xTaskCreate(&rotary_task, "rotary_task", 4096, NULL, 5, NULL);
+    //xTaskCreate(&sdcard_start, "sdcard player", 4096, NULL, 5, NULL);
+    start_sdcard_task();
 
     while(1)
     {
@@ -105,16 +106,16 @@ void menu_task(void * pvParameter)
     vTaskDelete(NULL);
 }
 
-void sdcard_task(void * pvParameter){
-    sdcard_start();
+// void sdcard_task(void * pvParameter){
+//     sdcard_start();
 
-    while(1)
-    {
-        vTaskDelay(1000 / portTICK_RATE_MS);
-    }
+//     while(1)
+//     {
+//         vTaskDelay(1000 / portTICK_RATE_MS);
+//     }
 
-    vTaskDelete(NULL);
-}
+//     vTaskDelete(NULL);
+// }
 
 char * toString(int number) {
     int length = snprintf(NULL, 0, "%d", number + 1);

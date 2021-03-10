@@ -207,7 +207,7 @@ void get_all_songs_from_SDcard(char** song_list){
     }
 }
 
-void sdcard_start(void)
+void sdcard_start(void * pvParameter)
 {
     //Configuration
     esp_log_level_set("*", ESP_LOG_WARN);
@@ -377,4 +377,9 @@ void sdcard_start(void)
     audio_element_deinit(rsp_handle);
     esp_periph_set_destroy(set);
     periph_service_destroy(input_ser);
+}
+
+void start_sdcard_task(){
+    
+    xTaskCreate(&sdcard_start, "sdcard player", 4096, NULL, 5, NULL);
 }
