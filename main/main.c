@@ -155,6 +155,9 @@ void resume(){
 
 //Plays song with given ID/URL
 void play_song_with_ID(char* url){
+
+    url = ("file://sdcard/%s.mp3", url);
+
     //Stops music, terminates current pipeline
     audio_pipeline_stop(pipeline);
     audio_pipeline_wait_for_stop(pipeline);
@@ -292,7 +295,7 @@ void app_main(void)
     }
 
     //Test to play songs with ID
-    char* avond = "file://sdcard/Avond.mp3";
+    char* avond = "Avond";
     play_song_with_ID(avond);
     
     //Test to pause/resume
