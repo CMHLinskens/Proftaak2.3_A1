@@ -32,7 +32,6 @@ void obtain_time(void)
     // update time
     time(&now);
     localtime_r(&now, &timeinfo);
-    
 }
 
 void initialize_sntp(void)
@@ -70,19 +69,15 @@ void clock_task(void*pvParameter){
         setenv("TZ", "CET-1", 1);
         tzset();
         localtime_r(&now, &timeinfo);
+
         // convert time to string
         //strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
         strftime(strftime_buf, sizeof(strftime_buf), "%H:%M", &timeinfo); // time
         // strftime(strftime_buf2, sizeof(strftime_buf), "%x", &timeinfo); // date
 
-        //if(menu != NULL){
-        // if (xSemaphoreTake(clockMutex, (TickType_t) 10) == pdTRUE){  
         timeString = strftime_buf;
         menu_displayTime(timeString);
-        //     xSemaphoreGive(clockMutex);
-        //     ESP_LOGI(CLOCKTAG, "The current time is: %s", strftime_buf);
-        //     printf("Test clock task\n");
-        // }
+
         vTaskDelay(60000 / portTICK_PERIOD_MS);
     }
 }

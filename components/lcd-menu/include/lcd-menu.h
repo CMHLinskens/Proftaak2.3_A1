@@ -3,6 +3,19 @@
 
 #include "i2c-lcd1602.h"
 
+//init
+#undef USE_STDIN
+
+#define I2C_MASTER_NUM           I2C_NUM_0
+#define I2C_MASTER_TX_BUF_LEN    0                     // disabled
+#define I2C_MASTER_RX_BUF_LEN    0                     // disabled
+#define I2C_MASTER_FREQ_HZ       100000
+#define I2C_MASTER_SDA_IO        CONFIG_I2C_MASTER_SDA
+#define I2C_MASTER_SCL_IO        CONFIG_I2C_MASTER_SCL
+#define LCD_NUM_ROWS			 4
+#define LCD_NUM_COLUMNS			 40
+#define LCD_NUM_VIS_COLUMNS		 20
+
 // Menu size settings
 #define MAX_MENU_ITEMS 9
 #define MAX_MENU_KEYS 3
@@ -53,7 +66,9 @@ typedef struct {
     unsigned int currentMenuItemId;
 } menu_t;
 
-menu_t *menu_createMenu(i2c_lcd1602_info_t *lcd_info);
+void i2c_master_init(void);
+i2c_lcd1602_info_t * lcd_init();
+menu_t *menu_createMenu();
 void menu_freeMenu(menu_t *menu);
 void menu_displayTime(char *time);
 void menu_displayDateTime(menu_t *menu, char* time, char* date);
