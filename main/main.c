@@ -46,10 +46,8 @@
 
 #define MAINTAG "main"
 
-static const char *CLOCK = "clock";
-
 menu_t *menu = NULL;
-SemaphoreHandle_t clockMutex;
+// SemaphoreHandle_t clockMutex;
 
 /* Constants that aren't configurable in menuconfig */
 #define WEB_SERVER "api.openweathermap.org"
@@ -62,50 +60,6 @@ static const char *REQUEST = "GET " WEB_PATH " HTTP/1.0\r\n"
     "Host: "WEB_SERVER":"WEB_PORT"\r\n"
     "User-Agent: esp-idf/1.0 esp32\r\n"
     "\r\n";
-
-void clock_task(void*pvParameter){
-    initialize_sntp();
-    while(1)
-    {
-    time_t now;
-    struct tm timeinfo;
-    time(&now);
-    localtime_r(&now, &timeinfo);
-    // Is time set? If not, tm_year will be (1970 - 1900).
-    if (timeinfo.tm_year < (2016 - 1900)) {
-        ESP_LOGI(CLOCK, "Time is not set yet. Connecting to WiFi and getting time over NTP.");
-        obtain_time();
-        // update 'now' variable with current time
-        time(&now);
-    }
-    // update 'now' variable with current time
-    time(&now);
-
-    char strftime_buf[64];
-    char strftime_buf2[64];
-    
-    // set timezone
-    setenv("TZ", "CET-1", 1);
-    tzset();
-    localtime_r(&now, &timeinfo);
-    // convert time to string
-    //strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-    strftime(strftime_buf, sizeof(strftime_buf), "%X", &timeinfo); // time
-    strftime(strftime_buf2, sizeof(strftime_buf), "%x", &timeinfo); // date
-    
-    //if(menu != NULL){
-    if (xSemaphoreTake(clockMutex, (TickType_t) 10) == pdTRUE && menu != NULL){  
-        menu_displayTime(menu, strftime_buf,strftime_buf2);
-        xSemaphoreGive(clockMutex);
-        ESP_LOGI(TAG, "The current date/time is: %s  %s", strftime_buf,strftime_buf2);
-        printf("Test clock task\n");
-    }
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
-    }
-
-
-    
-}
 
 static void http_get_task(void *pvParameters)
 {
@@ -244,60 +198,39 @@ void menu_task(void * pvParameter)
     menu = menu_createMenu(lcd_init());
 
     menu_displayWelcomeMessage(menu);
+    menu_displayScrollMenu(menu);
 
-   
-    // menu_displayScrollMenu(menu);
-    // vTaskDelay(2500 / portTICK_RATE_MS);
-    
-    // // Menu auto navigation demo code 
-    // menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
-    // vTaskDelay(2500 / portTICK_RATE_MS);
-    // menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
-    // vTaskDelay(2500 / portTICK_RATE_MS);
-    // menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
-    // vTaskDelay(2500 / portTICK_RATE_MS);
-    // menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
-    // vTaskDelay(2500 / portTICK_RATE_MS);
+    menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
+    vTaskDelay(2000 / portTICK_PERIOD_MS);
+    menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
+    vTaskDelay(2000 / portTICK_PERIOD_MS);
+    menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
+    vTaskDelay(2000 / portTICK_PERIOD_MS);
+    menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
+    vTaskDelay(2000 / portTICK_PERIOD_MS);
 
-    // menu_handleKeyEvent(menu, MENU_KEY_OK);
-    // vTaskDelay(2500 / portTICK_RATE_MS);
-    // menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
-    // vTaskDelay(2500 / portTICK_RATE_MS);
+    menu_handleKeyEvent(menu, MENU_KEY_OK);
+    vTaskDelay(2000 / portTICK_PERIOD_MS);
+    menu_handleKeyEvent(menu, MENU_KEY_OK);
+    vTaskDelay(2000 / portTICK_PERIOD_MS);
+    menu_handleKeyEvent(menu, MENU_KEY_OK);
+    vTaskDelay(2000 / portTICK_PERIOD_MS);
 
-    // menu_handleKeyEvent(menu, MENU_KEY_OK);
-    // vTaskDelay(2500 / portTICK_RATE_MS);
-    // menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
-    // vTaskDelay(2500 / portTICK_RATE_MS);
-    // menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
-    // vTaskDelay(2500 / portTICK_RATE_MS);
-    // menu_handleKeyEvent(menu, MENU_KEY_LEFT);
-    // vTaskDelay(2500 / portTICK_RATE_MS);
-    // menu_handleKeyEvent(menu, MENU_KEY_OK);
-    // vTaskDelay(2500 / portTICK_RATE_MS);
+    menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
+    vTaskDelay(2000 / portTICK_PERIOD_MS);
+    menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
+    vTaskDelay(2000 / portTICK_PERIOD_MS);
 
-    // menu_handleKeyEvent(menu, MENU_KEY_OK);
-    // vTaskDelay(2500 / portTICK_RATE_MS);
-    // menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
-    // vTaskDelay(2500 / portTICK_RATE_MS);
-    // menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
-    // vTaskDelay(2500 / portTICK_RATE_MS);
-    // menu_handleKeyEvent(menu, MENU_KEY_OK);
-    // vTaskDelay(2500 / portTICK_RATE_MS);
-
-    // menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
-    // vTaskDelay(2500 / portTICK_RATE_MS);
-    // menu_handleKeyEvent(menu, MENU_KEY_OK);
-    // vTaskDelay(2500 / portTICK_RATE_MS);
-
-    // End of menu auto navigation demo code 
+    menu_handleKeyEvent(menu, MENU_KEY_OK);
+    vTaskDelay(2000 / portTICK_PERIOD_MS);
 
     while(1)
     {
-        while (uxSemaphoreGetCount(clockMutex) == 0)
-        {
-            vTaskDelay(1 / portTICK_PERIOD_MS);
-        }
-        printf("Test menu task\n");
+        // while (uxSemaphoreGetCount(clockMutex) == 0)
+        // {
+        //     vTaskDelay(1 / portTICK_PERIOD_MS);
+        // }
+        // printf("Test menu task\n");
         vTaskDelay(1000 / portTICK_RATE_MS);
         
     }
@@ -319,9 +252,9 @@ void app_main()
      * examples/protocols/README.md for more information about this function.
      */
     ESP_ERROR_CHECK(example_connect());
-    clockMutex = xSemaphoreCreateMutex();
+    // clockMutex = xSemaphoreCreateMutex();
     xTaskCreate(&menu_task, "menu_task", 4096, NULL, 5, NULL);
     xTaskCreate(&clock_task, "clock_task", 4096, NULL, 5, NULL);
-    xTaskCreate(&http_get_task, "http_get_task", 4096, NULL, 5, NULL);
+    // xTaskCreate(&http_get_task, "http_get_task", 4096, NULL, 5, NULL);
 }
 

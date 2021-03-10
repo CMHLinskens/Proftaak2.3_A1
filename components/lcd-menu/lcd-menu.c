@@ -5,6 +5,8 @@
 #include "esp_log.h"
 #include <stdio.h>
 
+#include "clock-sync.h"
+
 #define MENUTAG "menu"
 
 // Menu event functions
@@ -29,14 +31,14 @@ menu_t *menu_createMenu(i2c_lcd1602_info_t *lcd_info)
 
     // Temporary array of menu items to copy from
     menu_item_t menuItems[MAX_MENU_ITEMS] = {
-        {MENU_MAIN_ID_0, {MENU_RADIO_ID_0, MENU_MAIN_ID_3, MENU_MAIN_ID_1}, {"MAIN MENU", "Radio"}, {NULL, NULL, NULL}, NULL, NULL},
-        {MENU_MAIN_ID_1, {MENU_MAIN_ID_1, MENU_MAIN_ID_0, MENU_MAIN_ID_2}, {"MAIN MENU", "Lights"}, {NULL, NULL, NULL}, NULL, NULL},
-        {MENU_MAIN_ID_2, {MENU_MAIN_ID_2, MENU_MAIN_ID_1, MENU_MAIN_ID_3}, {"MAIN MENU", "Agenda"}, {NULL, NULL, NULL}, NULL, NULL},
-        {MENU_MAIN_ID_3, {MENU_MAIN_ID_3, MENU_MAIN_ID_2, MENU_MAIN_ID_0}, {"MAIN MENU", "Settings"}, {NULL, NULL, NULL}, NULL, NULL},
+        {MENU_MAIN_ID_0, {MENU_RADIO_ID_0, MENU_MAIN_ID_3, MENU_MAIN_ID_1}, {"MAIN MENU", "Radio"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_MAIN_ID_1, {MENU_MAIN_ID_1, MENU_MAIN_ID_0, MENU_MAIN_ID_2}, {"MAIN MENU", "Lights"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_MAIN_ID_2, {MENU_MAIN_ID_2, MENU_MAIN_ID_1, MENU_MAIN_ID_3}, {"MAIN MENU", "Agenda"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_MAIN_ID_3, {MENU_MAIN_ID_3, MENU_MAIN_ID_2, MENU_MAIN_ID_0}, {"MAIN MENU", "Settings"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
         
-        {MENU_RADIO_ID_0, {MENU_RADIO_ID_4, MENU_RADIO_ID_2, MENU_RADIO_ID_1}, {"RADIO", "Channel"}, {NULL, NULL, NULL}, NULL, NULL},
-        {MENU_RADIO_ID_1, {MENU_RADIO_ID_3, MENU_RADIO_ID_0, MENU_RADIO_ID_2}, {"RADIO", "Volume"}, {NULL, NULL, NULL}, NULL, NULL},
-        {MENU_RADIO_ID_2, {MENU_MAIN_ID_0, MENU_RADIO_ID_1, MENU_RADIO_ID_0}, {"RADIO", "Back"}, {NULL, NULL, NULL}, NULL, NULL},
+        {MENU_RADIO_ID_0, {MENU_RADIO_ID_4, MENU_RADIO_ID_2, MENU_RADIO_ID_1}, {"RADIO", "Channel"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_RADIO_ID_1, {MENU_RADIO_ID_3, MENU_RADIO_ID_0, MENU_RADIO_ID_2}, {"RADIO", "Volume"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_RADIO_ID_2, {MENU_MAIN_ID_0, MENU_RADIO_ID_1, MENU_RADIO_ID_0}, {"RADIO", "Back"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
         
         {MENU_RADIO_ID_3, {MENU_RADIO_ID_1, MENU_RADIO_ID_3, MENU_RADIO_ID_3}, {"VOLUME", " ", "", ""}, {NULL, decreaseVolume, increaseVolume}, enterRadioVolume, NULL},
         {MENU_RADIO_ID_4, {MENU_RADIO_ID_0, MENU_RADIO_ID_4, MENU_RADIO_ID_4}, {"CHANNEL", " ", "", ""}, {NULL, decreaseChannel, increaseChannel}, enterRadioChannel, NULL}
@@ -84,7 +86,13 @@ void menu_displayWelcomeMessage(menu_t *menu)
     i2c_lcd1602_clear(menu->lcd_info);
 }
 
-void menu_displayTime(menu_t *menu, char* time, char* date)
+void menu_displayTime(char *time)
+{
+    i2c_lcd1602_move_cursor(_lcd_info, 15, 0);
+    i2c_lcd1602_write_string(_lcd_info, time);
+}
+
+void menu_displayDateTime(menu_t *menu, char* time, char* date)
 {
     i2c_lcd1602_clear(menu->lcd_info);
     i2c_lcd1602_write_string(menu->lcd_info, time);
@@ -165,7 +173,12 @@ void menu_handleKeyEvent(menu_t *menu, int key)
 }
 
 // Defining menu event functions
+void enterMenuItem(void) {
+    menu_displayTime(clock_getTimeString());
+}
 void enterRadioVolume(void){
+    enterMenuItem();
+
     char volumeStr[3];
     sprintf(volumeStr, "%d", volume);
 
@@ -192,6 +205,8 @@ void decreaseVolume(void){
 }
 
 void enterRadioChannel(void){
+    enterMenuItem();
+
     char channelStr[3];
     sprintf(channelStr, "%d", channel);
 
