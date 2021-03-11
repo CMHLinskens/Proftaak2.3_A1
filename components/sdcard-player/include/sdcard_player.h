@@ -11,5 +11,6 @@ void play_song_with_ID(char* url);
 void get_all_songs_from_SDcard(char** song_list);
 void sdcard_start(void * pvParameter);
 void start_sdcard_task();
+char **getSongList();
 
 #endif

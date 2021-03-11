@@ -34,6 +34,7 @@
 #include "sdcard_list.h"
 #include "sdcard_scan.h"
 
+
 typedef struct sdcard_list {
     char *save_file_name;                /*!< Name of file to save URLs */
     char *offset_file_name;              /*!< Name of file to save offset */
@@ -47,6 +48,7 @@ typedef struct sdcard_list {
 } sdcard_list_t;
 
 
+char** songList;
 static const char *TAG = "SDCard";
 static audio_board_handle_t board_handle;
 
@@ -89,7 +91,7 @@ static esp_err_t input_key_service_cb(periph_service_handle_t handle, periph_ser
                 }
                 break;
 
-            case INPUT_KEY_USER_ID_SET:
+            case INPUT_KEY_USER_ID_VOLDOWN:
                 ESP_LOGI(TAG, "Stopped, advancing to the next song");
                 char *url = NULL;
 
@@ -115,10 +117,10 @@ static esp_err_t input_key_service_cb(periph_service_handle_t handle, periph_ser
                 }
 
                 audio_hal_set_volume(board_handle->audio_hal, player_volume);
-                ESP_LOGI(TAG, "Volume set to %d", player_volume);
+                ESP_LOGI(TAG, "Volume set to %d %%", player_volume);
                 break;
 
-            case INPUT_KEY_USER_ID_VOLDOWN:
+            case INPUT_KEY_USER_ID_SET:
                 //Sets volume down
                 ESP_LOGI(TAG, "Volume went down");
                 player_volume -= 10;
@@ -211,6 +213,10 @@ void get_all_songs_from_SDcard(char** song_list){
     }
 }
 
+char **getSongList(){
+    return songList;
+}
+
 void sdcard_start(void * pvParameter)
 {
     //Configuration
@@ -293,13 +299,13 @@ void sdcard_start(void * pvParameter)
     //TEST CODE
 
     //Test to show all the songs on the SD card
-    char** test = calloc(24, 80);
-    get_all_songs_from_SDcard(test);
+    songList = calloc(24, 80);
+    get_all_songs_from_SDcard(songList);
 
     //Prints all the songs on the SD card
-    for(int i = 0; i < 24; i++){
-        ESP_LOGI(TAG, "This is the song %d with url %s", i, test[i]);
-    }
+    // for(int i = 0; i < 24; i++){
+    //     ESP_LOGI(TAG, "This is the song %d with url %s", i, songList[i]);
+    // }
 
     //Test to play songs with ID
     // char* avond = "Avond";

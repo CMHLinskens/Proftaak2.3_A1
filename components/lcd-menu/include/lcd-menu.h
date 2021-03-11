@@ -17,7 +17,7 @@
 #define LCD_NUM_VIS_COLUMNS		 20
 
 // Menu size settings
-#define MAX_MENU_ITEMS 9
+#define MAX_MENU_ITEMS 13
 #define MAX_MENU_KEYS 3
 #define MAX_LCD_LINES 4
 
@@ -31,13 +31,17 @@
 #define MENU_MAIN_ID_1 1
 #define MENU_MAIN_ID_2 2
 #define MENU_MAIN_ID_3 3
+#define MENU_MAIN_ID_4 4
 
-#define MENU_RADIO_ID_0 4
-#define MENU_RADIO_ID_1 5
-#define MENU_RADIO_ID_2 6
-#define MENU_RADIO_ID_3 7
-#define MENU_RADIO_ID_4 8
-#define MENU_RADIO_ID_5 9
+#define MENU_RADIO_ID_0 5
+#define MENU_RADIO_ID_1 6
+#define MENU_RADIO_ID_2 7
+#define MENU_RADIO_ID_3 8
+#define MENU_RADIO_ID_4 9
+
+#define MENU_SD_ID_0 10
+#define MENU_SD_ID_1 11
+#define MENU_SD_ID_2 12
 
 #define MENU_AGENDA_ID_0 12
 #define MENU_AGENDA_ID_1 13
