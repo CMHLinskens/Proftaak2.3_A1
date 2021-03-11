@@ -156,20 +156,24 @@ void resume(){
 //Plays song with given ID/URL
 void play_song_with_ID(char* url){
 
-    //url = ("file://sdcard/%s.mp3", url);
-
+    //Extends the URL so the SD card can find it
+    char extendedUrl[100];
+    strcpy(extendedUrl, "file://sdcard/");
+    strcat(extendedUrl, url);
+    strcat(extendedUrl, ".mp3");
+    
     //Stops music, terminates current pipeline
     audio_pipeline_stop(pipeline);
     audio_pipeline_wait_for_stop(pipeline);
     audio_pipeline_terminate(pipeline);
 
     //Resets pipeline and starts the new audio file
-    audio_element_set_uri(fatfs_stream_reader, url);
+    audio_element_set_uri(fatfs_stream_reader, extendedUrl);
     audio_pipeline_reset_ringbuffer(pipeline);
     audio_pipeline_reset_elements(pipeline);
     audio_pipeline_run(pipeline);
 
-    ESP_LOGI(TAG, "Song %s is playing", url);
+    ESP_LOGI(TAG, "Song %s is playing", extendedUrl);
     
 }
 
@@ -196,12 +200,11 @@ void get_all_songs_from_SDcard(char** song_list){
         //Copy's the url so the array doesnt point to a pointer.
         char *temp_url = calloc(1, 80);
         //Gets the 14'th char, because we dont want the file name to go with it
-        // strcpy(temp_url, url + 14);
-        strcpy(temp_url, url);
+        strcpy(temp_url, url + 14);
 
         //Removes the suffix .mp3
-        //int length = strlen(temp_url);
-        //temp_url[length-4] = '\0';
+        int length = strlen(temp_url);
+        temp_url[length-4] = '\0';
 
         //Adds url to array
         song_list[i] = temp_url;
@@ -298,8 +301,7 @@ void sdcard_start(void * pvParameter)
     }
 
     //Test to play songs with ID
-    // char* avond = "Avond";
-    char* avond = "file://sdcard/Avond.mp3";
+    char* avond = "Avond";
     play_song_with_ID(avond);
     
     //Test to pause/resume
