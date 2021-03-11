@@ -93,8 +93,8 @@ void menu_task(void * pvParameter)
     menu_displayWelcomeMessage(menu);
     menu_displayScrollMenu(menu);
 
-    //xTaskCreate(&rotary_task, "rotary_task", 4096, NULL, 5, NULL);
-    //xTaskCreate(&sdcard_start, "sdcard player", 4096, NULL, 5, NULL);
+    // xTaskCreate(&rotary_task, "rotary_task", 4096, NULL, 5, NULL);
+    // qwiic_twist_start_task(qwiic_twist_rotary);
     start_sdcard_task();
 
     while(1)
@@ -143,34 +143,34 @@ void onMove(int16_t move_value){
     
 }
 
-void rotary_task(void * pvParameter)
-{
-    //COLOR TEST WITH THE ROTARY ENCODER
-    //smbus_info_t * smbus_info_rotary = smbus_malloc();
-    // ESP_ERROR_CHECK(smbus_init(smbus_info_rotary, i2c_num, 0x3F));
-    // ESP_ERROR_CHECK(smbus_set_timeout(smbus_info_rotary, 1000 / portTICK_RATE_MS));
-    // smbus_write_byte(smbus_info_rotary, 0x0D, 255);
-    // smbus_write_byte(smbus_info_rotary, 0x0E, 255);
-    // smbus_write_byte(smbus_info_rotary, 0x0F, 255);
+// void rotary_task(void * pvParameter)
+// {
+//     //COLOR TEST WITH THE ROTARY ENCODER
+//     //smbus_info_t * smbus_info_rotary = smbus_malloc();
+//     // ESP_ERROR_CHECK(smbus_init(smbus_info_rotary, i2c_num, 0x3F));
+//     // ESP_ERROR_CHECK(smbus_set_timeout(smbus_info_rotary, 1000 / portTICK_RATE_MS));
+//     // smbus_write_byte(smbus_info_rotary, 0x0D, 255);
+//     // smbus_write_byte(smbus_info_rotary, 0x0E, 255);
+//     // smbus_write_byte(smbus_info_rotary, 0x0F, 255);
 
-    qwiic_twist_start_task(qwiic_twist_rotary);
-    while(1){
-        vTaskDelay(100 / portTICK_RATE_MS);
-    }
+    
+//     while(1){
+//         vTaskDelay(100 / portTICK_RATE_MS);
+//     }
 
-    vTaskDelete(NULL);
-}
+//     vTaskDelete(NULL);
+// }
 
 
 
 void app_main()
 {
     //I^2C initialization + the I^2C port
-    // i2c_master_init();
-    // i2c_num = I2C_MASTER_NUM;
+    i2c_master_init();
+    i2c_num = I2C_MASTER_NUM;
 
     //initialize the components
-    // component_init();
+    component_init();
 
     xTaskCreate(&menu_task, "menu_task", 4096, NULL, 5, NULL);
 }
