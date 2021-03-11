@@ -298,17 +298,16 @@ void sdcard_start(void * pvParameter)
 
     //Prints all the songs on the SD card
     for(int i = 0; i < 24; i++){
-        ESP_LOGE(TAG, "This is the song %d with url %s", i, test[i]);
-        ESP_LOGE(TAG, "Adress of test[i]: %p", &test[i]);
+        ESP_LOGI(TAG, "This is the song %d with url %s", i, test[i]);
     }
 
     //Test to play songs with ID
-    char* avond = "Avond";
-    play_song_with_ID(avond);
+    // char* avond = "Avond";
+    // play_song_with_ID(avond);
     
     //Test to pause/resume
-    pauseSound();
-    resumeSound();
+    // pauseSound();
+    // resumeSound();
     
 
     while (1) {
@@ -326,34 +325,34 @@ void sdcard_start(void * pvParameter)
 
                 audio_element_info_t music_info = {0};
                 audio_element_getinfo(mp3_decoder, &music_info);
-                ESP_LOGI(TAG, "Received music info from mp3 decoder, sample_rates=%d, bits=%d, ch=%d",
-                         music_info.sample_rates, music_info.bits, music_info.channels);
+                // ESP_LOGI(TAG, "Received music info from mp3 decoder, sample_rates=%d, bits=%d, ch=%d",
+                        //  music_info.sample_rates, music_info.bits, music_info.channels);
                 audio_element_setinfo(i2s_stream_writer, &music_info);
                 rsp_filter_set_src_info(rsp_handle, music_info.sample_rates, music_info.channels);
                 continue;
 
             }
             // Advance to the next song when previous finishes
-            if (msg.source == (void *) i2s_stream_writer && msg.cmd == AEL_MSG_CMD_REPORT_STATUS) {
+            // if (msg.source == (void *) i2s_stream_writer && msg.cmd == AEL_MSG_CMD_REPORT_STATUS) {
 
-                audio_element_state_t el_state = audio_element_get_state(i2s_stream_writer);
+            //     audio_element_state_t el_state = audio_element_get_state(i2s_stream_writer);
 
-                if (el_state == AEL_STATE_FINISHED) {
-                    ESP_LOGI(TAG, "Finished, advancing to the next song");
-                    sdcard_list_next(sdcard_list_handle, 1, &url);
-                    ESP_LOGW(TAG, "URL: %s", url);
-                    /* In previous versions, audio_pipeline_terminal() was called here. It will close all the elememnt task and when use
-                     * the pipeline next time, all the tasks should be restart again. It speed too much time when we switch to another music.
-                     * So we use another method to acheive this as below.
-                     */
-                    audio_element_set_uri(fatfs_stream_reader, url);
-                    audio_pipeline_reset_ringbuffer(pipeline);
-                    audio_pipeline_reset_elements(pipeline);
-                    audio_pipeline_change_state(pipeline, AEL_STATE_INIT);
-                    audio_pipeline_run(pipeline);
-                }
-                continue;
-            }
+            //     if (el_state == AEL_STATE_FINISHED) {
+            //         ESP_LOGI(TAG, "Finished, advancing to the next song");
+            //         sdcard_list_next(sdcard_list_handle, 1, &url);
+            //         ESP_LOGW(TAG, "URL: %s", url);
+            //         /* In previous versions, audio_pipeline_terminal() was called here. It will close all the elememnt task and when use
+            //          * the pipeline next time, all the tasks should be restart again. It speed too much time when we switch to another music.
+            //          * So we use another method to acheive this as below.
+            //          */
+            //         audio_element_set_uri(fatfs_stream_reader, url);
+            //         audio_pipeline_reset_ringbuffer(pipeline);
+            //         audio_pipeline_reset_elements(pipeline);
+            //         audio_pipeline_change_state(pipeline, AEL_STATE_INIT);
+            //         audio_pipeline_run(pipeline);
+            //     }
+            //     continue;
+            // }
         }
     }
 

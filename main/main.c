@@ -177,7 +177,7 @@ void menu_task(void * pvParameter)
 
     // xTaskCreate(&rotary_task, "rotary_task", 4096, NULL, 5, NULL);
     qwiic_twist_start_task(qwiic_twist_rotary);
-    start_sdcard_task();
+    
 
     while(1)
     {
@@ -242,6 +242,9 @@ void app_main()
      */
     ESP_ERROR_CHECK(example_connect());
     
+    start_sdcard_task();
+    vTaskDelay(1000);
+
     //I^2C initialization + the I^2C port
     i2c_master_init();
     i2c_num = I2C_MASTER_NUM;
