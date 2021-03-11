@@ -5,8 +5,8 @@
 #include "sdcard_scan.h"
 
 void sdcard_url_save_cb(void *user_data, char *url);
-void pause();
-void resume();
+void pauseSound();
+void resumeSound();
 void play_song_with_ID(char* url);
 void get_all_songs_from_SDcard(char** song_list);
 void sdcard_start(void * pvParameter);

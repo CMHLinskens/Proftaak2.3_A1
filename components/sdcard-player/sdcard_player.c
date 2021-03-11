@@ -143,12 +143,12 @@ void sdcard_url_save_cb(void *user_data, char *url)
     }
 }
 
-void pause(){
+void pauseSound(){
     audio_pipeline_pause(pipeline);
     ESP_LOGI(TAG, "Paused");
 }
 
-void resume(){
+void resumeSound(){
     audio_pipeline_resume(pipeline);
     ESP_LOGI(TAG, "Resumed");
 }
@@ -307,8 +307,8 @@ void sdcard_start(void * pvParameter)
     play_song_with_ID(avond);
     
     //Test to pause/resume
-    pause();
-    resume();
+    pauseSound();
+    resumeSound();
     
 
     while (1) {
