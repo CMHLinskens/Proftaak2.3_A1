@@ -6,6 +6,7 @@
 #include <stdio.h>
 
 #include "clock-sync.h"
+#include "sdcard_player.h"
 
 #define MENUTAG "menu"
 
@@ -18,12 +19,19 @@ void increaseVolume(void);
 void decreaseVolume(void);
 void increaseChannel(void);
 void decreaseChannel(void);
+void enterSDPlay(void);
+void nextSong(void);
+void previousSong(void);
+void okPressSDPlay(void);
 
 // Placeholder variables
 static int volume = 0;
 static int channel = 0;
+char** songList;
+int songIndex = 0;
 
 static i2c_lcd1602_info_t *_lcd_info;
+static menu_t *_menu;
 
 i2c_lcd1602_info_t * lcd_init()
 {
@@ -60,21 +68,27 @@ menu_t *menu_createMenu()
 
     // Temporary array of menu items to copy from
     menu_item_t menuItems[MAX_MENU_ITEMS] = {
-        {MENU_MAIN_ID_0, {MENU_RADIO_ID_0, MENU_MAIN_ID_3, MENU_MAIN_ID_1}, {"MAIN MENU", "Radio"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
-        {MENU_MAIN_ID_1, {MENU_MAIN_ID_1, MENU_MAIN_ID_0, MENU_MAIN_ID_2}, {"MAIN MENU", "Lights"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
-        {MENU_MAIN_ID_2, {MENU_MAIN_ID_2, MENU_MAIN_ID_1, MENU_MAIN_ID_3}, {"MAIN MENU", "Agenda"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
-        {MENU_MAIN_ID_3, {MENU_MAIN_ID_3, MENU_MAIN_ID_2, MENU_MAIN_ID_0}, {"MAIN MENU", "Settings"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_MAIN_ID_0, {MENU_RADIO_ID_0, MENU_MAIN_ID_4, MENU_MAIN_ID_1}, {"MAIN MENU", "Radio"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_MAIN_ID_1, {MENU_SD_ID_0, MENU_MAIN_ID_0, MENU_MAIN_ID_2}, {"MAIN MENU", "SD"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_MAIN_ID_2, {MENU_MAIN_ID_2, MENU_MAIN_ID_1, MENU_MAIN_ID_3}, {"MAIN MENU", "Lights"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_MAIN_ID_3, {MENU_MAIN_ID_3, MENU_MAIN_ID_2, MENU_MAIN_ID_4}, {"MAIN MENU", "Agenda"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_MAIN_ID_4, {MENU_MAIN_ID_4, MENU_MAIN_ID_3, MENU_MAIN_ID_0}, {"MAIN MENU", "Settings"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
         
         {MENU_RADIO_ID_0, {MENU_RADIO_ID_4, MENU_RADIO_ID_2, MENU_RADIO_ID_1}, {"RADIO", "Channel"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
         {MENU_RADIO_ID_1, {MENU_RADIO_ID_3, MENU_RADIO_ID_0, MENU_RADIO_ID_2}, {"RADIO", "Volume"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
         {MENU_RADIO_ID_2, {MENU_MAIN_ID_0, MENU_RADIO_ID_1, MENU_RADIO_ID_0}, {"RADIO", "Back"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
         
         {MENU_RADIO_ID_3, {MENU_RADIO_ID_1, MENU_RADIO_ID_3, MENU_RADIO_ID_3}, {"VOLUME", " ", "", ""}, {NULL, decreaseVolume, increaseVolume}, enterRadioVolume, NULL},
-        {MENU_RADIO_ID_4, {MENU_RADIO_ID_0, MENU_RADIO_ID_4, MENU_RADIO_ID_4}, {"CHANNEL", " ", "", ""}, {NULL, decreaseChannel, increaseChannel}, enterRadioChannel, NULL}
+        {MENU_RADIO_ID_4, {MENU_RADIO_ID_0, MENU_RADIO_ID_4, MENU_RADIO_ID_4}, {"CHANNEL", " ", "", ""}, {NULL, decreaseChannel, increaseChannel}, enterRadioChannel, NULL},
+
+        {MENU_SD_ID_0, {MENU_SD_ID_2, MENU_SD_ID_1, MENU_SD_ID_1}, {"SD", "Play"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_SD_ID_1, {MENU_MAIN_ID_1, MENU_SD_ID_0, MENU_SD_ID_0}, {"SD", "Back"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+
+        {MENU_SD_ID_2, {MENU_SD_ID_2, MENU_SD_ID_2, MENU_SD_ID_2}, {"SD", " ", "", ""}, {okPressSDPlay, previousSong, nextSong}, enterSDPlay, NULL}
     };
     
     _lcd_info = lcd_init();
-
+    
     if(menuPointer != NULL)
     {
         // Initialize menu with values
@@ -83,12 +97,23 @@ menu_t *menu_createMenu()
         memcpy(menuPointer->menuItems, menuItems, MAX_MENU_ITEMS * sizeof(menu_item_t));
         menuPointer->currentMenuItemId = MENU_MAIN_ID_0;
 
+        _menu = menuPointer;
+
         ESP_LOGD(MENUTAG, "malloc menu_t %p", menuPointer);
     }
     else 
     {
         ESP_LOGD(MENUTAG, "malloc menu_t failed");
     }
+
+    // Retrieve all songs from sdcard-player
+    char **tempSongList = getSongList();
+    songList = calloc(25, 80);
+    songList[0] = "Back";
+    for(int i = 1; i < 25; i++){
+        songList[i] = tempSongList[i - 1];
+    }
+
     return menuPointer;
 }
 
@@ -185,7 +210,6 @@ void menu_handleKeyEvent(menu_t *menu, int key)
         }
 
         menu->currentMenuItemId = menu->menuItems[menu->currentMenuItemId].otherIds[key];
-        ESP_LOGI(MENUTAG, "new id: %u", menu->currentMenuItemId);
 
         // Display menu on LCD
         if(strcmp(menu->menuItems[menu->currentMenuItemId].menuText[1], " ") == 0) {
@@ -199,6 +223,38 @@ void menu_handleKeyEvent(menu_t *menu, int key)
             (*menu->menuItems[menu->currentMenuItemId].fpOnMenuEntryEvent)();
         }
     }
+}
+
+void displaySongs(){
+    i2c_lcd1602_clear(_lcd_info);
+
+    char *menuText = "SD";
+    menu_writeScrollMenuItem(_lcd_info, menuText, 0);
+
+    if(songIndex + 1 > 25){
+        songIndex = 0;
+    } else if (songIndex - 1 < -1) {
+        songIndex = 24;
+    }
+
+    // Get the song index before current selected song
+    // if below 0 loop back to top
+    int previousSongIndex = songIndex - 1 < 0? 24 : songIndex - 1;
+    menuText = songList[previousSongIndex];
+    menu_writeScrollMenuItem(_lcd_info, menuText, 1);
+
+    menuText = songList[songIndex];
+    menu_writeScrollMenuItem(_lcd_info, menuText, 2);
+
+    int nextSongIndex = songIndex + 1 > 24? 0 : songIndex + 1;
+    menuText = songList[nextSongIndex];
+    menu_writeScrollMenuItem(_lcd_info, menuText, 3);  
+    
+    const char *cursor = "<";
+    i2c_lcd1602_move_cursor(_lcd_info, 17, 2);
+    i2c_lcd1602_write_string(_lcd_info, cursor);
+
+    menu_displayTime(clock_getTimeString());
 }
 
 // Defining menu event functions
@@ -263,4 +319,32 @@ void decreaseChannel(void){
 
     i2c_lcd1602_move_cursor(_lcd_info, 9, 1);
     i2c_lcd1602_write_string(_lcd_info, channelStr);
+}
+
+void enterSDPlay(void){
+    enterMenuItem();
+
+    displaySongs();
+}
+void nextSong(void){
+    songIndex++;
+    displaySongs();
+}
+void previousSong(void){
+    songIndex--;
+    displaySongs();
+}
+void okPressSDPlay(){
+    if(strcmp(songList[songIndex], "Back") == 0){
+        _menu->currentMenuItemId = MENU_SD_ID_0;
+
+        menu_displayScrollMenu(_menu);
+
+        if(_menu->menuItems[_menu->currentMenuItemId].fpOnMenuEntryEvent != NULL) {
+            (*_menu->menuItems[_menu->currentMenuItemId].fpOnMenuEntryEvent)();
+        }
+
+    } else {
+        play_song_with_ID(songList[songIndex]);
+    }
 }

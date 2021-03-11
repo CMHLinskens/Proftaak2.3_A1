@@ -16,7 +16,6 @@
 #include "esp_attr.h"
 #include "esp_sleep.h"
 #include "nvs_flash.h"
-#include "protocol_examples_common.h"
 #include "esp_sntp.h"
 #include "esp_task_wdt.h"
 #include "smbus.h"
@@ -31,6 +30,9 @@
 #include "lwip/sys.h"
 #include "lwip/netdb.h"
 #include "lwip/dns.h"
+
+#include "wifi_connect.h"
+#include "sdcard_player.h"
 
 #define MAINTAG "main"
 #define CLOCKTAG "clock"
@@ -175,6 +177,7 @@ void menu_task(void * pvParameter)
 
     // xTaskCreate(&rotary_task, "rotary_task", 4096, NULL, 5, NULL);
     qwiic_twist_start_task(qwiic_twist_rotary);
+    
 
     while(1)
     {
@@ -239,6 +242,9 @@ void app_main()
      */
     ESP_ERROR_CHECK(example_connect());
     
+    start_sdcard_task();
+    vTaskDelay(1000);
+
     //I^2C initialization + the I^2C port
     i2c_master_init();
     i2c_num = I2C_MASTER_NUM;
