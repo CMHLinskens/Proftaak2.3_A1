@@ -166,11 +166,11 @@ void rotary_task(void * pvParameter)
 void app_main()
 {
     //I^2C initialization + the I^2C port
-    i2c_master_init();
-    i2c_num = I2C_MASTER_NUM;
+    // i2c_master_init();
+    // i2c_num = I2C_MASTER_NUM;
 
     //initialize the components
-    component_init();
+    // component_init();
 
     xTaskCreate(&menu_task, "menu_task", 4096, NULL, 5, NULL);
 }

@@ -12,6 +12,7 @@
 #include "freertos/task.h"
 
 #include "esp_log.h"
+#include "nvs_flash.h"
 
 #include "audio_element.h"
 #include "audio_pipeline.h"
@@ -223,6 +224,7 @@ void sdcard_start(void * pvParameter)
 
     ESP_LOGI(TAG, "[1.2] Set up a sdcard playlist and scan sdcard music save to it");
     sdcard_list_create(&sdcard_list_handle);
+    ESP_LOGI(TAG, "SDcard created!");
     sdcard_scan(sdcard_url_save_cb, "/sdcard", 0, (const char *[]) {"mp3"}, 1, sdcard_list_handle);
 
     ESP_LOGI(TAG, "[ 2 ] Start codec chip");
@@ -286,23 +288,23 @@ void sdcard_start(void * pvParameter)
     //TEST CODE
 
     //Test to show all the songs on the SD card
-    //char** test = calloc(24, 80);
-    //get_all_songs_from_SDcard(test);
+    char** test = calloc(24, 80);
+    get_all_songs_from_SDcard(test);
 
     //Prints all the songs on the SD card
-    // for(int i = 0; i < 24; i++){
-    //     ESP_LOGE(TAG, "This is the song %d with url %s", i, test[i]);
-    //     ESP_LOGE(TAG, "Adress of test[i]: %p", &test[i]);
-    // }
+    for(int i = 0; i < 24; i++){
+        ESP_LOGE(TAG, "This is the song %d with url %s", i, test[i]);
+        ESP_LOGE(TAG, "Adress of test[i]: %p", &test[i]);
+    }
 
     //Test to play songs with ID
     // char* avond = "Avond";
-    // char* avond = "file://sdcard/Avond.mp3";
-    // play_song_with_ID(avond);
+    char* avond = "file://sdcard/Avond.mp3";
+    play_song_with_ID(avond);
     
     //Test to pause/resume
-    //pause();
-    //resume();
+    pause();
+    resume();
     
 
     while (1) {

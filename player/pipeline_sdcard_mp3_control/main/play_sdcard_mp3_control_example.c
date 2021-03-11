@@ -286,23 +286,23 @@ void app_main(void)
     
 
     //Test to show all the songs on the SD card
-    //char** test = calloc(24, 80);
-    //get_all_songs_from_SDcard(test);
+    char** test = calloc(24, 80);
+    get_all_songs_from_SDcard(test);
 
     //Prints all the songs on the SD card
-    // for(int i = 0; i < 24; i++){
-    //     ESP_LOGE(TAG, "This is the song %d with url %s", i, test[i]);
-    //     ESP_LOGE(TAG, "Adress of test[i]: %p", &test[i]);
-    // }
+    for(int i = 0; i < 24; i++){
+        ESP_LOGE(TAG, "This is the song %d with url %s", i, test[i]);
+        ESP_LOGE(TAG, "Adress of test[i]: %p", &test[i]);
+    }
 
     //Test to play songs with ID
-    // char* avond = "Avond";
-    // char* avond = "file://sdcard/Avond.mp3";
-    // play_song_with_ID(avond);
+    char* avond = "Avond";
+    char* avond = "file://sdcard/Avond.mp3";
+    play_song_with_ID(avond);
     
     //Test to pause/resume
-    //pause();
-    //resume();
+    pause();
+    resume();
     
 
     while (1) {
