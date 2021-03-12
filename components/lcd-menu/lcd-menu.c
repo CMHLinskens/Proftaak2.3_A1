@@ -27,12 +27,15 @@ void okPressSDPlay(void);
 // Placeholder variables
 static int volume = 0;
 static int channel = 0;
+
+// Variables for SD menu 
 char** songList;
 int songIndex = 0;
 
 static i2c_lcd1602_info_t *_lcd_info;
 static menu_t *_menu;
 
+// Inits the lcd and returns struct with lcd info for lcd usage
 i2c_lcd1602_info_t * lcd_init()
 {
     i2c_port_t i2c_num = I2C_MASTER_NUM;
@@ -62,6 +65,7 @@ i2c_lcd1602_info_t * lcd_init()
     return lcd_info;
 }
 
+// Creates and returnes a pointer to the menu 
 menu_t *menu_createMenu()
 {
     menu_t *menuPointer = malloc(sizeof(menu_t));
@@ -89,6 +93,7 @@ menu_t *menu_createMenu()
     
     _lcd_info = lcd_init();
     
+    // If allocation is succesful, set all values
     if(menuPointer != NULL)
     {
         // Initialize menu with values
@@ -117,6 +122,7 @@ menu_t *menu_createMenu()
     return menuPointer;
 }
 
+// Frees memory used by menu pointer
 void menu_freeMenu(menu_t *menu)
 {
     free(menu->lcd_info);
@@ -127,6 +133,7 @@ void menu_freeMenu(menu_t *menu)
     menu = NULL;
 }
 
+// Displays a welcome message on lcd
 void menu_displayWelcomeMessage(menu_t *menu)
 {
     i2c_lcd1602_set_cursor(menu->lcd_info, false);
@@ -140,20 +147,14 @@ void menu_displayWelcomeMessage(menu_t *menu)
     i2c_lcd1602_clear(menu->lcd_info);
 }
 
+// Displays time in top right corner of lcd
 void menu_displayTime(char *time)
 {
     i2c_lcd1602_move_cursor(_lcd_info, 15, 0);
     i2c_lcd1602_write_string(_lcd_info, time);
 }
 
-void menu_displayDateTime(menu_t *menu, char* time, char* date)
-{
-    i2c_lcd1602_clear(menu->lcd_info);
-    i2c_lcd1602_write_string(menu->lcd_info, time);
-    i2c_lcd1602_move_cursor(menu->lcd_info, 0, 1);
-    i2c_lcd1602_write_string(menu->lcd_info, date);
-}
-
+// Displays menu all lines from menu item on lcd 
 void menu_displayMenuItem(menu_t *menu, int menuItemId)
 {
     i2c_lcd1602_clear(menu->lcd_info);
@@ -166,6 +167,7 @@ void menu_displayMenuItem(menu_t *menu, int menuItemId)
     }
 }
 
+// Writes an menu item on given line
 void menu_writeScrollMenuItem(i2c_lcd1602_info_t *lcd_info, char* text, int line)
 {
     int textPosition = 10 - ((strlen(text) + 1) / 2);
@@ -173,27 +175,35 @@ void menu_writeScrollMenuItem(i2c_lcd1602_info_t *lcd_info, char* text, int line
     i2c_lcd1602_write_string(lcd_info, text);
 }
 
+// Displays menu scroll menu on lcd
+// by writing currentMenuItem and the item before and after
 void menu_displayScrollMenu(menu_t *menu)
 {
     i2c_lcd1602_clear(menu->lcd_info);
 
+    // Gets title of scroll menu
     char *menuText = menu->menuItems[menu->currentMenuItemId].menuText[0];
     menu_writeScrollMenuItem(menu->lcd_info, menuText, 0);
 
+    // Get item before currentMenuItem
     menuText = menu->menuItems[menu->menuItems[menu->currentMenuItemId].otherIds[MENU_KEY_LEFT]].menuText[1];
     menu_writeScrollMenuItem(menu->lcd_info, menuText, 1);
 
+    // Get currentMenuItem
     menuText = menu->menuItems[menu->currentMenuItemId].menuText[1];
     menu_writeScrollMenuItem(menu->lcd_info, menuText, 2);
 
+    // Get item after currentMenuItem
     menuText = menu->menuItems[menu->menuItems[menu->currentMenuItemId].otherIds[MENU_KEY_RIGHT]].menuText[1];
     menu_writeScrollMenuItem(menu->lcd_info, menuText, 3);
 
+    // Display cursor
     const char *cursor = "<";
     i2c_lcd1602_move_cursor(menu->lcd_info, 17, 2);
     i2c_lcd1602_write_string(menu->lcd_info, cursor);
 }
 
+// Handles key press by switching to new item or doing an onKeyEvent
 void menu_handleKeyEvent(menu_t *menu, int key)
 {
     // If key press leads to the same ID as the currentMenuItemId
@@ -225,12 +235,15 @@ void menu_handleKeyEvent(menu_t *menu, int key)
     }
 }
 
+// Displays songsList in a scroll menu form
 void displaySongs(){
     i2c_lcd1602_clear(_lcd_info);
 
+    // Display scroll menu title
     char *menuText = "SD";
     menu_writeScrollMenuItem(_lcd_info, menuText, 0);
 
+    // Loop back around if songIndex exeeds songList size
     if(songIndex + 1 > 25){
         songIndex = 0;
     } else if (songIndex - 1 < -1) {
@@ -246,10 +259,13 @@ void displaySongs(){
     menuText = songList[songIndex];
     menu_writeScrollMenuItem(_lcd_info, menuText, 2);
 
+    // Get the song index after current selected song
+    // if after 24 loop back to beginning
     int nextSongIndex = songIndex + 1 > 24? 0 : songIndex + 1;
     menuText = songList[nextSongIndex];
     menu_writeScrollMenuItem(_lcd_info, menuText, 3);  
     
+    // Display cursor
     const char *cursor = "<";
     i2c_lcd1602_move_cursor(_lcd_info, 17, 2);
     i2c_lcd1602_write_string(_lcd_info, cursor);
@@ -257,10 +273,11 @@ void displaySongs(){
     menu_displayTime(clock_getTimeString());
 }
 
-// Defining menu event functions
+// Default enter event, displays time
 void enterMenuItem(void) {
     menu_displayTime(clock_getTimeString());
 }
+// Radio volume enter event
 void enterRadioVolume(void){
     enterMenuItem();
 
@@ -270,7 +287,7 @@ void enterRadioVolume(void){
     i2c_lcd1602_move_cursor(_lcd_info, 9, 1);
     i2c_lcd1602_write_string(_lcd_info, volumeStr);
 }
-
+// Radio volume right press event
 void increaseVolume(void){
     volume++;
     if(volume > 100) volume = 100;
@@ -280,7 +297,7 @@ void increaseVolume(void){
     i2c_lcd1602_move_cursor(_lcd_info, 9, 1);
     i2c_lcd1602_write_string(_lcd_info, volumeStr);
 }
-
+// Radio volume left press event
 void decreaseVolume(void){
     volume--;
     if(volume < 0) volume = 0;
@@ -291,6 +308,7 @@ void decreaseVolume(void){
     i2c_lcd1602_write_string(_lcd_info, volumeStr);
 }
 
+// Radio channel enter event
 void enterRadioChannel(void){
     enterMenuItem();
 
@@ -300,7 +318,7 @@ void enterRadioChannel(void){
     i2c_lcd1602_move_cursor(_lcd_info, 9, 1);
     i2c_lcd1602_write_string(_lcd_info, channelStr);
 }
-
+// Radio channel right press event
 void increaseChannel(void){
     channel++;
     if(channel > 100) channel = 100;
@@ -310,7 +328,7 @@ void increaseChannel(void){
     i2c_lcd1602_move_cursor(_lcd_info, 9, 1);
     i2c_lcd1602_write_string(_lcd_info, channelStr);
 }
-
+// Radio channel left press event
 void decreaseChannel(void){
     channel--;
     if(channel < 0) channel = 0;
@@ -321,20 +339,25 @@ void decreaseChannel(void){
     i2c_lcd1602_write_string(_lcd_info, channelStr);
 }
 
+// SD play enter event
 void enterSDPlay(void){
     enterMenuItem();
 
     displaySongs();
 }
+// SD play right press event 
 void nextSong(void){
     songIndex++;
     displaySongs();
 }
+// SD play left press event
 void previousSong(void){
     songIndex--;
     displaySongs();
 }
+// SD play ok press event
 void okPressSDPlay(){
+    // If pressed Back, go back to SD scroll menu
     if(strcmp(songList[songIndex], "Back") == 0){
         _menu->currentMenuItemId = MENU_SD_ID_0;
 
@@ -345,6 +368,7 @@ void okPressSDPlay(){
         }
 
     } else {
+        // else play selected song
         play_song_with_ID(songList[songIndex]);
     }
 }

@@ -175,7 +175,6 @@ void menu_task(void * pvParameter)
     menu_displayWelcomeMessage(menu);
     menu_displayScrollMenu(menu);
 
-    // xTaskCreate(&rotary_task, "rotary_task", 4096, NULL, 5, NULL);
     qwiic_twist_start_task(qwiic_twist_rotary);
     
 
