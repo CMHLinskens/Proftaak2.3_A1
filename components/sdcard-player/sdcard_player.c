@@ -178,7 +178,6 @@ void play_song_with_ID(char* url){
 
 //Makes array of songs on the sd
 void get_all_songs_from_SDcard(){
-//void get_all_songs_from_SDcard(char** song_list){
     
     sdcard_list_t *playlist = sdcard_list_handle->playlist;
     uint32_t pos = 0;
@@ -219,7 +218,7 @@ char** getSongList(){
     if(songList == NULL){
         ESP_LOGE(SDCARDTAG, "Songlist not created yet!");
         //Songlist doesn't exist/have any songs so we return an array with a warning.
-        songList = (char*) malloc(19);
+        songList = malloc(19);
         songList[0] = "No songs in sdcard";
         return songList;
     } else {
