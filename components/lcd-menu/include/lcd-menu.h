@@ -75,7 +75,6 @@ i2c_lcd1602_info_t * lcd_init();
 menu_t *menu_createMenu();
 void menu_freeMenu(menu_t *menu);
 void menu_displayTime(char *time);
-void menu_displayDateTime(menu_t *menu, char* time, char* date);
 void menu_displayWelcomeMessage(menu_t *menu);
 void menu_displayScrollMenu(menu_t *menu);
 void menu_displayMenuItem(menu_t *menu, int menuItemId);
