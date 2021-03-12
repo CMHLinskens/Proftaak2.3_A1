@@ -1,11 +1,5 @@
-/* Control with a touch pad playing MP3 files from SD Card
+//Control of the SD card. Plays mp3 files
 
-   This example code is in the Public Domain (or CC0 licensed, at your option.)
-
-   Unless required by applicable law or agreed to in writing, this
-   software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-   CONDITIONS OF ANY KIND, either express or implied.
-*/
 #include <string.h>
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
