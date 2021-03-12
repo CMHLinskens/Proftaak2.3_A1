@@ -1,13 +1,9 @@
 //Control of the SD card. Plays mp3 files
 
 #include <string.h>
-#include <stdio.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-
 #include "esp_log.h"
-#include "nvs_flash.h"
-
 #include "audio_element.h"
 #include "audio_pipeline.h"
 #include "audio_event_iface.h"
@@ -16,7 +12,6 @@
 #include "i2s_stream.h"
 #include "mp3_decoder.h"
 #include "filter_resample.h"
-
 #include "esp_peripherals.h"
 #include "periph_sdcard.h"
 #include "periph_touch.h"
@@ -24,9 +19,10 @@
 #include "input_key_service.h"
 #include "periph_adc_button.h"
 #include "board.h"
-
 #include "sdcard_list.h"
 #include "sdcard_scan.h"
+
+#define SDCARDTAG "SDCard"
 
 typedef struct sdcard_list {
     char *save_file_name;                // Name of file to save URLs
@@ -41,8 +37,6 @@ typedef struct sdcard_list {
 } sdcard_list_t;
 
 char** songList = NULL;
-static const char *TAG = "SDCard";
-
 audio_pipeline_handle_t pipeline;
 audio_element_handle_t i2s_stream_writer, mp3_decoder, fatfs_stream_reader, rsp_handle;
 playlist_operator_handle_t sdcard_list_handle = NULL;
@@ -57,7 +51,7 @@ static esp_err_t input_key_service_cb(periph_service_handle_t handle, periph_ser
 
     //Touchpad event started
     if (evt->type == INPUT_KEY_SERVICE_ACTION_CLICK_RELEASE){
-        ESP_LOGI(TAG, "input key id is %d", (int)evt->data);
+        ESP_LOGI(SDCARDTAG, "input key id is %d", (int)evt->data);
 
         //Switch case with the event data
         switch ((int)evt->data){
@@ -69,25 +63,25 @@ static esp_err_t input_key_service_cb(periph_service_handle_t handle, periph_ser
                 //Looks at the state of the play button
                 switch (el_state) {
                     case AEL_STATE_INIT :
-                        ESP_LOGI(TAG, "Starting audio");
+                        ESP_LOGI(SDCARDTAG, "Starting audio");
                         audio_pipeline_run(pipeline);
                         break;
                     case AEL_STATE_RUNNING :
-                        ESP_LOGI(TAG, "Pausing audio");
+                        ESP_LOGI(SDCARDTAG, "Pausing audio");
                         audio_pipeline_pause(pipeline);
                         break;
                     case AEL_STATE_PAUSED :
-                        ESP_LOGI(TAG, "Resuming audio");
+                        ESP_LOGI(SDCARDTAG, "Resuming audio");
                         audio_pipeline_resume(pipeline);
                         break;
                     default :
-                        ESP_LOGI(TAG, "Not supported state %d", el_state);
+                        ESP_LOGI(SDCARDTAG, "Not supported state %d", el_state);
                 }
                 break;
 
             //Set button is pressed
             case INPUT_KEY_USER_ID_SET:
-                ESP_LOGI(TAG, "Stopped, advancing to the next song");
+                ESP_LOGI(SDCARDTAG, "Stopped, advancing to the next song");
                 char *url = NULL;
 
                 //Stops music, terminates current pipeline and looks up the next audio file on the SD card
@@ -106,27 +100,27 @@ static esp_err_t input_key_service_cb(periph_service_handle_t handle, periph_ser
             //Volume up button is pressed
             case INPUT_KEY_USER_ID_VOLUP:
                 //Sets volume up
-                ESP_LOGI(TAG, "Volume went up");
+                ESP_LOGI(SDCARDTAG, "Volume went up");
                 player_volume += 10;
                 if (player_volume > 100) {
                     player_volume = 100;
                 }
 
                 audio_hal_set_volume(board_handle->audio_hal, player_volume);
-                ESP_LOGI(TAG, "Volume set to %d %%", player_volume);
+                ESP_LOGI(SDCARDTAG, "Volume set to %d %%", player_volume);
                 break;
 
             //Volume down button is pressed
             case INPUT_KEY_USER_ID_VOLDOWN:
                 //Sets volume down
-                ESP_LOGI(TAG, "Volume went down");
+                ESP_LOGI(SDCARDTAG, "Volume went down");
                 player_volume -= 10;
                 if (player_volume < 0) {
                     player_volume = 0;
                 }
 
                 audio_hal_set_volume(board_handle->audio_hal, player_volume);
-                ESP_LOGI(TAG, "Volume set to %d %%", player_volume);
+                ESP_LOGI(SDCARDTAG, "Volume set to %d %%", player_volume);
                 break;
         }
     }
@@ -141,7 +135,7 @@ void sdcard_url_save_cb(void *user_data, char *url){
 
     //Failed to save
     if (ret != ESP_OK){
-        ESP_LOGE(TAG, "Fail to save sdcard url to sdcard playlist");
+        ESP_LOGE(SDCARDTAG, "Fail to save sdcard url to sdcard playlist");
     }
 }
 
@@ -149,14 +143,14 @@ void sdcard_url_save_cb(void *user_data, char *url){
 void pauseSound(){
 
     audio_pipeline_pause(pipeline);
-    ESP_LOGI(TAG, "Paused");
+    ESP_LOGI(SDCARDTAG, "Paused");
 }
 
 //Resumes audio
 void resumeSound(){
 
     audio_pipeline_resume(pipeline);
-    ESP_LOGI(TAG, "Resumed");
+    ESP_LOGI(SDCARDTAG, "Resumed");
 }
 
 //Plays audio with given ID/URL
@@ -179,7 +173,7 @@ void play_song_with_ID(char* url){
     audio_pipeline_reset_elements(pipeline);
     audio_pipeline_run(pipeline);
 
-    ESP_LOGI(TAG, "Song %s is playing", extendedUrl);
+    ESP_LOGI(SDCARDTAG, "Song %s is playing", extendedUrl);
 }
 
 //Makes array of songs on the sd
@@ -222,7 +216,7 @@ void get_all_songs_from_SDcard(char** song_list){
 //Returns all the songs on the SD card
 char** getSongList(){
     if(songList == NULL){
-        ESP_LOGE(TAG, "Songlist not created yet!");
+        ESP_LOGE(SDCARDTAG, "Songlist not created yet!");
         return NULL;
     } else {
         return songList;
@@ -232,28 +226,27 @@ char** getSongList(){
 //Starts the sdcard
 void sdcard_start(void * pvParameter){
 
-    //Configuration and Starting up
-    #pragma region Configuration
+   // #pragma region Configuration
 
-    esp_log_level_set(TAG, ESP_LOG_INFO);
+    esp_log_level_set(SDCARDTAG, ESP_LOG_INFO);
 
-    ESP_LOGI(TAG, "[1.0] Initialize peripherals management");
+    ESP_LOGI(SDCARDTAG, "[1.0] Initialize peripherals management");
     esp_periph_config_t periph_cfg = DEFAULT_ESP_PERIPH_SET_CONFIG();
     esp_periph_set_handle_t set = esp_periph_set_init(&periph_cfg);
 
-    ESP_LOGI(TAG, "[1.1] Initialize and start peripherals");
+    ESP_LOGI(SDCARDTAG, "[1.1] Initialize and start peripherals");
     audio_board_key_init(set);
     audio_board_sdcard_init(set, SD_MODE_1_LINE);
 
-    ESP_LOGI(TAG, "[1.2] Set up a sdcard playlist and scan sdcard music save to it");
+    ESP_LOGI(SDCARDTAG, "[1.2] Set up a sdcard playlist and scan sdcard music save to it");
     sdcard_list_create(&sdcard_list_handle);
     sdcard_scan(sdcard_url_save_cb, "/sdcard", 0, (const char *[]) {"mp3"}, 1, sdcard_list_handle);
 
-    ESP_LOGI(TAG, "[ 2 ] Start codec chip");
+    ESP_LOGI(SDCARDTAG, "[ 2 ] Start codec chip");
     audio_board_handle_t board_handle = audio_board_init();
     audio_hal_ctrl_codec(board_handle->audio_hal, AUDIO_HAL_CODEC_MODE_DECODE, AUDIO_HAL_CTRL_START);
 
-    ESP_LOGI(TAG, "[ 3 ] Create and start input key service");
+    ESP_LOGI(SDCARDTAG, "[ 3 ] Create and start input key service");
     input_key_service_info_t input_key_info[] = INPUT_KEY_DEFAULT_INFO();
     input_key_service_cfg_t input_cfg = INPUT_KEY_SERVICE_DEFAULT_CONFIG();
     input_cfg.handle = set;
@@ -261,26 +254,26 @@ void sdcard_start(void * pvParameter){
     input_key_service_add_key(input_ser, input_key_info, INPUT_KEY_NUM);
     periph_service_set_callback(input_ser, input_key_service_cb, (void *)board_handle);
 
-    ESP_LOGI(TAG, "[4.0] Create audio pipeline for playback");
+    ESP_LOGI(SDCARDTAG, "[4.0] Create audio pipeline for playback");
     audio_pipeline_cfg_t pipeline_cfg = DEFAULT_AUDIO_PIPELINE_CONFIG();
     pipeline = audio_pipeline_init(&pipeline_cfg);
     mem_assert(pipeline);
 
-    ESP_LOGI(TAG, "[4.1] Create i2s stream to write data to codec chip");
+    ESP_LOGI(SDCARDTAG, "[4.1] Create i2s stream to write data to codec chip");
     i2s_stream_cfg_t i2s_cfg = I2S_STREAM_CFG_DEFAULT();
     i2s_cfg.i2s_config.sample_rate = 48000;
     i2s_cfg.type = AUDIO_STREAM_WRITER;
     i2s_stream_writer = i2s_stream_init(&i2s_cfg);
 
-    ESP_LOGI(TAG, "[4.2] Create mp3 decoder to decode mp3 file");
+    ESP_LOGI(SDCARDTAG, "[4.2] Create mp3 decoder to decode mp3 file");
     mp3_decoder_cfg_t mp3_cfg = DEFAULT_MP3_DECODER_CONFIG();
     mp3_decoder = mp3_decoder_init(&mp3_cfg);
 
-    ESP_LOGI(TAG, "[4.3] Create resample filter");
+    ESP_LOGI(SDCARDTAG, "[4.3] Create resample filter");
     rsp_filter_cfg_t rsp_cfg = DEFAULT_RESAMPLE_FILTER_CONFIG();
     rsp_handle = rsp_filter_init(&rsp_cfg);
 
-    ESP_LOGI(TAG, "[4.4] Create fatfs stream to read data from sdcard");
+    ESP_LOGI(SDCARDTAG, "[4.4] Create fatfs stream to read data from sdcard");
     char *url = NULL;
     sdcard_list_current(sdcard_list_handle, &url);
     fatfs_stream_cfg_t fatfs_cfg = FATFS_STREAM_CFG_DEFAULT();
@@ -288,29 +281,27 @@ void sdcard_start(void * pvParameter){
     fatfs_stream_reader = fatfs_stream_init(&fatfs_cfg);
     audio_element_set_uri(fatfs_stream_reader, url);
 
-    ESP_LOGI(TAG, "[4.5] Register all elements to audio pipeline");
+    ESP_LOGI(SDCARDTAG, "[4.5] Register all elements to audio pipeline");
     audio_pipeline_register(pipeline, fatfs_stream_reader, "file");
     audio_pipeline_register(pipeline, mp3_decoder, "mp3");
     audio_pipeline_register(pipeline, rsp_handle, "filter");
     audio_pipeline_register(pipeline, i2s_stream_writer, "i2s");
 
-    ESP_LOGI(TAG, "[4.6] Link it together [sdcard]-->fatfs_stream-->mp3_decoder-->resample-->i2s_stream-->[codec_chip]");
+    ESP_LOGI(SDCARDTAG, "[4.6] Link it together [sdcard]-->fatfs_stream-->mp3_decoder-->resample-->i2s_stream-->[codec_chip]");
     const char *link_tag[4] = {"file", "mp3", "filter", "i2s"};
     audio_pipeline_link(pipeline, &link_tag[0], 4);
 
-    ESP_LOGI(TAG, "[5.0] Set up  event listener");
+    ESP_LOGI(SDCARDTAG, "[5.0] Set up  event listener");
     audio_event_iface_cfg_t evt_cfg = AUDIO_EVENT_IFACE_DEFAULT_CFG();
     audio_event_iface_handle_t evt = audio_event_iface_init(&evt_cfg);
 
-    ESP_LOGI(TAG, "[5.1] Listen for all pipeline events");
+    ESP_LOGI(SDCARDTAG, "[5.1] Listen for all pipeline events");
     audio_pipeline_set_listener(pipeline, evt);
 
-    ESP_LOGI(TAG, "[6.0] Creating songList");
-    get_all_songs_from_SDcard(songList);
+    ESP_LOGI(SDCARDTAG, "[6.0] Creating songList");
+    //get_all_songs_from_SDcard(songList);
 
-    //End of configuration
-
-    #pragma endregion Configuratoin
+    //#pragma endregion test
 
     //Main loop, waits for functions to be called
     while (1) {
@@ -318,13 +309,12 @@ void sdcard_start(void * pvParameter){
         audio_event_iface_msg_t msg;
         esp_err_t ret = audio_event_iface_listen(evt, &msg, portMAX_DELAY);
         if (ret != ESP_OK) {
-            ESP_LOGE(TAG, "Event interface error : %d", ret);
+            ESP_LOGE(SDCARDTAG, "Event interface error : %d", ret);
         }
     }
 }
 
 //Starts task to start the sdcard
 void start_sdcard_task(){
-
     xTaskCreate(&sdcard_start, "sdcard player", 4096, NULL, 5, NULL);
 }
