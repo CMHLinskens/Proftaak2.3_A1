@@ -177,12 +177,14 @@ void play_song_with_ID(char* url){
 }
 
 //Makes array of songs on the sd
-void get_all_songs_from_SDcard(char** song_list){
+void get_all_songs_from_SDcard(){
+//void get_all_songs_from_SDcard(char** song_list){
     
     sdcard_list_t *playlist = sdcard_list_handle->playlist;
     uint32_t pos = 0;
     uint16_t  size = 0;
     char* url = calloc(1, 2048);
+    songList = calloc(playlist->url_num, 80);
 
     fseek(playlist->save_file, 0, SEEK_SET);
     fseek(playlist->offset_file, 0, SEEK_SET);
@@ -206,8 +208,7 @@ void get_all_songs_from_SDcard(char** song_list){
         temp_url[length-4] = '\0';
 
         //Adds url to array
-        song_list[i] = temp_url;
-        songList = song_list;
+        songList[i] = temp_url;
         free(temp_url);
     }
     free(url);
@@ -217,7 +218,10 @@ void get_all_songs_from_SDcard(char** song_list){
 char** getSongList(){
     if(songList == NULL){
         ESP_LOGE(SDCARDTAG, "Songlist not created yet!");
-        return NULL;
+        //Songlist doesn't exist/have any songs so we return an array with a warning.
+        songList = (char*) malloc(19);
+        songList[0] = "No songs in sdcard";
+        return songList;
     } else {
         return songList;
     }
@@ -226,7 +230,7 @@ char** getSongList(){
 //Starts the sdcard
 void sdcard_start(void * pvParameter){
 
-   // #pragma region Configuration
+    //Start configuration
 
     esp_log_level_set(SDCARDTAG, ESP_LOG_INFO);
 
@@ -299,9 +303,9 @@ void sdcard_start(void * pvParameter){
     audio_pipeline_set_listener(pipeline, evt);
 
     ESP_LOGI(SDCARDTAG, "[6.0] Creating songList");
-    //get_all_songs_from_SDcard(songList);
-
-    //#pragma endregion test
+    get_all_songs_from_SDcard();
+    
+    //End configuration
 
     //Main loop, waits for functions to be called
     while (1) {
