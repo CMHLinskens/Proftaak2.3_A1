@@ -334,7 +334,7 @@ void sayTime(){
     char *soundsToPlay[10];
     soundsToPlay[0] = "Het is nu";
     soundsToPlay[2] = "Uur";
-    soundsToPlay[3] = "En";
+    //soundsToPlay[3] = "En";
     soundsToPlay[8] = "In de";
 
     // Check if we are in the morning, afternoon or evening
@@ -366,14 +366,21 @@ void sayTime(){
 
     // If we have minutes < 10 just add the string and "Minuten"
     if(minuteString[1] == '\0'){
+        soundsToPlay[3] = "En";
         soundsToPlay[4] = minuteString;
         soundsToPlay[5] = "Minuten";
         soundsToPlay[6] = soundsToPlay[7] = "";
+    // If we have a full hour add nothing more to the list
+    } else if (minuteString[0] == '0') {
+        soundsToPlay[3] = soundsToPlay[4] = soundsToPlay[5] = soundsToPlay[6] = soundsToPlay[7] = "";
+    // Else determine the minute sound fragments
     } else {
-    char minuteTens = minuteString[0];
-    char minuteOnes = minuteString[1];
-    switch(minuteTens){
+        soundsToPlay[3] = "En";
+        char minuteTens = minuteString[0];
+        char minuteOnes = minuteString[1];
+        switch(minuteTens){
             case '1':
+                // 
                 switch(minuteOnes){
                     case '0':
                         soundsToPlay[4] = "10";
@@ -424,7 +431,6 @@ void sayTime(){
                     soundsToPlay[5] = "En";
                 }
                 // tempMinuteString for turning the 2, 3, 4, etc. into 20, 30, 40, etc.
-                
                 tempMinuteString2[0] = minuteTens;
                 tempMinuteString2[1] = '0';
                 tempMinuteString2[2] = '\0';
@@ -441,5 +447,7 @@ void sayTime(){
     for(int i = 0; i < 10; i++){
         if(!strcmp(soundsToPlay[i], "")) { continue; }
         ESP_LOGI(SDCARDTAG, "%s", soundsToPlay[i]);
+        audio_pipeline_wait_for_stop(pipeline);
+        play_song_with_ID(soundsToPlay[i]);
     }
 }
