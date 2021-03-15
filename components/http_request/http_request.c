@@ -11,6 +11,8 @@
 #include "lwip/netdb.h"
 #include "lwip/dns.h"
 
+#include "cJSON.h"
+
 #define APITAG "API"
 
 /* Constants that aren't configurable in menuconfig */
@@ -23,6 +25,8 @@ static const char *REQUEST = "GET " WEB_PATH " HTTP/1.0\r\n"
     "User-Agent: esp-idf/1.0 esp32\r\n"
     "\r\n";
 
+char response[1024];
+
 void api_request(){
     const struct addrinfo hints = {
         .ai_family = AF_INET,
@@ -33,13 +37,11 @@ void api_request(){
     int s, r;
     char recv_buf[64];
 
-    while(1) {
         int err = getaddrinfo(WEB_SERVER, WEB_PORT, &hints, &res);
 
         if(err != 0 || res == NULL) {
             ESP_LOGE(APITAG, "DNS lookup failed err=%d res=%p", err, res);
             vTaskDelay(1000 / portTICK_PERIOD_MS);
-            continue;
         }
 
         /* Code to print the resolved IP.
@@ -53,7 +55,6 @@ void api_request(){
             ESP_LOGE(APITAG, "... Failed to allocate socket.");
             freeaddrinfo(res);
             vTaskDelay(1000 / portTICK_PERIOD_MS);
-            continue;
         }
         ESP_LOGI(APITAG, "... allocated socket");
 
@@ -62,7 +63,6 @@ void api_request(){
             close(s);
             freeaddrinfo(res);
             vTaskDelay(4000 / portTICK_PERIOD_MS);
-            continue;
         }
 
         ESP_LOGI(APITAG, "... connected");
@@ -72,7 +72,6 @@ void api_request(){
             ESP_LOGE(APITAG, "... socket send failed");
             close(s);
             vTaskDelay(4000 / portTICK_PERIOD_MS);
-            continue;
         }
         ESP_LOGI(APITAG, "... socket send success");
 
@@ -84,25 +83,38 @@ void api_request(){
             ESP_LOGE(APITAG, "... failed to set socket receiving timeout");
             close(s);
             vTaskDelay(4000 / portTICK_PERIOD_MS);
-            continue;
         }
         ESP_LOGI(APITAG, "... set socket receiving timeout success");
+
+        int json = 0;
+        int index = 0;
 
         /* Read HTTP response */
         do {
             bzero(recv_buf, sizeof(recv_buf));
             r = read(s, recv_buf, sizeof(recv_buf)-1);
             for(int i = 0; i < r; i++) {
-                putchar(recv_buf[i]);
+                if(recv_buf[i]=='{' || json){
+                    json = 1;
+                    response[index] = recv_buf[i];
+                    index++;
+                    putchar(recv_buf[i]);
+                }
             }
         } while(r > 0);
 
+        //ESP_LOGI(APITAG,"%d",index);
+        // cJSON *root = cJSON_Parse(&response[0]);
+        // cJSON *maan = cJSON_GetObjectItem(root, "main");
+        // double temp = cJSON_GetObjectItem(maan,"temp")->valuedouble;
+
+        //ESP_LOGI(APITAG,"temp: %f",temp);
+
         ESP_LOGI(APITAG, "... done reading from socket. Last read return=%d errno=%d.", r, errno);
         close(s);
-        for(int countdown = 10; countdown >= 0; countdown--) {
-            ESP_LOGI(APITAG, "%d... ", countdown);
-            vTaskDelay(1000 / portTICK_PERIOD_MS);
-        }
-        ESP_LOGI(APITAG, "Starting again!");
-    }
+}
+
+char * http_request_get_response()
+{
+        return &response[0];
 }

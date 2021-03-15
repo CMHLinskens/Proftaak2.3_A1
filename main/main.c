@@ -35,8 +35,11 @@
 #include "sdcard_player.h"
 #include "http_request.h"
 
+#include "cJSON.h"
+
 #define MAINTAG "main"
 #define CLOCKTAG "clock"
+#define APITAG "api"
 
 i2c_port_t i2c_num;
 qwiic_twist_t *qwiic_twist_rotary;
@@ -49,7 +52,16 @@ void onMove(int16_t);
 
 static void http_get_task(void *pvParameters)
 {
-    api_request();
+    while(1){
+      api_request();  
+      cJSON *root = cJSON_Parse(http_request_get_response());
+      cJSON *maan = cJSON_GetObjectItem(root, "main");
+      double temp = cJSON_GetObjectItem(maan,"temp")->valuedouble;
+      printf("%s",http_request_get_response());
+      ESP_LOGI(APITAG,"temp: %f",temp);
+      vTaskDelay(10000/portTICK_RATE_MS);
+    }
+    
 }
 
 void i2c_master_init(void)
