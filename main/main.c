@@ -21,7 +21,6 @@
 #include "smbus.h"
 #include "qwiic_twist.h"
 #include "i2c-lcd1602.h"
-#include "lcd-menu.h"
 #include "clock-sync.h"
 #include "esp_wifi.h" 
 
@@ -31,9 +30,12 @@
 #include "lwip/netdb.h"
 #include "lwip/dns.h"
 
+//components that we made
+#include "lcd-menu.h"
 #include "wifi_connect.h"
 #include "sdcard_player.h"
 #include "http_request.h"
+#include "mp3-radio.h"
 
 #define MAINTAG "main"
 #define CLOCKTAG "clock"
@@ -139,6 +141,10 @@ void rotary_task(void * pvParameter)
     vTaskDelete(NULL);
 }
 
+void radio_task(void * pvParmeter){
+    radio_init();
+}
+
 void app_main()
 {
     ESP_ERROR_CHECK( nvs_flash_init() );
@@ -151,7 +157,10 @@ void app_main()
      */
     ESP_ERROR_CHECK(example_connect());
     
-    start_sdcard_task();
+    //Doesnt work together. Either the sd card or the radio.
+    //start_sdcard_task();
+    vTaskDelay(1000);
+    xTaskCreate(&radio_task, "radio_task", 4096, NULL, 5, NULL);
     vTaskDelay(1000);
 
     //I^2C initialization + the I^2C port
@@ -164,5 +173,6 @@ void app_main()
     xTaskCreate(&menu_task, "menu_task", 4096, NULL, 5, NULL);
     xTaskCreate(&clock_task, "clock_task", 4096, NULL, 5, NULL);
     xTaskCreate(&http_get_task, "http_get_task", 4096, NULL, 5, NULL);
+    
 }
 

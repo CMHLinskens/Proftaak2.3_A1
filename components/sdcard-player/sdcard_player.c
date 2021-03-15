@@ -22,6 +22,8 @@
 #include "sdcard_list.h"
 #include "sdcard_scan.h"
 
+#include "audio-board.h"
+
 #define SDCARDTAG "SDCard"
 
 typedef struct sdcard_list {
@@ -245,8 +247,12 @@ void sdcard_start(void * pvParameter){
     sdcard_scan(sdcard_url_save_cb, "/sdcard", 0, (const char *[]) {"mp3"}, 1, sdcard_list_handle);
 
     ESP_LOGI(SDCARDTAG, "[ 2 ] Start codec chip");
+     //comment again
     audio_board_handle_t board_handle = audio_board_init();
     audio_hal_ctrl_codec(board_handle->audio_hal, AUDIO_HAL_CODEC_MODE_DECODE, AUDIO_HAL_CTRL_START);
+
+    // audio_board_handle_t board_handle;
+    // audio_board_handle_init(board_handle);
 
     ESP_LOGI(SDCARDTAG, "[ 3 ] Create and start input key service");
     input_key_service_info_t input_key_info[] = INPUT_KEY_DEFAULT_INFO();
@@ -257,19 +263,28 @@ void sdcard_start(void * pvParameter){
     periph_service_set_callback(input_ser, input_key_service_cb, (void *)board_handle);
 
     ESP_LOGI(SDCARDTAG, "[4.0] Create audio pipeline for playback");
+     //comment again
     audio_pipeline_cfg_t pipeline_cfg = DEFAULT_AUDIO_PIPELINE_CONFIG();
     pipeline = audio_pipeline_init(&pipeline_cfg);
+    
+    // audio_pipeline_handle_init(pipeline);
     mem_assert(pipeline);
 
     ESP_LOGI(SDCARDTAG, "[4.1] Create i2s stream to write data to codec chip");
+    //comment again
     i2s_stream_cfg_t i2s_cfg = I2S_STREAM_CFG_DEFAULT();
     i2s_cfg.i2s_config.sample_rate = 48000;
     i2s_cfg.type = AUDIO_STREAM_WRITER;
     i2s_stream_writer = i2s_stream_init(&i2s_cfg);
+    
+    // i2s_stream_handle_init(i2s_stream_writer);
 
     ESP_LOGI(SDCARDTAG, "[4.2] Create mp3 decoder to decode mp3 file");
+    //comment again
     mp3_decoder_cfg_t mp3_cfg = DEFAULT_MP3_DECODER_CONFIG();
     mp3_decoder = mp3_decoder_init(&mp3_cfg);
+
+    // mp3_decoder_handle_init(mp3_decoder_handle_init);
 
     ESP_LOGI(SDCARDTAG, "[4.3] Create resample filter");
     rsp_filter_cfg_t rsp_cfg = DEFAULT_RESAMPLE_FILTER_CONFIG();
@@ -285,15 +300,21 @@ void sdcard_start(void * pvParameter){
 
     ESP_LOGI(SDCARDTAG, "[4.5] Register all elements to audio pipeline");
     audio_pipeline_register(pipeline, fatfs_stream_reader, "file");
-    audio_pipeline_register(pipeline, mp3_decoder, "mp3");
     audio_pipeline_register(pipeline, rsp_handle, "filter");
+    
+    //comment again
+    audio_pipeline_register(pipeline, mp3_decoder, "mp3");
     audio_pipeline_register(pipeline, i2s_stream_writer, "i2s");
+    
+    //register_duplicate_elements();
 
     ESP_LOGI(SDCARDTAG, "[4.6] Link it together [sdcard]-->fatfs_stream-->mp3_decoder-->resample-->i2s_stream-->[codec_chip]");
+    
+     //TODO needs to be called only when you want to use the sdcard. So only when in the sd menu.
     const char *link_tag[4] = {"file", "mp3", "filter", "i2s"};
     audio_pipeline_link(pipeline, &link_tag[0], 4);
 
-    ESP_LOGI(SDCARDTAG, "[5.0] Set up  event listener");
+    ESP_LOGI(SDCARDTAG, "[5.0] Set up event listener");
     audio_event_iface_cfg_t evt_cfg = AUDIO_EVENT_IFACE_DEFAULT_CFG();
     audio_event_iface_handle_t evt = audio_event_iface_init(&evt_cfg);
 
