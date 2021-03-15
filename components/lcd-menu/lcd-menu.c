@@ -161,12 +161,14 @@ void menu_displayTemperature(char* response){
     cJSON *root = cJSON_Parse(response);
     cJSON *maan = cJSON_GetObjectItem(root, "main");
     double temp = cJSON_GetObjectItem(maan,"temp")->valuedouble;
+    int temp_in_c = (int) temp;
 
-    char dub[50] = {0};
-    sprintf(dub,"%f",temp);
+
+    char temp_in_string[50] = {0};
+    sprintf(temp_in_string,"%dC",temp_in_c);
 
     i2c_lcd1602_move_cursor(_lcd_info, 0, 0);
-    i2c_lcd1602_write_string(_lcd_info, &dub[0]);
+    i2c_lcd1602_write_string(_lcd_info, &temp_in_string[0]);
 }
 
 // Displays menu all lines from menu item on lcd 
