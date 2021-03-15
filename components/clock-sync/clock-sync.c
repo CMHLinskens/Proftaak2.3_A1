@@ -1,6 +1,7 @@
 #include "clock-sync.h"
 
 #include <time.h>
+#include <string.h>
 #include "esp_sntp.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -11,6 +12,7 @@
 
 static const char *CLOCKTAG = "clock";
 char *timeString;
+char **clockSounds;
 
 void time_sync_notification_cb(struct timeval *tv)
 {
@@ -86,4 +88,17 @@ char *clock_getTimeString()
 {
     if(timeString == NULL) { return "00:00"; }
     return timeString;
+}
+
+int *clock_getCurrentTime(){
+    if(timeString == NULL) { return NULL; }
+    int *time = calloc(2, sizeof(int));
+    for(int i = 0; i < 2; i++){
+        char tempString[3];
+        memcpy(tempString, &timeString[3 * i], 2);
+        tempString[3] = '\0';
+        int tempTime = atoi(tempString);
+        time[i] = tempTime;
+    }
+    return time;
 }

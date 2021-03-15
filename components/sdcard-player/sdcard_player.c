@@ -21,6 +21,7 @@
 #include "board.h"
 #include "sdcard_list.h"
 #include "sdcard_scan.h"
+#include "clock-sync.h"
 
 #define SDCARDTAG "SDCard"
 
@@ -319,4 +320,126 @@ void sdcard_start(void * pvParameter){
 //Starts task to start the sdcard
 void start_sdcard_task(){
     xTaskCreate(&sdcard_start, "sdcard player", 4096, NULL, 5, NULL);
+}
+
+void sayTime(){
+    // Retrieve time
+    int *time = clock_getCurrentTime();
+    if(time == NULL) {
+        ESP_LOGE(SDCARDTAG, "Time has not been set yet.");
+        return;
+    }
+
+    // Initialize sounds list
+    char *soundsToPlay[10];
+    soundsToPlay[0] = "Het is nu";
+    soundsToPlay[2] = "Uur";
+    soundsToPlay[3] = "En";
+    soundsToPlay[8] = "In de";
+
+    // Check if we are in the morning, afternoon or evening
+    if(time[0] < 12) {
+        soundsToPlay[9] = "Ochtend";
+    } else if (time[0] < 18) {
+        soundsToPlay[9] = "Middag";
+    } else {
+        soundsToPlay[9] = "Avond";
+    }
+    
+    // Remove 12 hours from time if it is after 12
+    if(time[0] > 12){
+        time[0] -= 12;
+    }
+
+    // Set the hour sound
+    char hourString[3];
+    sprintf(hourString, "%d", time[0]);
+    soundsToPlay[1] = hourString;
+
+    // Set the minute sounds
+    char minuteString[3];
+    sprintf(minuteString, "%d", time[1]);
+    
+    // temp variables (I dont know a better solution)
+    char tempMinuteString1[2];
+    char tempMinuteString2[3];
+
+    // If we have minutes < 10 just add the string and "Minuten"
+    if(minuteString[1] == '\0'){
+        soundsToPlay[4] = minuteString;
+        soundsToPlay[5] = "Minuten";
+        soundsToPlay[6] = soundsToPlay[7] = "";
+    } else {
+    char minuteTens = minuteString[0];
+    char minuteOnes = minuteString[1];
+    switch(minuteTens){
+            case '1':
+                switch(minuteOnes){
+                    case '0':
+                        soundsToPlay[4] = "10";
+                        soundsToPlay[5] = "";
+                    break;
+                    case '1':
+                        soundsToPlay[4] = "11";
+                        soundsToPlay[5] = "";
+                    break;
+                    case '2':
+                        soundsToPlay[4] = "12";
+                        soundsToPlay[5] = "";
+                    break;
+                    case '3':
+                        soundsToPlay[4] = "13";
+                        soundsToPlay[5] = "";
+                    break;
+                    case '4':
+                        soundsToPlay[4] = "14";
+                        soundsToPlay[5] = "";
+                    break;
+                    default:
+                        tempMinuteString1[0] = minuteOnes;
+                        tempMinuteString1[1] = '\0';
+                        soundsToPlay[4] = tempMinuteString1;
+                        tempMinuteString2[0] = minuteTens;
+                        tempMinuteString2[1] = '0';
+                        tempMinuteString2[2] = '\0';
+                        soundsToPlay[5] = tempMinuteString2;
+                    break;
+                }
+                soundsToPlay[6] = "Minuten";
+                soundsToPlay[7] = "";
+            break;
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+                // If we have 20, 30, 40, etc. add empty strings on 4 and 5
+                // else fill them with minutes before the tens and add "En" 
+                if(minuteOnes == '0'){
+                    soundsToPlay[4] = "";
+                    soundsToPlay[5] = "";
+                } else {       
+                    tempMinuteString1[0] = minuteOnes;
+                    tempMinuteString1[1] = '\0';
+                    soundsToPlay[4] = tempMinuteString1;
+                    soundsToPlay[5] = "En";
+                }
+                // tempMinuteString for turning the 2, 3, 4, etc. into 20, 30, 40, etc.
+                
+                tempMinuteString2[0] = minuteTens;
+                tempMinuteString2[1] = '0';
+                tempMinuteString2[2] = '\0';
+                soundsToPlay[6] = tempMinuteString2;
+                soundsToPlay[7] = "Minuten";
+            break;
+            default:
+                ESP_LOGE(SDCARDTAG, "Unknown minutes in playTime()");
+            break;
+        }
+    }
+
+    // Play all sounds
+    for(int i = 0; i < 10; i++){
+        if(!strcmp(soundsToPlay[i], "")) { continue; }
+        ESP_LOGI(SDCARDTAG, "%s", soundsToPlay[i]);
+    }
 }
