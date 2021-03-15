@@ -151,18 +151,18 @@ void app_main()
      */
     ESP_ERROR_CHECK(example_connect());
     
-    //start_sdcard_task();
-    //vTaskDelay(1000);
+    start_sdcard_task();
+    vTaskDelay(1000);
 
     //I^2C initialization + the I^2C port
-    //i2c_master_init();
-    //i2c_num = I2C_MASTER_NUM;
+    i2c_master_init();
+    i2c_num = I2C_MASTER_NUM;
 
     //initialize the components
-    //component_init();
+    component_init();
 
-    //xTaskCreate(&menu_task, "menu_task", 4096, NULL, 5, NULL);
-    //xTaskCreate(&clock_task, "clock_task", 4096, NULL, 5, NULL);
+    xTaskCreate(&menu_task, "menu_task", 4096, NULL, 5, NULL);
+    xTaskCreate(&clock_task, "clock_task", 4096, NULL, 5, NULL);
     xTaskCreate(&http_get_task, "http_get_task", 4096, NULL, 5, NULL);
 }
 
