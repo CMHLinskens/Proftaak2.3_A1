@@ -69,7 +69,7 @@ void i2c_master_init(void)
 }
 
 static void component_init(void){
-    //INIT rotary encoder
+    //INIT rotary encoder, and the qwiic_twist_init will set the oher settings for the rotary encoder
     qwiic_twist_rotary = (qwiic_twist_t*)malloc(sizeof(*qwiic_twist_rotary));
     qwiic_twist_rotary->port = i2c_num;
     qwiic_twist_rotary->onButtonClicked = &clicked;
@@ -104,14 +104,24 @@ char * toString(int number) {
     return str;
 }
 
+/*
+this method handles the key event "OK", this is necessary for navigating through the menu.
+*/
 void clicked(void){
     ESP_LOGI(MAINTAG, "clicked rotary encoder");
     menu_handleKeyEvent(menu, MENU_KEY_OK);
 }
+
+/*
+this method is only here for not getting the error of the presed function. can be fixed by deleting the pressed method out of the struct.
+*/
 void pressed(void){
     ESP_LOGI(MAINTAG, "pressed rotary encoder");
 }
 
+/*
+this method handles the key event for going left or right. This is necessary for navigating through the menu, cause this is the scrolling event.
+*/
 void onMove(int16_t move_value){
     if(move_value > 0){
         menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
@@ -123,14 +133,6 @@ void onMove(int16_t move_value){
 
 void rotary_task(void * pvParameter)
 {
-    //COLOR TEST WITH THE ROTARY ENCODER
-    //smbus_info_t * smbus_info_rotary = smbus_malloc();
-    // ESP_ERROR_CHECK(smbus_init(smbus_info_rotary, i2c_num, 0x3F));
-    // ESP_ERROR_CHECK(smbus_set_timeout(smbus_info_rotary, 1000 / portTICK_RATE_MS));
-    // smbus_write_byte(smbus_info_rotary, 0x0D, 255);
-    // smbus_write_byte(smbus_info_rotary, 0x0E, 255);
-    // smbus_write_byte(smbus_info_rotary, 0x0F, 255);
-
     qwiic_twist_start_task(qwiic_twist_rotary);
     while(1){
         vTaskDelay(1000 / portTICK_RATE_MS);
