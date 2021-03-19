@@ -42,6 +42,9 @@ char** songList = NULL;
 audio_pipeline_handle_t pipeline;
 audio_element_handle_t i2s_stream_writer, mp3_decoder, fatfs_stream_reader, rsp_handle;
 playlist_operator_handle_t sdcard_list_handle = NULL;
+esp_periph_set_handle_t set;
+audio_event_iface_handle_t evt;
+periph_service_handle_t input_ser;
 
 //Handles touchpad events
 static esp_err_t input_key_service_cb(periph_service_handle_t handle, periph_service_event_t *evt, void *ctx){
@@ -236,7 +239,7 @@ void sdcard_start(void * pvParameter){
 
     ESP_LOGI(SDCARDTAG, "[1.0] Initialize peripherals management");
     esp_periph_config_t periph_cfg = DEFAULT_ESP_PERIPH_SET_CONFIG();
-    esp_periph_set_handle_t set = esp_periph_set_init(&periph_cfg);
+    set = esp_periph_set_init(&periph_cfg);
 
     ESP_LOGI(SDCARDTAG, "[1.1] Initialize and start peripherals");
     audio_board_key_init(set);
@@ -258,7 +261,7 @@ void sdcard_start(void * pvParameter){
     input_key_service_info_t input_key_info[] = INPUT_KEY_DEFAULT_INFO();
     input_key_service_cfg_t input_cfg = INPUT_KEY_SERVICE_DEFAULT_CONFIG();
     input_cfg.handle = set;
-    periph_service_handle_t input_ser = input_key_service_create(&input_cfg);
+    input_ser = input_key_service_create(&input_cfg);
     input_key_service_add_key(input_ser, input_key_info, INPUT_KEY_NUM);
     periph_service_set_callback(input_ser, input_key_service_cb, (void *)board_handle);
 
@@ -316,7 +319,7 @@ void sdcard_start(void * pvParameter){
 
     ESP_LOGI(SDCARDTAG, "[5.0] Set up event listener");
     audio_event_iface_cfg_t evt_cfg = AUDIO_EVENT_IFACE_DEFAULT_CFG();
-    audio_event_iface_handle_t evt = audio_event_iface_init(&evt_cfg);
+    evt = audio_event_iface_init(&evt_cfg);
 
     ESP_LOGI(SDCARDTAG, "[5.1] Listen for all pipeline events");
     audio_pipeline_set_listener(pipeline, evt);
@@ -335,6 +338,35 @@ void sdcard_start(void * pvParameter){
             ESP_LOGE(SDCARDTAG, "Event interface error : %d", ret);
         }
     }
+}
+
+void stop_sdcard(void){
+    ESP_LOGI(SDCARDTAG, "Stop audio_pipeline");
+    audio_pipeline_stop(pipeline);
+    audio_pipeline_wait_for_stop(pipeline);
+    audio_pipeline_terminate(pipeline);
+
+    audio_pipeline_unregister(pipeline, mp3_decoder);
+    audio_pipeline_unregister(pipeline, i2s_stream_writer);
+    audio_pipeline_unregister(pipeline, rsp_handle);
+
+    /* Terminate the pipeline before removing the listener */
+    audio_pipeline_remove_listener(pipeline);
+
+    /* Stop all peripherals before removing the listener */
+    esp_periph_set_stop_all(set);
+    audio_event_iface_remove_listener(esp_periph_set_get_event_iface(set), evt);
+
+    /* Make sure audio_pipeline_remove_listener & audio_event_iface_remove_listener are called before destroying event_iface */
+    audio_event_iface_destroy(evt);
+
+    /* Release all resources */
+    audio_pipeline_deinit(pipeline);
+    audio_element_deinit(i2s_stream_writer);
+    audio_element_deinit(mp3_decoder);
+    audio_element_deinit(rsp_handle);
+    esp_periph_set_destroy(set);
+    periph_service_destroy(input_ser);
 }
 
 //Starts task to start the sdcard

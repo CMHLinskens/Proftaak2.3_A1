@@ -36,6 +36,11 @@
 
 #define MP3_STREAM_URI "https://22533.live.streamtheworld.com/SKYRADIO.mp3"
 
+audio_pipeline_handle_t pipeline;
+audio_element_handle_t http_stream_reader, i2s_stream_writer, aac_decoder, mp3_decoder;
+esp_periph_set_handle_t set;
+audio_event_iface_handle_t evt;
+
 int _http_stream_event_handle(http_stream_event_msg_t *msg)
 {
     if (msg->event_id == HTTP_STREAM_RESOLVE_ALL_TRACKS) {
@@ -63,9 +68,6 @@ void radio_init(void)
 #else
     tcpip_adapter_init();
 #endif
-
-    audio_pipeline_handle_t pipeline;
-    audio_element_handle_t http_stream_reader, i2s_stream_writer, aac_decoder, mp3_decoder;
 
     esp_log_level_set("*", ESP_LOG_INFO);
     esp_log_level_set(RADIOTAG, ESP_LOG_DEBUG);
@@ -126,7 +128,7 @@ void radio_init(void)
 
     ESP_LOGI(RADIOTAG, "[ 3 ] Start and wait for Wi-Fi network");
     esp_periph_config_t periph_cfg = DEFAULT_ESP_PERIPH_SET_CONFIG();
-    esp_periph_set_handle_t set = esp_periph_set_init(&periph_cfg);
+    set = esp_periph_set_init(&periph_cfg);
     // periph_wifi_cfg_t wifi_cfg = {
     //     .ssid = CONFIG_EXAMPLE_WIFI_SSID,
     //     .password = CONFIG_EXAMPLE_WIFI_PASSWORD,
@@ -137,7 +139,7 @@ void radio_init(void)
 
     ESP_LOGI(RADIOTAG, "[ 4 ] Set up event listener");
     audio_event_iface_cfg_t evt_cfg = AUDIO_EVENT_IFACE_DEFAULT_CFG();
-    audio_event_iface_handle_t evt = audio_event_iface_init(&evt_cfg);
+    evt = audio_event_iface_init(&evt_cfg);
 
     ESP_LOGI(RADIOTAG, "[4.1] Listening event from all elements of pipeline");
     audio_pipeline_set_listener(pipeline, evt);
@@ -185,7 +187,9 @@ void radio_init(void)
             continue;
         }
     }
+}
 
+void stop_mp3Radio(void){
     ESP_LOGI(RADIOTAG, "[ 6 ] Stop audio_pipeline");
     audio_pipeline_stop(pipeline);
     audio_pipeline_wait_for_stop(pipeline);
