@@ -74,10 +74,20 @@ esp_err_t qwiic_twist_set_color(qwiic_twist_t* config, uint8_t r, uint8_t g, uin
 }
 
 esp_err_t set_volume_color(qwiic_twist_t* config){
-	int volume = getVolume();
-	int r = (255 * (volume/100));
-	int g = 0;
 
+	int volume = getVolume();
+
+	if(volume == NULL){
+		ESP_LOGE("Volume is not initiaised yet!")
+	}
+
+	//If volume is above 50, cap at 255.
+	int r = volume * 5.1 > 255 ? 255 : volume * 5.1;
+	int g = 255;
+
+	if(volume > 50){
+		g =- volume * 5.1 - 255;
+	}
 
 	qwiic_twist_set_color(config, r, g, 0);
 }
