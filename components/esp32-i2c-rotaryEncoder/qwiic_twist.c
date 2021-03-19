@@ -12,6 +12,7 @@ Author: P.S.M.Goossens
 #include "esp_event.h"
 #include "esp_log.h"
 #include "esp_attr.h"
+#include "sdcard_player.h"
 #include <string.h>
 
 static const char *TAG = "QWIIC_TWIST";
@@ -70,6 +71,15 @@ esp_err_t qwiic_twist_set_color(qwiic_twist_t* config, uint8_t r, uint8_t g, uin
 	xSemaphoreGive( config->xMutex );
 	
 	return err;
+}
+
+esp_err_t set_volume_color(qwiic_twist_t* config){
+	int volume = getVolume();
+	int r = (255 * (volume/100));
+	int g = 0;
+
+
+	qwiic_twist_set_color(config, r, g, 0);
 }
 
 esp_err_t qwiic_twist_get_color(qwiic_twist_t* config, uint8_t *r, uint8_t *g, uint8_t *b) {
@@ -237,6 +247,8 @@ void qwiic_twist_task(void* pvParameters)
 	uint8_t result = 0;
 	esp_err_t err = 0;
 	int16_t movement = 0;
+
+	set_volume_color(config);
 	
     while (config->task_enabled) {
 		
