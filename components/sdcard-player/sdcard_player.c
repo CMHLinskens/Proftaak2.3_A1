@@ -37,7 +37,7 @@ typedef struct sdcard_list {
 } sdcard_list_t;
 
 char** songList = NULL;
-int volume = 50;
+int volume = 30;
 audio_pipeline_handle_t pipeline;
 audio_element_handle_t i2s_stream_writer, mp3_decoder, fatfs_stream_reader, rsp_handle;
 playlist_operator_handle_t sdcard_list_handle = NULL;
@@ -311,8 +311,6 @@ void sdcard_start(void * pvParameter){
     get_all_songs_from_SDcard();
     
     //End configuration
-
-    getVolume();
 
     //Main loop, waits for functions to be called
     while (1) {
