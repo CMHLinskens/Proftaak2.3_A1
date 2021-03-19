@@ -25,8 +25,7 @@ void alarm_task(void*pvParameter){
                ESP_LOGI(ALARMTAG, "alarm going off");
           }
         }
-        vTaskDelay(1000 / portTICK_RATE_MS);
-        
+        vTaskDelay(10000 / portTICK_RATE_MS);
     }
     
 }
