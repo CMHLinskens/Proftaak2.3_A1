@@ -21,7 +21,6 @@
 #include "smbus.h"
 #include "qwiic_twist.h"
 #include "i2c-lcd1602.h"
-#include "lcd-menu.h"
 #include "clock-sync.h"
 #include "esp_wifi.h" 
 
@@ -31,9 +30,13 @@
 #include "lwip/netdb.h"
 #include "lwip/dns.h"
 
+//components that we made
+#include "lcd-menu.h"
 #include "wifi_connect.h"
-#include "sdcard_player.h"
+// #include "sdcard_player.h"
 #include "http_request.h"
+// #include "mp3-radio.h"
+#include "audio-board.h"
 
 #include "cJSON.h"
 
@@ -153,6 +156,10 @@ void rotary_task(void * pvParameter)
     vTaskDelete(NULL);
 }
 
+void radio_task(void * pvParmeter){
+    radio_init();
+}
+
 void app_main()
 {
     ESP_ERROR_CHECK( nvs_flash_init() );
@@ -165,7 +172,7 @@ void app_main()
      */
     ESP_ERROR_CHECK(example_connect());
     
-    start_sdcard_task();
+    start_audio_task();
     vTaskDelay(1000);
 
     //I^2C initialization + the I^2C port
