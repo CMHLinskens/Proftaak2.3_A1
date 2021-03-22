@@ -1,18 +1,15 @@
 #ifndef GOERTZEL_H
 #define GOERTZEL_H
 
+#include <stdbool.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/event_groups.h"
 #include "freertos/queue.h"
-#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-
-
 
 struct goertzel_data_t;
 // Callback
@@ -38,7 +35,7 @@ typedef struct
 } goertzel_data_t;
 
 
-goertzel_data_t** goertzel_malloc(int numOfConfigurations);
+int goertzel_malloc(int numOfConfigurations, goertzel_data_t** configs);
 
 esp_err_t goertzel_init_config(goertzel_data_t* config);
 esp_err_t goertzel_init_configs(goertzel_data_t** configs, int numOfConfigurations);

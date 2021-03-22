@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
 #include "freertos/FreeRTOS.h"
 #include "esp_log.h"
 #include "board.h"
@@ -12,9 +13,7 @@
 #include "i2s_stream.h"
 #include "raw_stream.h"
 #include "filter_resample.h"
-#include "goertzel.h"
-#include <math.h>
 
-void init_microphone(void* goertzel_callback);
+void init_microphone(void);
 
 #endif  // MICROPHONE_H

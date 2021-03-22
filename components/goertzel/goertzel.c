@@ -4,11 +4,10 @@
 
 static const char *TAG = "goertzel";
 
-
 // Allocate number of Goertzel filter
-goertzel_data_t** goertzel_malloc(int numOfConfigurations) {
+int goertzel_malloc(int numOfConfigurations, goertzel_data_t** configs) {
 
-	goertzel_data_t** configs;
+
 	configs = (goertzel_data_t**)malloc(numOfConfigurations*sizeof(goertzel_data_t*));
 	
 	if (configs == NULL) {
@@ -24,7 +23,7 @@ goertzel_data_t** goertzel_malloc(int numOfConfigurations) {
 		}
 
 	}
-	return configs;
+	return ESP_OK;
 	
 }
 

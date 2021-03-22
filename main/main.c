@@ -35,7 +35,6 @@
 #include "sdcard_player.h"
 #include "http_request.h"
 
-#include "board.h"
 #include "goertzel.h"
 #include "microphone.h"
 
@@ -51,7 +50,7 @@ void clicked(void);
 void pressed(void);
 void onMove(int16_t);
 
-static void http_get_task(void *pvParameters)
+void http_get_task(void *pvParameters)
 {
     api_request();
 }
@@ -72,7 +71,7 @@ void i2c_master_init(void)
                        I2C_MASTER_TX_BUF_LEN, 0);
 }
 
-static void component_init(void){
+void component_init(void){
     //INIT rotary encoder
     qwiic_twist_rotary = (qwiic_twist_t*)malloc(sizeof(*qwiic_twist_rotary));
     qwiic_twist_rotary->port = i2c_num;
@@ -143,19 +142,8 @@ void rotary_task(void * pvParameter)
     vTaskDelete(NULL);
 }
 
-static void goertzel_callback(struct goertzel_data_t* filter, float result)
-{
-    goertzel_data_t* filt = (goertzel_data_t*)filter;
-    float logVal = 10.0f * log10f(result);
-
-    if (logVal > 25.0f)
-    {
-        if (filt->target_frequency == 1120)
-        {
-            ESP_LOGI("epic TAG", "[Goertzel] Epic frequency detection callback: %d Hz", filt->target_frequency);
-        }
-        //ESP_LOGI(TAG, "[Goertzel] Callback Freq: %d Hz amplitude: %.2f", filt->target_frequency, 10.0f * log10f(result));
-    }
+void microphone_task(void * pvParameter ){
+    init_microphone();
 }
 
 void app_main()
@@ -170,7 +158,8 @@ void app_main()
      */
     ESP_ERROR_CHECK(example_connect());
 
-    init_microphone(&goertzel_callback);
+    xTaskCreate(&microphone_task, "init_microphone_task", 4096, NULL, 5, NULL);
+    vTaskDelay(1000);
     
     //start_sdcard_task();
     //vTaskDelay(1000);
@@ -184,6 +173,6 @@ void app_main()
 
     //xTaskCreate(&menu_task, "menu_task", 4096, NULL, 5, NULL);
     //xTaskCreate(&clock_task, "clock_task", 4096, NULL, 5, NULL);
-    xTaskCreate(&http_get_task, "http_get_task", 4096, NULL, 5, NULL);
+    //xTaskCreate(&http_get_task, "http_get_task", 4096, NULL, 5, NULL);
 }
 
