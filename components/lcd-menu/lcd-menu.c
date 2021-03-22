@@ -4,8 +4,10 @@
 #include "freertos/FreeRTOS.h"
 #include "esp_log.h"
 #include <stdio.h>
+#include "cJSON.h"
 
 #include "clock-sync.h"
+#include "http_request.h"
 #include "sdcard_player.h"
 
 #define MENUTAG "menu"
@@ -154,6 +156,21 @@ void menu_displayTime(char *time)
     i2c_lcd1602_write_string(_lcd_info, time);
 }
 
+void menu_displayTemperature(char* response){
+
+    cJSON *root = cJSON_Parse(response);
+    cJSON *maan = cJSON_GetObjectItem(root, "main");
+    double temp = cJSON_GetObjectItem(maan,"temp")->valuedouble;
+    int temp_in_c = (int) temp;
+
+
+    char temp_in_string[50] = {0};
+    sprintf(temp_in_string,"%dC",temp_in_c);
+
+    i2c_lcd1602_move_cursor(_lcd_info, 0, 0);
+    i2c_lcd1602_write_string(_lcd_info, &temp_in_string[0]);
+}
+
 // Displays menu all lines from menu item on lcd 
 void menu_displayMenuItem(menu_t *menu, int menuItemId)
 {
@@ -275,6 +292,7 @@ void displaySongs(){
 
 // Default enter event, displays time
 void enterMenuItem(void) {
+    menu_displayTemperature(http_request_get_response());
     menu_displayTime(clock_getTimeString());
 }
 // Radio volume enter event
