@@ -30,17 +30,6 @@ static const int GOERTZEL_DETECT_FREQUENCIES[GOERTZEL_N_DETECTION] = {
 	1249
 };
 
-
-// static void goertzel_callback(struct goertzel_data_t* filter, float result) {
-// 	goertzel_data_t* filt = (goertzel_data_t*)filter;
-// 	float logVal = 10.0f*log10f(result);
-	
-// 	// Detection filter. Only above 25 dB(A)
-// 	if (logVal > 25.0f) {
-// 		ESP_LOGI(TAG, "[Goertzel] Callback Freq: %d Hz amplitude: %.2f", filt->target_frequency,10.0f*log10f(result));
-// 	}
-// }
-
 static void goertzel_callback(struct goertzel_data_t* filter, float result)
 {
     goertzel_data_t* filt = (goertzel_data_t*)filter;
@@ -50,9 +39,9 @@ static void goertzel_callback(struct goertzel_data_t* filter, float result)
     {
         if (filt->target_frequency == 1120)
         {
-            ESP_LOGI(MICROPHONETAG, "[Goertzel] Epic frequency detection callback: %d Hz", filt->target_frequency);
+            ESP_LOGI(MICROPHONETAG, "Frequency detection callback: %d Hz", filt->target_frequency);
         }
-        //ESP_LOGI(TAG, "[Goertzel] Callback Freq: %d Hz amplitude: %.2f", filt->target_frequency, 10.0f * log10f(result));
+        ESP_LOGI(MICROPHONETAG, " Callback Freq: %d Hz amplitude: %.2f", filt->target_frequency, 10.0f * log10f(result));
     }
 }
 
@@ -103,14 +92,9 @@ void init_microphone()
 
     ESP_LOGI(MICROPHONETAG, "[ 4 ] Link elements together [codec_chip]-->i2s_stream-->filter-->raw-->[Goertzel]");
     audio_pipeline_link(pipeline, (const char *[]) {"i2s", "filter", "raw"}, 3);
-	
+
    	// Config goertzel filters
-    goertzel_data_t** configs = NULL;
-	if(goertzel_malloc(GOERTZEL_N_DETECTION,configs) == ESP_OK) // Alloc mem
-	{
-        ESP_LOGE(MICROPHONETAG,"ERROR when allocating memory to goertzel");
-        return;
-    }
+    goertzel_data_t** configs = goertzel_malloc(GOERTZEL_N_DETECTION); // Alloc mem
 
     // Apply configuration for all filters
 	for (int i = 0; i < GOERTZEL_N_DETECTION; i++) {

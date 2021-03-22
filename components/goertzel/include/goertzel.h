@@ -35,7 +35,7 @@ typedef struct
 } goertzel_data_t;
 
 
-int goertzel_malloc(int numOfConfigurations, goertzel_data_t** configs);
+goertzel_data_t** goertzel_malloc(int numOfConfigurations);
 
 esp_err_t goertzel_init_config(goertzel_data_t* config);
 esp_err_t goertzel_init_configs(goertzel_data_t** configs, int numOfConfigurations);

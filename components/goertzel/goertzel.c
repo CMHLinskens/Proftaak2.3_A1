@@ -2,29 +2,28 @@
 #include "esp_log.h"
 #include <math.h>
 
-static const char *TAG = "goertzel";
+#define GOERTZELTAG "goertzel"
 
 // Allocate number of Goertzel filter
-int goertzel_malloc(int numOfConfigurations, goertzel_data_t** configs) {
+goertzel_data_t** goertzel_malloc(int numOfConfigurations) {
 
-
+    goertzel_data_t** configs;
 	configs = (goertzel_data_t**)malloc(numOfConfigurations*sizeof(goertzel_data_t*));
 	
 	if (configs == NULL) {
-		ESP_LOGE(TAG, "Cannot malloc goertzel configuration");
-		return ESP_FAIL;
+		ESP_LOGE(GOERTZELTAG, "Cannot malloc goertzel configuration");
+		return;
 	}
 	
 	for (int i = 0; i < numOfConfigurations; i++) {
 		configs[i] = (goertzel_data_t*)malloc(sizeof(goertzel_data_t));
 		if (configs[i] == NULL) {
-			ESP_LOGE(TAG, "Cannot malloc goertzel configuration");
-			return ESP_FAIL;
+			ESP_LOGE(GOERTZELTAG, "Cannot malloc goertzel configuration");
+			return;
 		}
 
 	}
-	return ESP_OK;
-	
+	return configs;
 }
 
 // Initialize goertzel configuration per configuration
@@ -50,7 +49,7 @@ esp_err_t goertzel_init_configs(goertzel_data_t** configs, int numOfConfiguratio
 	for (int i = 0; i < numOfConfigurations; i++) {
 		esp_err_t ret = goertzel_init_config(configs[i]);
 		if (ret != ESP_OK) {
-			ESP_LOGE(TAG, "Cannot create Goertzel settings");
+			ESP_LOGE(GOERTZELTAG, "Cannot create Goertzel settings");
 			return ret;
 		}
 	}
@@ -88,7 +87,6 @@ esp_err_t goertzel_proces(goertzel_data_t** configs, int numOfConfigurations, in
 			currFilter->q2 = currFilter->q1;
 			currFilter->q1 = currFilter->q0;
 			
-			
 			// Check if we have the amount of samples
 			currFilter->sample_counter++;
 			if (currFilter->sample_counter == currFilter->samples) {
@@ -115,11 +113,11 @@ esp_err_t goertzel_proces(goertzel_data_t** configs, int numOfConfigurations, in
 // Free all goertzel configurations
 esp_err_t goertzel_free(goertzel_data_t** configs) {
 	if (configs != NULL && (*configs != NULL)) {
-        ESP_LOGD(TAG, "free goertzel_data_t %p", *configs);
+        ESP_LOGD(GOERTZELTAG, "free goertzel_data_t %p", *configs);
         free(*configs);
         *configs = NULL;
     } else {
-        ESP_LOGE(TAG, "free goertzel_data_t failed");
+        ESP_LOGE(GOERTZELTAG, "free goertzel_data_t failed");
 		return ESP_FAIL;
     }
 	
