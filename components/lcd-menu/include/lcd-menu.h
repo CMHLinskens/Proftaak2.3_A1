@@ -71,8 +71,8 @@ typedef struct {
 } menu_t;
 
 void i2c_master_init(void);
-i2c_lcd1602_info_t * lcd_init();
-menu_t *menu_createMenu();
+i2c_lcd1602_info_t * lcd_init(void);
+menu_t *menu_createMenu(void);
 void menu_freeMenu(menu_t *menu);
 void menu_displayTime(char *time);
 void menu_displayWelcomeMessage(menu_t *menu);

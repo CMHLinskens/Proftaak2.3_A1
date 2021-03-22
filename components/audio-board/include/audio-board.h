@@ -11,19 +11,18 @@
 
 char *radioChannelNames[AMOUNT_OF_RADIO_CHANNELS + 1];
 
-audio_pipeline_handle_t getPipeline();
-int getVolume();
+audio_pipeline_handle_t getPipeline(void);
+int getVolume(void);
 
 // SD Card
 void sdcard_url_save_cb(void *user_data, char *url);
-void pauseSound();
-void resumeSound();
+void pauseSound(void);
+void resumeSound(void);
 void play_song_with_ID(char* url);
-void get_all_songs_from_SDcard();
-void audio_start(void * pvParameter);
+void get_all_songs_from_SDcard(void);
+void audio_start(void);
 void stop_audio(void);
-void start_audio_task();
-char **getSongList();
+char **getSongList(void);
 
 // Radio
 int _http_stream_event_handle(http_stream_event_msg_t *msg);

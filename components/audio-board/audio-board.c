@@ -70,6 +70,7 @@ char *radioChannels[AMOUNT_OF_RADIO_CHANNELS] = {
                         "https://icecast-qmusicnl-cdp.triple-it.nl/Qmusic_nl_live_96.mp3"
                         };
 
+//Event handler for all the radio messages.
 int _http_stream_event_handle(http_stream_event_msg_t *msg)
 {
     if (msg->event_id == HTTP_STREAM_RESOLVE_ALL_TRACKS) {
@@ -85,6 +86,7 @@ int _http_stream_event_handle(http_stream_event_msg_t *msg)
     return ESP_OK;
 }
 
+//Gets the pipeline object;
 audio_pipeline_handle_t getPipeline(){
     return pipeline;
 }
@@ -286,7 +288,7 @@ char** getSongList(){
 }
 
 // Starts the audio board
-void audio_start(void * pvParameter){
+void audio_start(){
 
     esp_err_t err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES) {
@@ -316,12 +318,8 @@ void audio_start(void * pvParameter){
     sdcard_scan(sdcard_url_save_cb, "/sdcard", 0, (const char *[]) {"mp3"}, 1, sdcard_list_handle);
 
     ESP_LOGI(AUDIOBOARDTAG, "[ 2 ] Start codec chip");
-     //comment again
     audio_board_handle_t board_handle = audio_board_init();
     audio_hal_ctrl_codec(board_handle->audio_hal, AUDIO_HAL_CODEC_MODE_DECODE, AUDIO_HAL_CTRL_START);
-
-    // audio_board_handle_t board_handle;
-    // audio_board_handle_init(board_handle);
 
     ESP_LOGI(AUDIOBOARDTAG, "[ 3 ] Create and start input key service");
     input_key_service_info_t input_key_info[] = INPUT_KEY_DEFAULT_INFO();
@@ -332,23 +330,17 @@ void audio_start(void * pvParameter){
     periph_service_set_callback(input_ser, input_key_service_cb, (void *)board_handle);
 
     ESP_LOGI(AUDIOBOARDTAG, "[4.0] Create audio pipeline for playback");
-     //comment again
     audio_pipeline_cfg_t pipeline_cfg = DEFAULT_AUDIO_PIPELINE_CONFIG();
     pipeline = audio_pipeline_init(&pipeline_cfg);
-    
-    // audio_pipeline_handle_init(pipeline);
     mem_assert(pipeline);
 
     ESP_LOGI(AUDIOBOARDTAG, "[4.1] Create i2s stream to write data to codec chip");
-    //comment again
     i2s_stream_cfg_t i2s_cfg = I2S_STREAM_CFG_DEFAULT();
     i2s_cfg.i2s_config.sample_rate = 48000;
     i2s_cfg.type = AUDIO_STREAM_WRITER;
     i2s_stream_writer = i2s_stream_init(&i2s_cfg);
-    
-    // i2s_stream_handle_init(i2s_stream_writer);
 
-     ESP_LOGI(AUDIOBOARDTAG, "[4.2] Create http stream to read data");
+    ESP_LOGI(AUDIOBOARDTAG, "[4.2] Create http stream to read data");
     http_stream_cfg_t http_cfg = HTTP_STREAM_CFG_DEFAULT();
     http_cfg.event_handle = _http_stream_event_handle;
     http_cfg.type = AUDIO_STREAM_READER;
@@ -356,11 +348,8 @@ void audio_start(void * pvParameter){
     http_stream_reader = http_stream_init(&http_cfg);
 
     ESP_LOGI(AUDIOBOARDTAG, "[4.3] Create mp3 decoder to decode mp3 file");
-    //comment again
     mp3_decoder_cfg_t mp3_cfg = DEFAULT_MP3_DECODER_CONFIG();
     mp3_decoder = mp3_decoder_init(&mp3_cfg);
-
-    // mp3_decoder_handle_init(mp3_decoder_handle_init);
 
     ESP_LOGI(AUDIOBOARDTAG, "[4.4] Create resample filter");
     rsp_filter_cfg_t rsp_cfg = DEFAULT_RESAMPLE_FILTER_CONFIG();
@@ -377,26 +366,13 @@ void audio_start(void * pvParameter){
     ESP_LOGI(AUDIOBOARDTAG, "[4.6] Register all elements to audio pipeline");
     audio_pipeline_register(pipeline, fatfs_stream_reader, "file");
     audio_pipeline_register(pipeline, rsp_handle, "filter");
-    
-    //comment again
     audio_pipeline_register(pipeline, mp3_decoder, "mp3");
     audio_pipeline_register(pipeline, i2s_stream_writer, "i2s");
-    
     audio_pipeline_register(pipeline, http_stream_reader, "http");
 
-    //register_duplicate_elements();
-
     ESP_LOGI(AUDIOBOARDTAG, "[4.7] Link it together [sdcard]-->fatfs_stream-->mp3_decoder-->resample-->i2s_stream-->[codec_chip]");
-    
-     //TODO needs to be called only when you want to use the sdcard. So only when in the sd menu.
     const char *link_tag[4] = {"file", "mp3", "filter", "i2s"};
     audio_pipeline_link(pipeline, &link_tag[0], 4);
-
-    // ESP_LOGI(AUDIOBOARDTAG, "[4.7] Link it together http_stream-->mp3_decoder-->i2s_stream-->[codec_chip]");
-    
-    // //TODO needs to be called only when you want to use the radio. So only when in the radio menu. 
-    // const char *link_tag[3] = {"http", "mp3", "i2s"};
-    // audio_pipeline_link(pipeline, &link_tag[0], 3);
 
     ESP_LOGI(AUDIOBOARDTAG, "[5.0] Set up event listener");
     audio_event_iface_cfg_t evt_cfg = AUDIO_EVENT_IFACE_DEFAULT_CFG();
@@ -436,28 +412,23 @@ void stop_audio(void){
     audio_pipeline_unregister(pipeline, i2s_stream_writer);
     audio_pipeline_unregister(pipeline, rsp_handle);
 
-    /* Terminate the pipeline before removing the listener */
+    // Terminate the pipeline before removing the listener
     audio_pipeline_remove_listener(pipeline);
 
-    /* Stop all peripherals before removing the listener */
+    // Stop all peripherals before removing the listener 
     esp_periph_set_stop_all(set);
     audio_event_iface_remove_listener(esp_periph_set_get_event_iface(set), evt);
 
-    /* Make sure audio_pipeline_remove_listener & audio_event_iface_remove_listener are called before destroying event_iface */
+    // Make sure audio_pipeline_remove_listener & audio_event_iface_remove_listener are called before destroying event_iface 
     audio_event_iface_destroy(evt);
 
-    /* Release all resources */
+    // Release all resources 
     audio_pipeline_deinit(pipeline);
     audio_element_deinit(i2s_stream_writer);
     audio_element_deinit(mp3_decoder);
     audio_element_deinit(rsp_handle);
     esp_periph_set_destroy(set);
     periph_service_destroy(input_ser);
-}
-
-//Starts task to start the sdcard
-void start_audio_task(){
-    xTaskCreate(&audio_start, "audio start", 4096, NULL, 5, NULL);
 }
 
 void play_radio(int radioChannel){
