@@ -39,6 +39,8 @@
 #include "audio-board.h"
 
 #include "cJSON.h"
+#include "goertzel.h"
+#include "microphone.h"
 
 #define MAINTAG "main"
 #define CLOCKTAG "clock"
@@ -53,7 +55,7 @@ void clicked(void);
 void pressed(void);
 void onMove(int16_t);
 
-static void http_get_task(void *pvParameters)
+void http_get_task(void *pvParameters)
 {
     while(1){
       api_request();  
@@ -151,8 +153,8 @@ void rotary_task(void * pvParameter)
     vTaskDelete(NULL);
 }
 
-void radio_task(void * pvParmeter){
-    radio_init();
+void microphone_task(void * pvParameter ){
+    init_microphone();
 }
 
 void app_main()
@@ -166,6 +168,9 @@ void app_main()
      * examples/protocols/README.md for more information about this function.
      */
     ESP_ERROR_CHECK(example_connect());
+
+    xTaskCreate(&microphone_task, "init_microphone_task", 4096, NULL, 5, NULL);
+    vTaskDelay(1000);
     
     start_audio_task();
     vTaskDelay(1000);

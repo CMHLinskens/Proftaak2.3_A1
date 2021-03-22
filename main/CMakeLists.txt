@@ -14,5 +14,7 @@ set(COMPONENT_REQUIRES audio_pipeline
                        clock-sync 
                        http_request
                        json
-                       audio-board)
+                       audio-board
+                       goertzel
+                       microphone)
 register_component()
