@@ -72,23 +72,23 @@ menu_t *menu_createMenu()
 
     // Temporary array of menu items to copy from
     menu_item_t menuItems[MAX_MENU_ITEMS] = {
-        {MENU_MAIN_ID_0, {MENU_RADIO_ID_0, MENU_MAIN_ID_4, MENU_MAIN_ID_1}, {"MAIN MENU", "Radio"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
-        {MENU_MAIN_ID_1, {MENU_SD_ID_0, MENU_MAIN_ID_0, MENU_MAIN_ID_2}, {"MAIN MENU", "SD"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
-        {MENU_MAIN_ID_2, {MENU_MAIN_ID_2, MENU_MAIN_ID_1, MENU_MAIN_ID_3}, {"MAIN MENU", "Lights"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
-        {MENU_MAIN_ID_3, {MENU_MAIN_ID_3, MENU_MAIN_ID_2, MENU_MAIN_ID_4}, {"MAIN MENU", "Agenda"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
-        {MENU_MAIN_ID_4, {MENU_MAIN_ID_4, MENU_MAIN_ID_3, MENU_MAIN_ID_0}, {"MAIN MENU", "Settings"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_MAIN_ID_0, {MENU_RADIO_ID_0, MENU_MAIN_ID_4, MENU_MAIN_ID_1}, {"*MAIN MENU*", "Radio"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_MAIN_ID_1, {MENU_SD_ID_0, MENU_MAIN_ID_0, MENU_MAIN_ID_2}, {"*MAIN MENU*", "SD"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_MAIN_ID_2, {MENU_MAIN_ID_2, MENU_MAIN_ID_1, MENU_MAIN_ID_3}, {"*MAIN MENU*", "Lights"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_MAIN_ID_3, {MENU_MAIN_ID_3, MENU_MAIN_ID_2, MENU_MAIN_ID_4}, {"*MAIN MENU*", "Agenda"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_MAIN_ID_4, {MENU_MAIN_ID_4, MENU_MAIN_ID_3, MENU_MAIN_ID_0}, {"*MAIN MENU*", "Settings"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
         
-        {MENU_RADIO_ID_0, {MENU_RADIO_ID_4, MENU_RADIO_ID_2, MENU_RADIO_ID_1}, {"RADIO", "Channel"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
-        {MENU_RADIO_ID_1, {MENU_RADIO_ID_3, MENU_RADIO_ID_0, MENU_RADIO_ID_2}, {"RADIO", "Volume"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
-        {MENU_RADIO_ID_2, {MENU_MAIN_ID_0, MENU_RADIO_ID_1, MENU_RADIO_ID_0}, {"RADIO", "Back"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_RADIO_ID_0, {MENU_RADIO_ID_4, MENU_RADIO_ID_2, MENU_RADIO_ID_1}, {"*RADIO*", "Channel"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_RADIO_ID_1, {MENU_RADIO_ID_3, MENU_RADIO_ID_0, MENU_RADIO_ID_2}, {"*RADIO*", "Volume"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_RADIO_ID_2, {MENU_MAIN_ID_0, MENU_RADIO_ID_1, MENU_RADIO_ID_0}, {"*RADIO*", "Back"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
         
-        {MENU_RADIO_ID_3, {MENU_RADIO_ID_1, MENU_RADIO_ID_3, MENU_RADIO_ID_3}, {"VOLUME", " ", "", ""}, {NULL, decreaseVolume, increaseVolume}, enterRadioVolume, NULL},
-        {MENU_RADIO_ID_4, {MENU_RADIO_ID_0, MENU_RADIO_ID_4, MENU_RADIO_ID_4}, {"CHANNEL", " ", "", ""}, {NULL, decreaseChannel, increaseChannel}, enterRadioChannel, NULL},
+        {MENU_RADIO_ID_3, {MENU_RADIO_ID_1, MENU_RADIO_ID_3, MENU_RADIO_ID_3}, {"*VOLUME*", " ", "", ""}, {NULL, decreaseVolume, increaseVolume}, enterRadioVolume, NULL},
+        {MENU_RADIO_ID_4, {MENU_RADIO_ID_0, MENU_RADIO_ID_4, MENU_RADIO_ID_4}, {"*CHANNEL*", " ", "", ""}, {NULL, decreaseChannel, increaseChannel}, enterRadioChannel, NULL},
 
-        {MENU_SD_ID_0, {MENU_SD_ID_2, MENU_SD_ID_1, MENU_SD_ID_1}, {"SD", "Play"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
-        {MENU_SD_ID_1, {MENU_MAIN_ID_1, MENU_SD_ID_0, MENU_SD_ID_0}, {"SD", "Back"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_SD_ID_0, {MENU_SD_ID_2, MENU_SD_ID_1, MENU_SD_ID_1}, {"*SD*", "Play"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_SD_ID_1, {MENU_MAIN_ID_1, MENU_SD_ID_0, MENU_SD_ID_0}, {"*SD*", "Back"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
 
-        {MENU_SD_ID_2, {MENU_SD_ID_2, MENU_SD_ID_2, MENU_SD_ID_2}, {"SD", " ", "", ""}, {okPressSDPlay, previousSong, nextSong}, enterSDPlay, NULL}
+        {MENU_SD_ID_2, {MENU_SD_ID_2, MENU_SD_ID_2, MENU_SD_ID_2}, {"*SD*", " ", "", ""}, {okPressSDPlay, previousSong, nextSong}, enterSDPlay, NULL}
     };
     
     _lcd_info = lcd_init();
@@ -170,7 +170,8 @@ void menu_displayMenuItem(menu_t *menu, int menuItemId)
 // Writes an menu item on given line
 void menu_writeScrollMenuItem(i2c_lcd1602_info_t *lcd_info, char* text, int line)
 {
-    int textPosition = 10 - ((strlen(text) + 1) / 2);
+    //int textPosition = 5 - ((strlen(text) + 1) / 2);
+    int textPosition = 0;
     i2c_lcd1602_move_cursor(lcd_info, textPosition, line);
     i2c_lcd1602_write_string(lcd_info, text);
 }
@@ -199,7 +200,7 @@ void menu_displayScrollMenu(menu_t *menu)
 
     // Display cursor
     const char *cursor = "<";
-    i2c_lcd1602_move_cursor(menu->lcd_info, 17, 2);
+    i2c_lcd1602_move_cursor(menu->lcd_info, 10, 2);
     i2c_lcd1602_write_string(menu->lcd_info, cursor);
 }
 
@@ -235,24 +236,26 @@ void menu_handleKeyEvent(menu_t *menu, int key)
     }
 }
 
+static int songsSDCard = 6;
+
 // Displays songsList in a scroll menu form
 void displaySongs(){
     i2c_lcd1602_clear(_lcd_info);
 
     // Display scroll menu title
-    char *menuText = "SD";
+    char *menuText = "*SD*";
     menu_writeScrollMenuItem(_lcd_info, menuText, 0);
 
     // Loop back around if songIndex exeeds songList size
-    if(songIndex + 1 > 25){
+    if(songIndex + 1 > songsSDCard + 1){
         songIndex = 0;
     } else if (songIndex - 1 < -1) {
-        songIndex = 24;
+        songIndex = songsSDCard;
     }
 
     // Get the song index before current selected song
     // if below 0 loop back to top
-    int previousSongIndex = songIndex - 1 < 0? 24 : songIndex - 1;
+    int previousSongIndex = songIndex - 1 < 0? songsSDCard : songIndex - 1;
     menuText = songList[previousSongIndex];
     menu_writeScrollMenuItem(_lcd_info, menuText, 1);
 
@@ -261,13 +264,13 @@ void displaySongs(){
 
     // Get the song index after current selected song
     // if after 24 loop back to beginning
-    int nextSongIndex = songIndex + 1 > 24? 0 : songIndex + 1;
+    int nextSongIndex = songIndex + 1 > songsSDCard? 0 : songIndex + 1;
     menuText = songList[nextSongIndex];
     menu_writeScrollMenuItem(_lcd_info, menuText, 3);  
     
     // Display cursor
     const char *cursor = "<";
-    i2c_lcd1602_move_cursor(_lcd_info, 17, 2);
+    i2c_lcd1602_move_cursor(_lcd_info, 10, 2);
     i2c_lcd1602_write_string(_lcd_info, cursor);
 
     menu_displayTime(clock_getTimeString());
