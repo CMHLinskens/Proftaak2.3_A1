@@ -100,4 +100,6 @@ esp_err_t qwiic_twist_timeSinceLastPress(qwiic_twist_t* config, uint16_t* result
 
 esp_err_t qwiic_twist_get_version(qwiic_twist_t* config, uint16_t* version);
 
+void changeRGB(qwiic_twist_t*, int R, int G, int B);
+
 #endif
