@@ -6,6 +6,7 @@
 #include <stdio.h>
 
 #include "clock-sync.h"
+// #include "audio-board.h"
 #include "sdcard_player.h"
 
 #define MENUTAG "menu"

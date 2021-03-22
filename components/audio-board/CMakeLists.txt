@@ -1,7 +1,12 @@
 set(COMPONENT_ADD_INCLUDEDIRS include)
 set(COMPONENT_SRCS "audio-board.c")
-set(COMPONENT_REQUIRES audio_hal
-                       audio_pipeline
-                       esp_peripherals 
-                       audio_board)
+set(COMPONENT_REQUIRES  audio_hal
+                        audio_pipeline
+                        esp_peripherals 
+                        audio_board
+                        nvs_flash
+                        audio_stream
+                        esp-adf-libs
+                        input_key_service 
+                        playlist )
 register_component()

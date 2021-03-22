@@ -10,9 +10,8 @@ set(COMPONENT_REQUIRES audio_pipeline
                        esp32-i2c-lcd1602 
                        esp32-i2c-rotaryEncoder 
                        lcd-menu 
-                       sdcard-player 
                        wifi_connect 
                        clock-sync 
                        http_request
-                       mp3-radio)
+                       sdcard-player)
 register_component()

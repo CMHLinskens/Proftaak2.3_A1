@@ -1,10 +1,26 @@
-#ifndef audio_board_H
-#define audio_board_H
+// #ifndef audio_board_H
+// #define audio_board_H
 
-void audio_board_handle_init(audio_board_handle_t *new_board_handle);
-void audio_pipeline_handle_init(audio_pipeline_handle_t *new_pipeline_handle);
-void i2s_stream_handle_init(audio_element_handle_t *new_i2s_stream_writer);
-void mp3_decoder_handle_init(audio_element_handle_t *new_mp3_decoder);
-void register_duplicate_elements();
+// #include "sdcard_list.h"
+// #include "sdcard_scan.h"
 
-#endif
+// #include "http_stream.h"
+
+// // SD Card
+// void sdcard_url_save_cb(void *user_data, char *url);
+// void pauseSound();
+// void resumeSound();
+// void play_song_with_ID(char* url);
+// void get_all_songs_from_SDcard();
+// void audio_start(void * pvParameter);
+// void stop_audio(void);
+// void start_audio_task();
+// char **getSongList();
+
+// // Radio
+// int _http_stream_event_handle(http_stream_event_msg_t *msg);
+// void radio_init(void);
+// void play_radio(void);
+// void stop_radio(void);
+
+// #endif
