@@ -102,7 +102,7 @@ void menu_task(void * pvParameter)
 
     while(1)
     {
-        vTaskDelay(1000 / portTICK_RATE_MS);
+        vTaskDelay(2500 / portTICK_RATE_MS);
     }
 
     menu_freeMenu(menu);

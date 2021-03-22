@@ -7,7 +7,8 @@ set(COMPONENT_REQUIRES audio_pipeline
                        playlist 
                        nvs_flash
                        audio-board
-                       esp-adf-libs)
+                       esp-adf-libs
+                       clock-sync)
 register_component()
 
 

@@ -13,5 +13,6 @@
 // void stop_sdcard(void);
 // void start_sdcard_task();
 // char **getSongList();
+// void sayTime();
 
 // #endif

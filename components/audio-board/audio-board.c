@@ -3,7 +3,6 @@
 #include "freertos/task.h"
 #include "esp_log.h"
 #include "audio_element.h"
-#include "audio_pipeline.h"
 #include "audio_event_iface.h"
 #include "audio_common.h"
 #include "fatfs_stream.h"
@@ -83,6 +82,10 @@ int _http_stream_event_handle(http_stream_event_msg_t *msg)
         return http_stream_fetch_again(msg->el);
     }
     return ESP_OK;
+}
+
+audio_pipeline_handle_t getPipeline(){
+    return pipeline;
 }
 
 //Handles touchpad events

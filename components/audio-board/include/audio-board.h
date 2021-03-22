@@ -5,10 +5,13 @@
 #include "sdcard_scan.h"
 
 #include "http_stream.h"
+#include "audio_pipeline.h"
 
 #define AMOUNT_OF_RADIO_CHANNELS 3
 
 char *radioChannelNames[AMOUNT_OF_RADIO_CHANNELS + 1];
+
+audio_pipeline_handle_t getPipeline();
 
 // SD Card
 void sdcard_url_save_cb(void *user_data, char *url);

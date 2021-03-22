@@ -1,26 +1,27 @@
 // //Control of the SD card. Plays mp3 files
 
-// #include <string.h>
-// #include "freertos/FreeRTOS.h"
-// #include "freertos/task.h"
-// #include "esp_log.h"
-// #include "audio_element.h"
-// #include "audio_pipeline.h"
-// #include "audio_event_iface.h"
-// #include "audio_common.h"
-// #include "fatfs_stream.h"
-// #include "i2s_stream.h"
-// #include "mp3_decoder.h"
-// #include "filter_resample.h"
-// #include "esp_peripherals.h"
-// #include "periph_sdcard.h"
-// #include "periph_touch.h"
-// #include "periph_button.h"
-// #include "input_key_service.h"
-// #include "periph_adc_button.h"
-// #include "board.h"
-// #include "sdcard_list.h"
-// #include "sdcard_scan.h"
+#include <string.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "esp_log.h"
+#include "audio_element.h"
+#include "audio_pipeline.h"
+#include "audio_event_iface.h"
+#include "audio_common.h"
+#include "fatfs_stream.h"
+#include "i2s_stream.h"
+#include "mp3_decoder.h"
+#include "filter_resample.h"
+#include "esp_peripherals.h"
+#include "periph_sdcard.h"
+#include "periph_touch.h"
+#include "periph_button.h"
+#include "input_key_service.h"
+#include "periph_adc_button.h"
+#include "board.h"
+#include "sdcard_list.h"
+#include "sdcard_scan.h"
+#include "clock-sync.h"
 
 // #include "audio-board.h"
 
@@ -340,36 +341,7 @@
 //     }
 // }
 
-// // void stop_sdcard(void){
-// //     ESP_LOGI(SDCARDTAG, "Stop audio_pipeline");
-// //     audio_pipeline_stop(pipeline);
-// //     audio_pipeline_wait_for_stop(pipeline);
-// //     audio_pipeline_terminate(pipeline);
-
-// //     audio_pipeline_unregister(pipeline, mp3_decoder);
-// //     audio_pipeline_unregister(pipeline, i2s_stream_writer);
-// //     audio_pipeline_unregister(pipeline, rsp_handle);
-
-// //     /* Terminate the pipeline before removing the listener */
-// //     audio_pipeline_remove_listener(pipeline);
-
-// //     /* Stop all peripherals before removing the listener */
-// //     esp_periph_set_stop_all(set);
-// //     audio_event_iface_remove_listener(esp_periph_set_get_event_iface(set), evt);
-
-// //     /* Make sure audio_pipeline_remove_listener & audio_event_iface_remove_listener are called before destroying event_iface */
-// //     audio_event_iface_destroy(evt);
-
-// //     /* Release all resources */
-// //     audio_pipeline_deinit(pipeline);
-// //     audio_element_deinit(i2s_stream_writer);
-// //     audio_element_deinit(mp3_decoder);
-// //     audio_element_deinit(rsp_handle);
-// //     esp_periph_set_destroy(set);
-// //     periph_service_destroy(input_ser);
-// // }
-
-// //Starts task to start the sdcard
+//Starts task to start the sdcard
 // void start_sdcard_task(){
 //     xTaskCreate(&sdcard_start, "sdcard player", 4096, NULL, 5, NULL);
 // }
