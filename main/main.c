@@ -57,12 +57,7 @@ static void http_get_task(void *pvParameters)
 {
     while(1){
       api_request();  
-      cJSON *root = cJSON_Parse(http_request_get_response());
-      cJSON *maan = cJSON_GetObjectItem(root, "main");
-      double temp = cJSON_GetObjectItem(maan,"temp")->valuedouble;
-      printf("%s",http_request_get_response());
-      ESP_LOGI(APITAG,"temp: %f",temp);
-      vTaskDelay(10000/portTICK_RATE_MS);
+      vTaskDelay(60000/portTICK_RATE_MS);
     }
     
 }

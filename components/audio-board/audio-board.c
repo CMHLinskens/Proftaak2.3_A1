@@ -199,24 +199,26 @@ void resumeSound(){
 
 //Plays audio with given ID/URL
 void play_song_with_ID(char* url){
-    if(playingRadio)
-        stop_radio();
-
     //Extends the URL so the SD card can find it
     char extendedUrl[80];
     strcpy(extendedUrl, "file://sdcard/");
     strcat(extendedUrl, url);
     strcat(extendedUrl, ".mp3");
     
-    //Stops audio, terminates current pipeline
-    audio_pipeline_stop(pipeline);
-    audio_pipeline_wait_for_stop(pipeline);
-    audio_pipeline_terminate(pipeline);
+    if(playingRadio){
+        stop_radio();
+    } else {
+        //Stops audio, terminates current pipeline
+        audio_pipeline_stop(pipeline);
+        audio_pipeline_wait_for_stop(pipeline);
+        audio_pipeline_terminate(pipeline);
+    }
 
     //Resets pipeline and starts the new audio file
     audio_element_set_uri(fatfs_stream_reader, extendedUrl);
     audio_pipeline_reset_ringbuffer(pipeline);
     audio_pipeline_reset_elements(pipeline);
+    audio_pipeline_change_state(pipeline, AEL_STATE_INIT);
     audio_pipeline_run(pipeline);
 
     ESP_LOGI(AUDIOBOARDTAG, "Song %s is playing", extendedUrl);
@@ -456,8 +458,9 @@ void play_radio(int radioChannel){
     audio_pipeline_stop(pipeline);
     audio_pipeline_wait_for_stop(pipeline);
     audio_pipeline_terminate(pipeline);
+
     
-    if(playingRadio == false) {
+    if(playingRadio == false) {      
         // Change linkage to radio
         const char *link_tag[3] = {"http", "mp3", "i2s"};
         audio_pipeline_link(pipeline, &link_tag[0], 3);
@@ -469,6 +472,7 @@ void play_radio(int radioChannel){
     audio_element_set_uri(http_stream_reader, radioChannels[radioChannel]);
     audio_pipeline_reset_ringbuffer(pipeline);
     audio_pipeline_reset_elements(pipeline);
+    audio_pipeline_change_state(pipeline, AEL_STATE_INIT);
     audio_pipeline_run(pipeline);
 }
 

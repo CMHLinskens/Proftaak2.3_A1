@@ -160,10 +160,13 @@ void menu_displayTime(char *time)
 }
 
 void menu_displayTemperature(char* response){
+    if(response == NULL)
+        return;
 
     cJSON *root = cJSON_Parse(response);
     cJSON *maan = cJSON_GetObjectItem(root, "main");
     double temp = cJSON_GetObjectItem(maan,"temp")->valuedouble;
+
     int temp_in_c = (int) temp;
     temp_in_c -= 272;
 
@@ -290,7 +293,7 @@ void displaySongs(){
     i2c_lcd1602_move_cursor(_lcd_info, 17, 2);
     i2c_lcd1602_write_string(_lcd_info, cursor);
 
-    menu_displayTime(clock_getTimeString());
+    enterMenuItem();
 }
 
 void displayRadioChannels(){
@@ -327,7 +330,7 @@ void displayRadioChannels(){
     i2c_lcd1602_move_cursor(_lcd_info, 17, 2);
     i2c_lcd1602_write_string(_lcd_info, cursor);
 
-    menu_displayTime(clock_getTimeString());
+    enterMenuItem();
 }
 
 // Default enter event, displays time
