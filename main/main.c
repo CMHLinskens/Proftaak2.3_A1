@@ -33,9 +33,7 @@
 //components that we made
 #include "lcd-menu.h"
 #include "wifi_connect.h"
-// #include "sdcard_player.h"
 #include "http_request.h"
-// #include "mp3-radio.h"
 #include "audio-board.h"
 
 #include "cJSON.h"

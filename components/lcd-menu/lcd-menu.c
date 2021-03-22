@@ -303,7 +303,7 @@ void displayRadioChannels(){
     char *menuText = "CHANNEL";
     menu_writeScrollMenuItem(_lcd_info, menuText, 0);
 
-    // Loop back around if radioIndex exeeds songList size
+    // Loop back around if radioIndex exeeds AMOUNT_OF_RADIO_CHANNELS size
     if(channelIndex + 1 > AMOUNT_OF_RADIO_CHANNELS + 1){
         channelIndex = 0;
     } else if (channelIndex - 1 < -1) {
@@ -319,8 +319,8 @@ void displayRadioChannels(){
     menuText = radioChannelNames[channelIndex];
     menu_writeScrollMenuItem(_lcd_info, menuText, 2);
 
-    // Get the song index after current selected song
-    // if after 24 loop back to beginning
+    // Get the channel index after current selected song
+    // if after AMOUNT_OF_RADIO_CHANNELS loop back to beginning
     int nextChannelIndex = channelIndex + 1 > AMOUNT_OF_RADIO_CHANNELS? 0 : channelIndex + 1;
     menuText = radioChannelNames[nextChannelIndex];
     menu_writeScrollMenuItem(_lcd_info, menuText, 3);  

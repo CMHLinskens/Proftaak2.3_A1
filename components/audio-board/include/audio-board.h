@@ -12,6 +12,7 @@
 char *radioChannelNames[AMOUNT_OF_RADIO_CHANNELS + 1];
 
 audio_pipeline_handle_t getPipeline();
+int getVolume();
 
 // SD Card
 void sdcard_url_save_cb(void *user_data, char *url);

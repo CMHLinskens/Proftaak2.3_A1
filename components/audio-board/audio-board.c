@@ -62,6 +62,7 @@ esp_periph_set_handle_t set;
 audio_event_iface_handle_t evt;
 periph_service_handle_t input_ser;
 bool playingRadio = false;
+int volume = 50;
 
 char *radioChannels[AMOUNT_OF_RADIO_CHANNELS] = {
                         "https://22533.live.streamtheworld.com/SKYRADIO.mp3",
@@ -86,6 +87,12 @@ int _http_stream_event_handle(http_stream_event_msg_t *msg)
 
 audio_pipeline_handle_t getPipeline(){
     return pipeline;
+}
+
+//Gets the current volume
+int getVolume(){
+    ESP_LOGI(AUDIOBOARDTAG, "Volume: %d", volume);
+    return volume; 
 }
 
 //Handles touchpad events
@@ -152,6 +159,7 @@ static esp_err_t input_key_service_cb(periph_service_handle_t handle, periph_ser
                 if (player_volume > 100) {
                     player_volume = 100;
                 }
+                volume = player_volume;
 
                 audio_hal_set_volume(board_handle->audio_hal, player_volume);
                 ESP_LOGI(AUDIOBOARDTAG, "Volume set to %d %%", player_volume);
@@ -165,6 +173,7 @@ static esp_err_t input_key_service_cb(periph_service_handle_t handle, periph_ser
                 if (player_volume < 0) {
                     player_volume = 0;
                 }
+                volume = player_volume;
 
                 audio_hal_set_volume(board_handle->audio_hal, player_volume);
                 ESP_LOGI(AUDIOBOARDTAG, "Volume set to %d %%", player_volume);
