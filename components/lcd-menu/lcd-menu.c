@@ -162,7 +162,7 @@ void menu_displayTemperature(char* response){
     cJSON *maan = cJSON_GetObjectItem(root, "main");
     double temp = cJSON_GetObjectItem(maan,"temp")->valuedouble;
     int temp_in_c = (int) temp;
-
+    temp_in_c -= 272;
 
     char temp_in_string[50] = {0};
     sprintf(temp_in_string,"%dC",temp_in_c);
