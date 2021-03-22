@@ -35,6 +35,10 @@
 #include "sdcard_player.h"
 #include "http_request.h"
 
+#include "board.h"
+#include "goertzel.h"
+#include "microphone.h"
+
 #define MAINTAG "main"
 #define CLOCKTAG "clock"
 
@@ -139,6 +143,21 @@ void rotary_task(void * pvParameter)
     vTaskDelete(NULL);
 }
 
+static void goertzel_callback(struct goertzel_data_t* filter, float result)
+{
+    goertzel_data_t* filt = (goertzel_data_t*)filter;
+    float logVal = 10.0f * log10f(result);
+
+    if (logVal > 25.0f)
+    {
+        if (filt->target_frequency == 1120)
+        {
+            ESP_LOGI("epic TAG", "[Goertzel] Epic frequency detection callback: %d Hz", filt->target_frequency);
+        }
+        //ESP_LOGI(TAG, "[Goertzel] Callback Freq: %d Hz amplitude: %.2f", filt->target_frequency, 10.0f * log10f(result));
+    }
+}
+
 void app_main()
 {
     ESP_ERROR_CHECK( nvs_flash_init() );
@@ -150,6 +169,8 @@ void app_main()
      * examples/protocols/README.md for more information about this function.
      */
     ESP_ERROR_CHECK(example_connect());
+
+    init_microphone(&goertzel_callback);
     
     //start_sdcard_task();
     //vTaskDelay(1000);
