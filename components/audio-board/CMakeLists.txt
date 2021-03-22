@@ -8,5 +8,5 @@ set(COMPONENT_REQUIRES  audio_hal
                         audio_stream
                         esp-adf-libs
                         input_key_service 
-                        playlist )
+                        playlist)
 register_component()

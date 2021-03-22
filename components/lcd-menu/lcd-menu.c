@@ -6,8 +6,8 @@
 #include <stdio.h>
 
 #include "clock-sync.h"
-// #include "audio-board.h"
-#include "sdcard_player.h"
+#include "audio-board.h"
+// #include "sdcard_player.h"
 
 #define MENUTAG "menu"
 
@@ -318,6 +318,8 @@ void enterRadioChannel(void){
 
     i2c_lcd1602_move_cursor(_lcd_info, 9, 1);
     i2c_lcd1602_write_string(_lcd_info, channelStr);
+
+    play_radio();
 }
 // Radio channel right press event
 void increaseChannel(void){

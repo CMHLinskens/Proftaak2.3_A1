@@ -33,10 +33,10 @@
 //components that we made
 #include "lcd-menu.h"
 #include "wifi_connect.h"
-#include "sdcard_player.h"
+// #include "sdcard_player.h"
 #include "http_request.h"
 // #include "mp3-radio.h"
-// #include "audio-board.h"
+#include "audio-board.h"
 
 #define MAINTAG "main"
 #define CLOCKTAG "clock"
@@ -142,9 +142,9 @@ void rotary_task(void * pvParameter)
     vTaskDelete(NULL);
 }
 
-// void radio_task(void * pvParmeter){
-//     radio_init();
-// }
+void radio_task(void * pvParmeter){
+    radio_init();
+}
 
 void app_main()
 {
@@ -159,8 +159,8 @@ void app_main()
     ESP_ERROR_CHECK(example_connect());
     
     //Doesnt work together. Either the sd card or the radio.
-    start_sdcard_task();
-    // start_audio_task();
+    // start_sdcard_task();
+    start_audio_task();
     vTaskDelay(1000);
     // xTaskCreate(&radio_task, "radio_task", 4096, NULL, 5, NULL);
     // vTaskDelay(1000);

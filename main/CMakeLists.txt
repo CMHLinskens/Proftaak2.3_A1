@@ -13,5 +13,5 @@ set(COMPONENT_REQUIRES audio_pipeline
                        wifi_connect 
                        clock-sync 
                        http_request
-                       sdcard-player)
+                       audio-board)
 register_component()

@@ -6,7 +6,8 @@ set(COMPONENT_REQUIRES audio_pipeline
                        input_key_service 
                        playlist 
                        nvs_flash
-                       audio-board)
+                       audio-board
+                       esp-adf-libs)
 register_component()
 
 
