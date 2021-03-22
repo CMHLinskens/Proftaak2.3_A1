@@ -18,8 +18,9 @@ void enterRadioVolume(void);
 void enterRadioChannel(void);
 void increaseVolume(void);
 void decreaseVolume(void);
-void increaseChannel(void);
-void decreaseChannel(void);
+void nextChannel(void);
+void previousChannel(void);
+void okPressRadioChannel(void);
 void enterSDPlay(void);
 void nextSong(void);
 void previousSong(void);
@@ -27,11 +28,13 @@ void okPressSDPlay(void);
 
 // Placeholder variables
 static int volume = 0;
-static int channel = 0;
 
 // Variables for SD menu 
 char** songList;
 int songIndex = 0;
+
+// Variables for Radio menu
+int channelIndex = 0;
 
 static i2c_lcd1602_info_t *_lcd_info;
 static menu_t *_menu;
@@ -84,7 +87,7 @@ menu_t *menu_createMenu()
         {MENU_RADIO_ID_2, {MENU_MAIN_ID_0, MENU_RADIO_ID_1, MENU_RADIO_ID_0}, {"RADIO", "Back"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
         
         {MENU_RADIO_ID_3, {MENU_RADIO_ID_1, MENU_RADIO_ID_3, MENU_RADIO_ID_3}, {"VOLUME", " ", "", ""}, {NULL, decreaseVolume, increaseVolume}, enterRadioVolume, NULL},
-        {MENU_RADIO_ID_4, {MENU_RADIO_ID_0, MENU_RADIO_ID_4, MENU_RADIO_ID_4}, {"CHANNEL", " ", "", ""}, {NULL, decreaseChannel, increaseChannel}, enterRadioChannel, NULL},
+        {MENU_RADIO_ID_4, {MENU_RADIO_ID_4, MENU_RADIO_ID_4, MENU_RADIO_ID_4}, {"CHANNEL", " ", "", ""}, {okPressRadioChannel, previousChannel, nextChannel}, enterRadioChannel, NULL},
 
         {MENU_SD_ID_0, {MENU_SD_ID_2, MENU_SD_ID_1, MENU_SD_ID_1}, {"SD", "Play"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
         {MENU_SD_ID_1, {MENU_MAIN_ID_1, MENU_SD_ID_0, MENU_SD_ID_0}, {"SD", "Back"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
@@ -274,6 +277,43 @@ void displaySongs(){
     menu_displayTime(clock_getTimeString());
 }
 
+void displayRadioChannels(){
+    i2c_lcd1602_clear(_lcd_info);
+
+    // Display scroll menu title
+    char *menuText = "CHANNEL";
+    menu_writeScrollMenuItem(_lcd_info, menuText, 0);
+
+    // Loop back around if radioIndex exeeds songList size
+    if(channelIndex + 1 > AMOUNT_OF_RADIO_CHANNELS + 1){
+        channelIndex = 0;
+    } else if (channelIndex - 1 < -1) {
+        channelIndex = AMOUNT_OF_RADIO_CHANNELS;
+    }
+
+    // Get the channel index before current selected song
+    // if below 0 loop back to top
+    int previousChannelIndex = channelIndex - 1 < 0? AMOUNT_OF_RADIO_CHANNELS : channelIndex - 1;
+    menuText = radioChannelNames[previousChannelIndex];
+    menu_writeScrollMenuItem(_lcd_info, menuText, 1);
+
+    menuText = radioChannelNames[channelIndex];
+    menu_writeScrollMenuItem(_lcd_info, menuText, 2);
+
+    // Get the song index after current selected song
+    // if after 24 loop back to beginning
+    int nextChannelIndex = channelIndex + 1 > AMOUNT_OF_RADIO_CHANNELS? 0 : channelIndex + 1;
+    menuText = radioChannelNames[nextChannelIndex];
+    menu_writeScrollMenuItem(_lcd_info, menuText, 3);  
+    
+    // Display cursor
+    const char *cursor = "<";
+    i2c_lcd1602_move_cursor(_lcd_info, 17, 2);
+    i2c_lcd1602_write_string(_lcd_info, cursor);
+
+    menu_displayTime(clock_getTimeString());
+}
+
 // Default enter event, displays time
 void enterMenuItem(void) {
     menu_displayTime(clock_getTimeString());
@@ -313,33 +353,34 @@ void decreaseVolume(void){
 void enterRadioChannel(void){
     enterMenuItem();
 
-    char channelStr[3];
-    sprintf(channelStr, "%d", channel);
-
-    i2c_lcd1602_move_cursor(_lcd_info, 9, 1);
-    i2c_lcd1602_write_string(_lcd_info, channelStr);
-
-    play_radio();
+    displayRadioChannels();
 }
 // Radio channel right press event
-void increaseChannel(void){
-    channel++;
-    if(channel > 100) channel = 100;
-    char channelStr[3];
-    sprintf(channelStr, "%d", channel);
-
-    i2c_lcd1602_move_cursor(_lcd_info, 9, 1);
-    i2c_lcd1602_write_string(_lcd_info, channelStr);
+void  nextChannel(void){
+    channelIndex++;
+    displayRadioChannels();
 }
 // Radio channel left press event
-void decreaseChannel(void){
-    channel--;
-    if(channel < 0) channel = 0;
-    char channelStr[3];
-    sprintf(channelStr, "%d", channel);
+void previousChannel(void){
+    channelIndex--;
+    displayRadioChannels();
+}
+void okPressRadioChannel(){
+    // User pressed back
+    if(channelIndex == 0){
+        // Switch back to radio menu
+        _menu->currentMenuItemId = MENU_RADIO_ID_0;
 
-    i2c_lcd1602_move_cursor(_lcd_info, 9, 1);
-    i2c_lcd1602_write_string(_lcd_info, channelStr);
+        menu_displayScrollMenu(_menu);
+
+        if(_menu->menuItems[_menu->currentMenuItemId].fpOnMenuEntryEvent != NULL) {
+            (*_menu->menuItems[_menu->currentMenuItemId].fpOnMenuEntryEvent)();
+        }
+
+    } else {
+        // else play selected radio channel
+        play_radio(channelIndex - 1);
+    }
 }
 
 // SD play enter event

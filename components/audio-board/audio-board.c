@@ -43,8 +43,6 @@
 
 #define AUDIOBOARDTAG "AudioBoard"
 
-#define MP3_STREAM_URI "https://22533.live.streamtheworld.com/SKYRADIO.mp3"
-
 typedef struct sdcard_list {
     char *save_file_name;                // Name of file to save URLs
     char *offset_file_name;              // Name of file to save offset
@@ -65,6 +63,12 @@ esp_periph_set_handle_t set;
 audio_event_iface_handle_t evt;
 periph_service_handle_t input_ser;
 bool playingRadio = false;
+
+char *radioChannels[AMOUNT_OF_RADIO_CHANNELS] = {
+                        "https://22533.live.streamtheworld.com/SKYRADIO.mp3",
+                        "https://icecast.omroep.nl/radio2-bb-mp3",
+                        "https://icecast-qmusicnl-cdp.triple-it.nl/Qmusic_nl_live_96.mp3"
+                        };
 
 int _http_stream_event_handle(http_stream_event_msg_t *msg)
 {
@@ -392,6 +396,11 @@ void audio_start(void * pvParameter){
     
     //End configuration
 
+    radioChannelNames[0] = "Back";
+    radioChannelNames[1] = "Sky Radio";
+    radioChannelNames[2] = "NPO Radio 2";
+    radioChannelNames[3] = "Qmusic";
+
     //Main loop, waits for functions to be called
     while (1) {
         //Error check
@@ -437,19 +446,27 @@ void start_audio_task(){
     xTaskCreate(&audio_start, "audio start", 4096, NULL, 5, NULL);
 }
 
-void play_radio(){
-    playingRadio = true;
+void play_radio(int radioChannel){
+    if(radioChannel < 0 || radioChannel > AMOUNT_OF_RADIO_CHANNELS) {
+        ESP_LOGE(AUDIOBOARDTAG, "Invalid radio channel in play_radio()");
+        return;
+    }
 
     // Stop playing audio
     audio_pipeline_stop(pipeline);
     audio_pipeline_wait_for_stop(pipeline);
+    audio_pipeline_terminate(pipeline);
     
-    // Change linkage to radio
-    const char *link_tag[3] = {"http", "mp3", "i2s"};
-    audio_pipeline_link(pipeline, &link_tag[0], 3);
+    if(playingRadio == false) {
+        // Change linkage to radio
+        const char *link_tag[3] = {"http", "mp3", "i2s"};
+        audio_pipeline_link(pipeline, &link_tag[0], 3);
+    }
+
+    playingRadio = true;
 
     // Start radio
-    audio_element_set_uri(http_stream_reader, MP3_STREAM_URI);
+    audio_element_set_uri(http_stream_reader, radioChannels[radioChannel]);
     audio_pipeline_reset_ringbuffer(pipeline);
     audio_pipeline_reset_elements(pipeline);
     audio_pipeline_run(pipeline);
@@ -461,6 +478,7 @@ void stop_radio(){
     // Stop playing 
     audio_pipeline_stop(pipeline);
     audio_pipeline_wait_for_stop(pipeline);
+    audio_pipeline_terminate(pipeline);
 
     // Change linkage to SD
     const char *link_tag[4] = {"file", "mp3", "filter", "i2s"};
