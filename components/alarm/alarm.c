@@ -11,42 +11,125 @@
 struct ALARM{
     char** songs;
     int* time;
+    struct ALARM *next;
 };
 
-struct ALARM* alarms;
-int N = 0;
+typedef struct ALARM *Node;
 
-void alarm_add(char** songs, int* time);
+Node head, node;
+
+Node CreateAlarm(int* time, char** songs)
+{
+    struct ALARM *alarm;
+    alarm = (Node) malloc(sizeof(struct ALARM));
+    if(alarm == NULL){
+        ESP_LOGE(ALARMTAG, "Error: not enough memory.");
+        return NULL;
+    }
+    alarm->songs = songs;
+    alarm->time = time;
+    alarm->next = NULL;
+    return alarm;
+};
+
+void FreeNode(Node node){
+    if(node){
+        free(node);
+    }
+}
+
+void Prepend(Node *head, Node node){
+    node->next = *head;
+    *head = node;
+}
+
+void Append(Node *head, Node node){
+    Node tmp = *head;
+    if(*head == NULL){
+        *head = node;
+    }
+    else{
+        while(tmp->next){
+            tmp = tmp->next;
+        }
+        tmp->next = node;
+    }
+}
+
+Node Remove(Node *head, Node node){
+    Node tmp = *head;
+    if(*head == NULL){
+        return;
+    }
+    else if(*head == node){
+        *head = (*head)->next;
+        FreeNode(node);
+    }
+    else{
+        while(tmp->next == node){
+            tmp->next = tmp->next->next;
+            FreeNode(node);
+            return;
+        }
+        tmp = tmp->next;
+    }
+}
+
+void Clear(Node head){
+    Node node;
+
+    while(head){
+        node = head;
+        head = head->next;
+        FreeNode(node);
+    }
+}
+
+void Print(Node node){
+    if(node){
+        int* time = node->time;
+        ESP_LOGI(ALARMTAG, "time = %d", time[1]);
+    }
+}
+
+void PrintList(Node head){
+    while(head){
+        Print(head);
+        head = head->next;
+    }
+}
 
 void alarm_task(void*pvParameter){
-    alarms = malloc(sizeof(struct ALARM));
-    while (1)
-    {
-        alarm_add(NULL, clock_getCurrentTime());
+    head = NULL;
+
+    while(1){
         if(clock_getCurrentTime() != NULL){
             int* current = clock_getCurrentTime();
-            alarms[0].time = clock_getCurrentTime();
-            for(int i=0; i<=N; i++){
-                int* alarm = alarms[i].time;
-                if(alarm[0] == current[0] && alarm[1] == current[1]){
-                    ESP_LOGI(ALARMTAG, "alarm going off %d, %d", alarm[1], current[1]);
+            Node tmp = head;
+            while(tmp){
+                int *alarmTime = tmp->time;
+                if(alarmTime[0] == current[0] && alarmTime[1] == current[1]){
+                    ESP_LOGI(ALARMTAG, "Alarm going off %d, %d", alarmTime[1], current[1]);
+                    //Do stuff when alarm goes off
+                    alarm_going();
+                    Remove(&head, tmp);
+                    ESP_LOGI(ALARMTAG, "Removed element");
                 }
-                else{
-                    ESP_LOGI(ALARMTAG, "%d, %d", alarm[1] , current[1]);
-                }
+                tmp = tmp->next;
             }
         }
-        else{
-            ESP_LOGI(ALARMTAG,"%s", clock_getTimeString());
-        }
-        vTaskDelay(60000 / portTICK_RATE_MS);
+        PrintList(head);
+        vTaskDelay(5000/ portTICK_RATE_MS);
     }
     
 }
 
-void alarm_add(char** songs, int* time){
-    alarms = realloc(alarms, (N+1) * sizeof(alarms)/sizeof(alarms[0]));
-    alarms->time  = malloc(sizeof(int));
-    alarms->time = time;
-    N++;
+void alarm_add(int* time, char** songs){
+    Node newNode = CreateAlarm(time, songs);
+    Prepend(&head, newNode);
+
+}
+
+void alarm_going(){
+
 }
