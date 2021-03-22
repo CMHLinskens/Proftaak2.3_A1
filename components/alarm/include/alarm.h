@@ -2,5 +2,6 @@
 #define alarm_H
 
 void alarm_task(void*pvParameter);
+void alarm_add(char** songs, int* time);
 
 #endif

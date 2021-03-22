@@ -34,6 +34,7 @@
 #include "wifi_connect.h"
 #include "sdcard_player.h"
 #include "http_request.h"
+#include "alarm.h"
 
 #define MAINTAG "main"
 #define CLOCKTAG "clock"
@@ -152,7 +153,7 @@ void app_main()
      */
     ESP_ERROR_CHECK(example_connect());
     
-    start_sdcard_task();
+    // start_sdcard_task();
     vTaskDelay(1000);
 
     //I^2C initialization + the I^2C port
@@ -164,6 +165,7 @@ void app_main()
 
     xTaskCreate(&menu_task, "menu_task", 4096, NULL, 5, NULL);
     xTaskCreate(&clock_task, "clock_task", 4096, NULL, 5, NULL);
-    // xTaskCreate(&http_get_task, "http_get_task", 4096, NULL, 5, NULL);
+    xTaskCreate(&alarm_task, "alarm_task", 4096, NULL, 5, NULL);
+    xTaskCreate(&http_get_task, "http_get_task", 4096, NULL, 5, NULL);
 }
 
