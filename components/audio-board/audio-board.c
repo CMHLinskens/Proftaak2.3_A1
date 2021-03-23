@@ -20,7 +20,7 @@
 #include "sdcard_scan.h"
 #include "freertos/event_groups.h"
 #include "http_stream.h"
-// #include "esp_wifi.h"
+#include "esp_wifi.h"
 #include "nvs_flash.h"
 #include "sdkconfig.h"
 #include "periph_wifi.h"
@@ -53,7 +53,7 @@ typedef struct sdcard_list {
     uint32_t total_size_offset_file;     // Size of file to save offset
 } sdcard_list_t;
 
-char** songList = NULL;
+char** song_list = NULL;
 static int array_index = 0;
 audio_pipeline_handle_t pipeline;
 audio_element_handle_t http_stream_reader, i2s_stream_writer, aac_decoder, mp3_decoder, fatfs_stream_reader, rsp_handle;
@@ -61,10 +61,10 @@ playlist_operator_handle_t sdcard_list_handle = NULL;
 esp_periph_set_handle_t set;
 audio_event_iface_handle_t evt;
 periph_service_handle_t input_ser;
-bool playingRadio = false;
+bool playing_radio = false;
 int volume = 50;
 
-const char *radioChannels[AMOUNT_OF_RADIO_CHANNELS] = {
+const char *radio_channels[AMOUNT_OF_RADIO_CHANNELS] = {
                         "https://22533.live.streamtheworld.com/SKYRADIO.mp3",
                         "https://icecast.omroep.nl/radio2-bb-mp3",
                         "https://icecast-qmusicnl-cdp.triple-it.nl/Qmusic_nl_live_96.mp3"
@@ -214,12 +214,12 @@ void resume_sound(){
 //Plays audio with given ID/URL
 void play_song_with_ID(char* url){
     //Extends the URL so the SD card can find it
-    char extendedUrl[80];
-    strcpy(extendedUrl, "file://sdcard/");
-    strcat(extendedUrl, url);
-    strcat(extendedUrl, ".mp3");
+    char extended_url[80];
+    strcpy(extended_url, "file://sdcard/");
+    strcat(extended_url, url);
+    strcat(extended_url, ".mp3");
     
-    if(playingRadio){
+    if(playing_radio){
         stop_radio();
     } else {
         //Stops audio, terminates current pipeline
@@ -229,13 +229,13 @@ void play_song_with_ID(char* url){
     }
 
     //Resets pipeline and starts the new audio file
-    audio_element_set_uri(fatfs_stream_reader, extendedUrl);
+    audio_element_set_uri(fatfs_stream_reader, extended_url);
     audio_pipeline_reset_ringbuffer(pipeline);
     audio_pipeline_reset_elements(pipeline);
     audio_pipeline_change_state(pipeline, AEL_STATE_INIT);
     audio_pipeline_run(pipeline);
 
-    ESP_LOGI(AUDIOBOARDTAG, "Song %s is playing", extendedUrl);
+    ESP_LOGI(AUDIOBOARDTAG, "Song %s is playing", extended_url);
 }
 
 //Makes array of songs on the sd
@@ -245,8 +245,8 @@ void get_all_songs_from_SDcard(char* type){
     uint32_t pos = 0;
     uint16_t  size = 0;
     char* url = malloc(MAX_FILE_LENGTH);
-    free(songList);
-    songList = calloc(playlist->url_num + 1, 80);
+    free(song_list);
+    song_list = calloc(playlist->url_num + 1, 80);
 
     //Goes to the first position on the file
     fseek(playlist->save_file, 0, SEEK_SET);
@@ -280,7 +280,7 @@ void get_all_songs_from_SDcard(char* type){
         if(strcmp(compare_char, type) == 0){
             //Adds url to array and removes the type
             strcpy(temp_url, temp_url + 1);
-            songList[array_index] = temp_url;
+            song_list[array_index] = temp_url;
             array_index++;
         }
     }
@@ -293,14 +293,14 @@ int get_array_size(){
 
 //Returns all the songs on the SD card
 char** get_song_list(){
-    if(songList == NULL){
+    if(song_list == NULL){
         ESP_LOGE(AUDIOBOARDTAG, "Songlist not created yet!");
         //Songlist doesn't exist/have any songs so we return an array with a warning.
-        songList = calloc(1, 19);
-        songList[0] = "No songs in sdcard";
-        return songList;
+        song_list = calloc(1, 19);
+        song_list[0] = "No songs in sdcard";
+        return song_list;
     } else {
-        return songList;
+        return song_list;
     }
 }
 
@@ -457,16 +457,16 @@ void play_radio(int radioChannel){
     audio_pipeline_terminate(pipeline);
 
     
-    if(playingRadio == false) {      
+    if(playing_radio == false) {      
         // Change linkage to radio
         const char *link_tag[3] = {"http", "mp3", "i2s"};
         audio_pipeline_link(pipeline, &link_tag[0], 3);
     }
 
-    playingRadio = true;
+    playing_radio = true;
 
     // Start radio
-    audio_element_set_uri(http_stream_reader, radioChannels[radioChannel]);
+    audio_element_set_uri(http_stream_reader, radio_channels[radioChannel]);
     audio_pipeline_reset_ringbuffer(pipeline);
     audio_pipeline_reset_elements(pipeline);
     audio_pipeline_change_state(pipeline, AEL_STATE_INIT);
@@ -474,7 +474,7 @@ void play_radio(int radioChannel){
 }
 
 void stop_radio(){
-    playingRadio = false;
+    playing_radio = false;
 
     // Stop playing 
     audio_pipeline_stop(pipeline);
