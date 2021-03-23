@@ -6,13 +6,15 @@
 
 #include "esp_log.h"
 
+#include "audio-board.h"
+
 #define ALARMTAG "alarm"
 
 //Struct for all the alarm nodes
 //songs is what will be playes when the alarm goes off
 // time is the time when the alarm goes off
 struct ALARM{
-    char** songs;
+    char* song;
     int* time;
     struct ALARM *next;
 };
@@ -22,7 +24,7 @@ typedef struct ALARM *Node;
 Node head, node;
 
 //Creates an alarm node 
-Node CreateAlarm(int* time, char** songs)
+Node CreateAlarm(int* time, char* song)
 {
     struct ALARM *alarm;
     alarm = (Node) malloc(sizeof(struct ALARM));
@@ -30,7 +32,7 @@ Node CreateAlarm(int* time, char** songs)
         ESP_LOGE(ALARMTAG, "Error: not enough memory.");
         return NULL;
     }
-    alarm->songs = songs;
+    alarm->song = song;
     alarm->time = time;
     alarm->next = NULL;
     return alarm;
@@ -98,7 +100,9 @@ void Clear(Node head){
 void Print(Node node){
     if(node){
         int* time = node->time;
-        ESP_LOGI(ALARMTAG, "time = %d", time[1]);
+        char* song = node->song;
+        ESP_LOGI(ALARMTAG, "time = %d:%d song = %s", time[0], time[1], song);
+
     }
 }
 
@@ -125,27 +129,22 @@ void alarm_task(void*pvParameter){
                 //alarmTime[1] = minute
                 if(alarmTime[0] == current[0] && alarmTime[1] == current[1]){
                     ESP_LOGI(ALARMTAG, "Alarm going off %d, %d", alarmTime[1], current[1]);
-                    //Do stuff when alarm goes off
-                    alarm_going();
+                    play_song_with_ID(tmp->song);
                     Remove(&head, tmp);
                     ESP_LOGI(ALARMTAG, "Removed element");
                 }
                 tmp = tmp->next;
             }
         }
-        PrintList(head);
-        vTaskDelay(5000/ portTICK_RATE_MS);
+        //PrintList(head);
+        vTaskDelay(60000/ portTICK_RATE_MS);
     }
     
 }
 
 //Method to add an alarm node to the list
-void alarm_add(int* time, char** songs){
-    Node newNode = CreateAlarm(time, songs);
+void alarm_add(int* time, char* song){
+    Node newNode = CreateAlarm(time, song);
     Prepend(&head, newNode);
 
-}
-
-void alarm_going(){
-    //TODO play music from sd
 }
