@@ -117,7 +117,8 @@ menu_t *menu_createMenu()
     }
 
     // Retrieve all songs from sdcard-player
-    char **tempSongList = getSongList("m");
+    get_all_songs_from_SDcard("m");
+    char **tempSongList = get_song_list();
     songList = calloc(get_array_size() + 1, 80);
     songList[0] = "Back";
     for(int i = 1; i < get_array_size() + 1; i++){
@@ -267,15 +268,15 @@ void displaySongs(){
     menu_writeScrollMenuItem(_lcd_info, menuText, 0);
 
     // Loop back around if songIndex exeeds songList size
-    if(songIndex + 1 > 25){
+    if(songIndex + 1 > get_array_size() + 1){
         songIndex = 0;
     } else if (songIndex - 1 < -1) {
-        songIndex = 24;
+        songIndex = get_array_size();
     }
 
     // Get the song index before current selected song
     // if below 0 loop back to top
-    int previousSongIndex = songIndex - 1 < 0? 24 : songIndex - 1;
+    int previousSongIndex = songIndex - 1 < 0? get_array_size() : songIndex - 1;
     menuText = songList[previousSongIndex];
     menu_writeScrollMenuItem(_lcd_info, menuText, 1);
 
@@ -284,7 +285,7 @@ void displaySongs(){
 
     // Get the song index after current selected song
     // if after 24 loop back to beginning
-    int nextSongIndex = songIndex + 1 > 24? 0 : songIndex + 1;
+    int nextSongIndex = songIndex + 1 > get_array_size()? 0 : songIndex + 1;
     menuText = songList[nextSongIndex];
     menu_writeScrollMenuItem(_lcd_info, menuText, 3);  
     
@@ -433,6 +434,6 @@ void okPressSDPlay(){
 
     } else {
         // else play selected song
-        play_song_with_ID(songList[songIndex]);
+        play_song_with_ID(songList[songIndex], "m");
     }
 }

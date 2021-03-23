@@ -212,10 +212,11 @@ void resume_sound(){
 }
 
 //Plays audio with given ID/URL
-void play_song_with_ID(char* url){
+void play_song_with_ID(char* url, char *type){
     //Extends the URL so the SD card can find it
     char extended_url[80];
     strcpy(extended_url, "file://sdcard/");
+    strcat(extended_url, type);
     strcat(extended_url, url);
     strcat(extended_url, ".mp3");
     
