@@ -39,6 +39,7 @@
 #endif
 
 #define AUDIOBOARDTAG "AudioBoard"
+#define MAX_FILE_LENGTH 2048
 
 typedef struct sdcard_list {
     char *save_file_name;                // Name of file to save URLs
@@ -71,16 +72,16 @@ const char *radioChannels[AMOUNT_OF_RADIO_CHANNELS] = {
 //Event handler for all the radio messages.
  int http_stream_event_handle(http_stream_event_msg_t *msg)
  {
-//     if (msg->event_id == HTTP_STREAM_RESOLVE_ALL_TRACKS) {
-//         return ESP_OK;
-//     }
+    if (msg->event_id == HTTP_STREAM_RESOLVE_ALL_TRACKS) {
+        return ESP_OK;
+    }
 
-//     if (msg->event_id == HTTP_STREAM_FINISH_TRACK) {
-//         return http_stream_next_track(msg->el);
-//     }
-//     if (msg->event_id == HTTP_STREAM_FINISH_PLAYLIST) {
-//         return http_stream_fetch_again(msg->el);
-//     }
+    if (msg->event_id == HTTP_STREAM_FINISH_TRACK) {
+        return http_stream_next_track(msg->el);
+    }
+    if (msg->event_id == HTTP_STREAM_FINISH_PLAYLIST) {
+        return http_stream_fetch_again(msg->el);
+    }
     return ESP_OK;
 }
 
@@ -210,12 +211,10 @@ void resume_sound(){
 }
 
 //Plays audio with given ID/URL
-void play_song_with_ID(char* dir, char* url){
+void play_song_with_ID(char* url){
     //Extends the URL so the SD card can find it
     char extendedUrl[80];
     strcpy(extendedUrl, "file://sdcard/");
-    strcat(extendedUrl, dir);
-    strcat(extendedUrl, "/");
     strcat(extendedUrl, url);
     strcat(extendedUrl, ".mp3");
     
@@ -239,53 +238,57 @@ void play_song_with_ID(char* dir, char* url){
 }
 
 //Makes array of songs on the sd
-void get_all_songs_from_SDcard(char* dir){
-    songList = NULL;
-
-    char sdcard_dir[80];
-    strcpy(sdcard_dir, "/sdcard/");
-    strcat(sdcard_dir, dir);
-
-    sdcard_scan(sdcard_url_save_cb, sdcard_dir, 0, (const char *[]) {"mp3"}, 1, sdcard_list_handle);
-
-
+void get_all_songs_from_SDcard(char* type){
+    //Init playlist and array
     sdcard_list_t *playlist = sdcard_list_handle->playlist;
     uint32_t pos = 0;
     uint16_t  size = 0;
-    char* url = calloc(1, 2048);
+    char* url = malloc(MAX_FILE_LENGTH);
     free(songList);
     songList = calloc(playlist->url_num + 1, 80);
 
+    //Goes to the first position on the file
     fseek(playlist->save_file, 0, SEEK_SET);
     fseek(playlist->offset_file, 0, SEEK_SET);
 
-    //First value is the array length
-    char* first_value = (char*)playlist->url_num;
-    songList[0] = first_value;
-    
+    //Place in the array
+    int index = 0;
+    //Loops through all the songs
     for(int i = 0; i < playlist->url_num; i++){
-        //Gets songs from the SD, these lines are copied from sdcard_list_show
+        //Reads the files on the SD, these lines are copied from sdcard_list_show
         memset(url, 0, 2048);
         fread(&pos, 1, sizeof(uint32_t), playlist->offset_file);
         fread(&size, 1, sizeof(uint16_t), playlist->offset_file);
-        fseek(playlist->save_file, pos, SEEK_SET) ;
+        fseek(playlist->save_file, pos, SEEK_SET);
         fread(url, 1, size, playlist->save_file);
 
         //Copy's the url so the array doesnt point to a pointer.
         char *temp_url = calloc(1, 80);
         //Gets the 14'th char, because we dont want the file name to go with it
         strcpy(temp_url, url + 14);
-
         //Removes the suffix .mp3
         int length = strlen(temp_url);
-        //Adds 0 character to mark end of the string
         temp_url[length-4] = '\0';
 
-        //Adds url to array
-        songList[i + 1] = temp_url;
+        //Looks if the fist char equals the type. ex: c means clock, m means music etc...
+        char compare_char[80];
+        strcpy(compare_char, temp_url);
+        compare_char[1] = '\0';
+
+        //If equal
+        if(strcmp(compare_char, type) == 0){
+            //Adds url to array and removes the type
+            strcpy(temp_url, temp_url + 1);
+            songList[index] = temp_url;
+            index++;
+        }
     }
-    
     free(url);
+}
+
+int get_array_size(){
+    sdcard_list_t *playlist = sdcard_list_handle->playlist;
+    return playlist->url_num;
 }
 
 //Returns all the songs on the SD card
@@ -394,30 +397,29 @@ void audio_start(){
 
     ESP_LOGI(AUDIOBOARDTAG, "[5.1] Listen for all pipeline events");
     audio_pipeline_set_listener(pipeline, evt);
-
-    ESP_LOGI(AUDIOBOARDTAG, "[6.0] Creating songList");
-    // get_all_songs_from_SDcard();
     
     //End configuration
 
     //Test
     
-    get_all_songs_from_SDcard("music");
-    for(int i = 0; i < 6; i++){
-        ESP_LOGI(AUDIOBOARDTAG, "Music: %s", songList[i + 1]);
+    get_all_songs_from_SDcard("m");
+    for(int i = 0; i < 1; i++){
+        ESP_LOGI(AUDIOBOARDTAG, "Music: %s", songList[i]);
     }
 
-    get_all_songs_from_SDcard("klok");
-    for(int i = 0; i < 22; i++){
-        ESP_LOGI(AUDIOBOARDTAG, "Klok: %s", songList[i + 1]);
+    get_all_songs_from_SDcard("c");
+    for(int i = 0; i < 8; i++){
+        ESP_LOGI(AUDIOBOARDTAG, "Klok: %s", songList[i]);
     }
+
+
 
     //Endtest
 
-    // radioChannelNames[0] = "Back";
-    // radioChannelNames[1] = "Sky Radio";
-    // radioChannelNames[2] = "NPO Radio 2";
-    // radioChannelNames[3] = "Qmusic";
+    radioChannelNames[0] = "Back";
+    radioChannelNames[1] = "Sky Radio";
+    radioChannelNames[2] = "NPO Radio 2";
+    radioChannelNames[3] = "Qmusic";
 
     //Main loop, waits for functions to be called
     while (1) {
