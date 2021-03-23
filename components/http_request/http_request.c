@@ -103,13 +103,6 @@ void api_request(){
             }
         } while(r > 0);
 
-        //ESP_LOGI(APITAG,"%d",index);
-        // cJSON *root = cJSON_Parse(&response[0]);
-        // cJSON *maan = cJSON_GetObjectItem(root, "main");
-        // double temp = cJSON_GetObjectItem(maan,"temp")->valuedouble;
-
-        //ESP_LOGI(APITAG,"temp: %f",temp);
-
         ESP_LOGI(APITAG, "... done reading from socket. Last read return=%d errno=%d.", r, errno);
         close(s);
 }
