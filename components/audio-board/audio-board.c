@@ -18,14 +18,12 @@
 #include "board.h"
 #include "sdcard_list.h"
 #include "sdcard_scan.h"
-
 #include "freertos/event_groups.h"
 #include "http_stream.h"
 #include "esp_wifi.h"
 #include "nvs_flash.h"
 #include "sdkconfig.h"
 #include "periph_wifi.h"
-
 #include "audio-board.h"
 
 #if __has_include("esp_idf_version.h")
@@ -64,14 +62,14 @@ periph_service_handle_t input_ser;
 bool playingRadio = false;
 int volume = 50;
 
-char *radioChannels[AMOUNT_OF_RADIO_CHANNELS] = {
+const char *radioChannels[AMOUNT_OF_RADIO_CHANNELS] = {
                         "https://22533.live.streamtheworld.com/SKYRADIO.mp3",
                         "https://icecast.omroep.nl/radio2-bb-mp3",
                         "https://icecast-qmusicnl-cdp.triple-it.nl/Qmusic_nl_live_96.mp3"
                         };
 
 //Event handler for all the radio messages.
-int _http_stream_event_handle(http_stream_event_msg_t *msg)
+int http_stream_event_handle(http_stream_event_msg_t *msg)
 {
     if (msg->event_id == HTTP_STREAM_RESOLVE_ALL_TRACKS) {
         return ESP_OK;
@@ -87,7 +85,7 @@ int _http_stream_event_handle(http_stream_event_msg_t *msg)
 }
 
 //Gets the pipeline object;
-audio_pipeline_handle_t getPipeline(){
+audio_pipeline_handle_t get_pipeline(){
     return pipeline;
 }
 
@@ -198,24 +196,26 @@ void sdcard_url_save_cb(void *user_data, char *url){
 }
 
 //Pauses audio
-void pauseSound(){
+void pause_sound(){
 
     audio_pipeline_pause(pipeline);
     ESP_LOGI(AUDIOBOARDTAG, "Paused");
 }
 
 //Resumes audio
-void resumeSound(){
+void resume_sound(){
 
     audio_pipeline_resume(pipeline);
     ESP_LOGI(AUDIOBOARDTAG, "Resumed");
 }
 
 //Plays audio with given ID/URL
-void play_song_with_ID(char* url){
+void play_song_with_ID(char* dir, char* url){
     //Extends the URL so the SD card can find it
     char extendedUrl[80];
     strcpy(extendedUrl, "file://sdcard/");
+    strcat(extendedUrl, dir);
+    strcat(extendedUrl, "/");
     strcat(extendedUrl, url);
     strcat(extendedUrl, ".mp3");
     
@@ -279,7 +279,7 @@ void get_all_songs_from_SDcard(){
 }
 
 //Returns all the songs on the SD card
-char** getSongList(){
+char** get_song_list(){
     if(songList == NULL){
         ESP_LOGE(AUDIOBOARDTAG, "Songlist not created yet!");
         //Songlist doesn't exist/have any songs so we return an array with a warning.
@@ -346,7 +346,7 @@ void audio_start(){
 
     ESP_LOGI(AUDIOBOARDTAG, "[4.2] Create http stream to read data");
     http_stream_cfg_t http_cfg = HTTP_STREAM_CFG_DEFAULT();
-    http_cfg.event_handle = _http_stream_event_handle;
+    http_cfg.event_handle = http_stream_event_handle;
     http_cfg.type = AUDIO_STREAM_READER;
     http_cfg.enable_playlist_parser = true;
     http_stream_reader = http_stream_init(&http_cfg);
