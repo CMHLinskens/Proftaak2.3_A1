@@ -13,12 +13,13 @@ char *radioChannelNames[AMOUNT_OF_RADIO_CHANNELS + 1];
 
 audio_pipeline_handle_t getPipeline(void);
 int get_volume(void);
+int get_array_size(void);
 
 // SD Card
 void sdcard_url_save_cb(void *user_data, char *url);
 void pause_sound(void);
 void resume_sound(void);
-void play_song_with_ID(char* dir, char* url);
+void play_song_with_ID(char* url);
 void get_all_songs_from_SDcard(char * dir);
 void audio_start(void);
 void stop_audio(void);

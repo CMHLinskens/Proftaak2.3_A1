@@ -117,10 +117,10 @@ menu_t *menu_createMenu()
     }
 
     // Retrieve all songs from sdcard-player
-    char **tempSongList = getSongList();
-    songList = calloc(25, 80);
+    char **tempSongList = getSongList("m");
+    songList = calloc(get_array_size() + 1, 80);
     songList[0] = "Back";
-    for(int i = 1; i < 25; i++){
+    for(int i = 1; i < get_array_size() + 1; i++){
         songList[i] = tempSongList[i - 1];
     }
 
