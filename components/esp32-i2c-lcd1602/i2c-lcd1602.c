@@ -592,7 +592,6 @@ esp_err_t i2c_lcd1602_write_custom_char(const i2c_lcd1602_info_t * i2c_lcd1602_i
     
     esp_err_t err = ESP_FAIL;
     if(_is_init(i2c_lcd1602_info)){
-        err = _write_command(i2c_lcd1602_info, COMMAND_SET_DDRAM_ADDR | (index << 3));
         err = _write_data(i2c_lcd1602_info, index);
     }
 
