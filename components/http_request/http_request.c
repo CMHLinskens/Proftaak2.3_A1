@@ -15,10 +15,13 @@
 
 #define APITAG "API"
 
+#define CITY "Amsterdam"
+#define KEY "8a844dfb8a5c5fef30713f8ca4fb4aca"
+
 /* Constants that aren't configurable in menuconfig */
 #define WEB_SERVER "api.openweathermap.org"
 #define WEB_PORT "80"
-#define WEB_PATH "http://api.openweathermap.org/data/2.5/weather?q=Rotterdam&appid=8a844dfb8a5c5fef30713f8ca4fb4aca"
+#define WEB_PATH "http://api.openweathermap.org/data/2.5/weather?q="CITY"&appid="KEY
 
 static const char *REQUEST = "GET " WEB_PATH " HTTP/1.0\r\n"
     "Host: "WEB_SERVER":"WEB_PORT"\r\n"
@@ -27,10 +30,8 @@ static const char *REQUEST = "GET " WEB_PATH " HTTP/1.0\r\n"
 
 char response[1024];
 
-SemaphoreHandle_t mutex;
-
 void api_request(){
-    mutex = xSemaphoreCreateMutex();
+    memset(response, 0, sizeof(response));
 
     const struct addrinfo hints = {
         .ai_family = AF_INET,
@@ -94,35 +95,23 @@ void api_request(){
         int index = 0;
 
         /* Read HTTP response */
-
-        if(xSemaphoreTake(mutex, (TickType_t) 10) == pdTRUE){
-            do {
-                bzero(recv_buf, sizeof(recv_buf));
-                r = read(s, recv_buf, sizeof(recv_buf)-1);
-                for(int i = 0; i < r; i++) {
-                    if(recv_buf[i]=='{' || json){
-                        json = 1;
-                        response[index] = recv_buf[i];
-                        index++;
-                        putchar(recv_buf[i]);
-                    }
+        do {
+            bzero(recv_buf, sizeof(recv_buf));
+            r = read(s, recv_buf, sizeof(recv_buf)-1);
+            for(int i = 0; i < r; i++) {
+                if(recv_buf[i]=='{' || json){
+                    json = 1;
+                    response[index] = recv_buf[i];
+                    index++;
+                    putchar(recv_buf[i]);
                 }
-            } while(r > 0);
-            xSemaphoreGive(mutex);
-        }
-        else{
-            ESP_LOGE(APITAG, "Error: Could not get Semaphore");
-        }
-
-        ESP_LOGI(APITAG, "... done reading from socket. Last read return=%d errno=%d.", r, errno);
+            }
+        } while(r > 0);
+        ESP_LOGI(APITAG, "size = %d \n response:\n%s", index, &response[0]);
         close(s);
 }
 
 char* http_request_get_response()
 {
-    while (uxSemaphoreGetCount(mutex) == 0)
-    {
-        vTaskDelay(1 / portTICK_PERIOD_MS);
-    }
-    return &response[0];
+    return &response[0]; 
 }
