@@ -65,11 +65,11 @@
 
 #define GOERTZEL_N_DETECTION 5
 static const int GOERTZEL_DETECT_FREQUENCIES[GOERTZEL_N_DETECTION] = {
-	880,
-	960,
-	1023,
-	1120,
-	1249
+	880,    // A
+	960,    // A#   
+	1023,   // B/C
+	1120,   // C#
+	1249    // D#
 };
 static int listenCounter = 0;
 static int GOERTZEL_DETECT_FREQUENCY_COUNTERS[GOERTZEL_N_DETECTION] = {
@@ -80,7 +80,7 @@ static int GOERTZEL_DETECT_FREQUENCY_COUNTERS[GOERTZEL_N_DETECTION] = {
     0
 };
 
-#define FREQ_COMMAND_THRESHOLD 8
+#define FREQ_COMMAND_THRESHOLD 7
 #define LISTEN_COMMAND_TIMEOUT 30
 
 #define AUDIOBOARDTAG "AudioBoard"
@@ -576,7 +576,7 @@ static void goertzel_callback(struct goertzel_data_t* filter, float result)
     goertzel_data_t* filt = (goertzel_data_t*)filter;
     float logVal = 10.0f * log10f(result);
 
-    if (logVal > 12.5f)
+    if (logVal > 13.0f)
     {
         ESP_LOGI(AUDIOBOARDTAG, "Callback Freq: %d Hz amplitude: %.2f", filt->target_frequency, 10.0f * log10f(result));
         for(int i = 0; i < GOERTZEL_N_DETECTION; i++){
@@ -624,7 +624,7 @@ void startListening(){
 		// process Goertzel Samples
 		goertzel_proces(configs, GOERTZEL_N_DETECTION, raw_buff, GOERTZEL_BUFFER_LENGTH); 
         
-        vTaskDelay(25 / portTICK_RATE_MS);
+        vTaskDelay(100 / portTICK_RATE_MS);
     }
 
 	if (raw_buff != NULL) {
