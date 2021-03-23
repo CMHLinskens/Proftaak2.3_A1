@@ -335,7 +335,7 @@ void displayRadioChannels(){
 
 // Default enter event, displays time
 void enterMenuItem(void) {
-    menu_displayTemperature(http_request_get_response());
+    // menu_displayTemperature(http_request_get_response());
     menu_displayTime(clock_getTimeString());
 }
 // Radio volume enter event
