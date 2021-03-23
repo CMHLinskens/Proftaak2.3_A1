@@ -4,5 +4,4 @@
 void api_request(void);
 char* http_request_get_response(void);
 
-
 #endif
