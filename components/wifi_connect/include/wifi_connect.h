@@ -16,11 +16,9 @@ extern "C" {
 #include "esp_err.h"
 #include "esp_netif.h"
 
-#ifdef CONFIG_EXAMPLE_CONNECT_ETHERNET
-#define EXAMPLE_INTERFACE get_example_netif()
-#endif
 
-#ifdef CONFIG_EXAMPLE_CONNECT_WIFI
+
+#ifdef CONFIG_CONNECT_WIFI
 #define EXAMPLE_INTERFACE get_example_netif()
 #endif
 
@@ -39,12 +37,12 @@ extern "C" {
  *
  * @return ESP_OK on successful connection
  */
-esp_err_t example_connect(void);
+esp_err_t wifi_connect(void);
 
 /**
  * Counterpart to example_connect, de-initializes Wi-Fi or Ethernet
  */
-esp_err_t example_disconnect(void);
+esp_err_t wifi_disconnect(void);
 
 /**
  * @brief Configure stdin and stdout to use blocking I/O

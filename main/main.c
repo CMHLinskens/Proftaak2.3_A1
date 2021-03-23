@@ -21,7 +21,6 @@
 #include "smbus.h"
 #include "qwiic_twist.h"
 #include "i2c-lcd1602.h"
-#include "lcd-menu.h"
 #include "clock-sync.h"
 #include "esp_wifi.h" 
 
@@ -31,13 +30,20 @@
 #include "lwip/netdb.h"
 #include "lwip/dns.h"
 
+//components that we made
+#include "lcd-menu.h"
 #include "wifi_connect.h"
-#include "sdcard_player.h"
 #include "http_request.h"
+#include "audio-board.h"
 #include "alarm.h"
+
+#include "cJSON.h"
+#include "goertzel.h"
+#include "microphone.h"
 
 #define MAINTAG "main"
 #define CLOCKTAG "clock"
+#define APITAG "api"
 
 i2c_port_t i2c_num;
 qwiic_twist_t *qwiic_twist_rotary;
@@ -48,9 +54,13 @@ void clicked(void);
 void pressed(void);
 void onMove(int16_t);
 
-static void http_get_task(void *pvParameters)
+void http_get_task(void *pvParameters)
 {
-    api_request();
+    while(1){
+      api_request();  
+      vTaskDelay(60000/portTICK_RATE_MS);
+    }
+    
 }
 
 void i2c_master_init(void)
@@ -70,7 +80,7 @@ void i2c_master_init(void)
 }
 
 static void component_init(void){
-    //INIT rotary encoder
+    //INIT rotary encoder, and the qwiic_twist_init will set the oher settings for the rotary encoder
     qwiic_twist_rotary = (qwiic_twist_t*)malloc(sizeof(*qwiic_twist_rotary));
     qwiic_twist_rotary->port = i2c_num;
     qwiic_twist_rotary->onButtonClicked = &clicked;
@@ -92,7 +102,6 @@ void menu_task(void * pvParameter)
     while(1)
     {
         vTaskDelay(2500 / portTICK_RATE_MS);
-        sayTime();
     }
 
     menu_freeMenu(menu);
@@ -106,14 +115,24 @@ char * toString(int number) {
     return str;
 }
 
+/*
+this method handles the key event "OK", this is necessary for navigating through the menu.
+*/
 void clicked(void){
     ESP_LOGI(MAINTAG, "clicked rotary encoder");
     menu_handleKeyEvent(menu, MENU_KEY_OK);
 }
+
+/*
+this method is only here for not getting the error of the presed function. can be fixed by deleting the pressed method out of the struct.
+*/
 void pressed(void){
     ESP_LOGI(MAINTAG, "pressed rotary encoder");
 }
 
+/*
+this method handles the key event for going left or right. This is necessary for navigating through the menu, cause this is the scrolling event.
+*/
 void onMove(int16_t move_value){
     if(move_value > 0){
         menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
@@ -125,20 +144,20 @@ void onMove(int16_t move_value){
 
 void rotary_task(void * pvParameter)
 {
-    //COLOR TEST WITH THE ROTARY ENCODER
-    //smbus_info_t * smbus_info_rotary = smbus_malloc();
-    // ESP_ERROR_CHECK(smbus_init(smbus_info_rotary, i2c_num, 0x3F));
-    // ESP_ERROR_CHECK(smbus_set_timeout(smbus_info_rotary, 1000 / portTICK_RATE_MS));
-    // smbus_write_byte(smbus_info_rotary, 0x0D, 255);
-    // smbus_write_byte(smbus_info_rotary, 0x0E, 255);
-    // smbus_write_byte(smbus_info_rotary, 0x0F, 255);
-
     qwiic_twist_start_task(qwiic_twist_rotary);
     while(1){
         vTaskDelay(1000 / portTICK_RATE_MS);
     }
 
     vTaskDelete(NULL);
+}
+
+void microphone_task(void * pvParameter ){
+    init_microphone();
+}
+
+void audio_task(void * pvParameter){
+    audio_start();
 }
 
 void app_main()
@@ -151,9 +170,13 @@ void app_main()
      * Read "Establishing Wi-Fi or Ethernet Connection" section in
      * examples/protocols/README.md for more information about this function.
      */
-    ESP_ERROR_CHECK(example_connect());
+    ESP_ERROR_CHECK(wifi_connect());
+
+    // xTaskCreate(&microphone_task, "init_microphone_task", 4096, NULL, 5, NULL);
+    // vTaskDelay(1000);
     
-    // start_sdcard_task();
+    //Starts task to start the sdcard
+    xTaskCreate(&audio_task, "audio task", 4096, NULL, 5, NULL);
     vTaskDelay(1000);
 
     //I^2C initialization + the I^2C port
@@ -166,6 +189,6 @@ void app_main()
     //xTaskCreate(&menu_task, "menu_task", 4096, NULL, 5, NULL);
     xTaskCreate(&clock_task, "clock_task", 4096, NULL, 5, NULL);
     xTaskCreate(&alarm_task, "alarm_task", 4096, NULL, 5, NULL);
-    //xTaskCreate(&http_get_task, "http_get_task", 4096, NULL, 5, NULL);
+    xTaskCreate(&http_get_task, "http_get_task", 4096, NULL, 5, NULL);
 }
 
