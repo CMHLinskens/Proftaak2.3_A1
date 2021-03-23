@@ -245,10 +245,13 @@ void get_all_songs_from_SDcard(){
     uint32_t pos = 0;
     uint16_t  size = 0;
     char* url = calloc(1, 2048);
-    songList = calloc(playlist->url_num, 80);
+    songList = calloc(playlist->url_num + 1, 80);
 
     fseek(playlist->save_file, 0, SEEK_SET);
     fseek(playlist->offset_file, 0, SEEK_SET);
+
+    //First value is the array length
+    songList[0] = playlist->url_num;
     
     for(int i = 0; i < playlist->url_num; i++){
         //Gets songs from the SD, these lines are copied from sdcard_list_show
@@ -269,8 +272,9 @@ void get_all_songs_from_SDcard(){
         temp_url[length-4] = '\0';
 
         //Adds url to array
-        songList[i] = temp_url;
+        songList[i + 1] = temp_url;
     }
+    
     free(url);
 }
 
