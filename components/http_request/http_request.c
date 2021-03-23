@@ -15,10 +15,13 @@
 
 #define APITAG "API"
 
+#define CITY "Amsterdam"
+#define KEY "8a844dfb8a5c5fef30713f8ca4fb4aca"
+
 /* Constants that aren't configurable in menuconfig */
 #define WEB_SERVER "api.openweathermap.org"
 #define WEB_PORT "80"
-#define WEB_PATH "http://api.openweathermap.org/data/2.5/weather?q=Rotterdam&appid=8a844dfb8a5c5fef30713f8ca4fb4aca"
+#define WEB_PATH "http://api.openweathermap.org/data/2.5/weather?q="CITY"&appid="KEY
 
 static const char *REQUEST = "GET " WEB_PATH " HTTP/1.0\r\n"
     "Host: "WEB_SERVER":"WEB_PORT"\r\n"
@@ -28,6 +31,8 @@ static const char *REQUEST = "GET " WEB_PATH " HTTP/1.0\r\n"
 char response[1024];
 
 void api_request(){
+    memset(response, 0, sizeof(response));
+
     const struct addrinfo hints = {
         .ai_family = AF_INET,
         .ai_socktype = SOCK_STREAM,
@@ -102,19 +107,11 @@ void api_request(){
                 }
             }
         } while(r > 0);
-
-        //ESP_LOGI(APITAG,"%d",index);
-        // cJSON *root = cJSON_Parse(&response[0]);
-        // cJSON *maan = cJSON_GetObjectItem(root, "main");
-        // double temp = cJSON_GetObjectItem(maan,"temp")->valuedouble;
-
-        //ESP_LOGI(APITAG,"temp: %f",temp);
-
-        ESP_LOGI(APITAG, "... done reading from socket. Last read return=%d errno=%d.", r, errno);
+        ESP_LOGI(APITAG, "size = %d \n response:\n%s", index, &response[0]);
         close(s);
 }
 
-char * http_request_get_response()
+char* http_request_get_response()
 {
-        return &response[0];
+    return &response[0]; 
 }

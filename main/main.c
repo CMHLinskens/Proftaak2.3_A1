@@ -176,7 +176,7 @@ void app_main()
     // vTaskDelay(1000);
     
     //Starts task to start the sdcard
-    xTaskCreate(&audio_task, "audio task", 4096, NULL, 5, NULL);
+    //xTaskCreate(&audio_task, "audio task", 4096, NULL, 5, NULL);
     vTaskDelay(1000);
 
     //I^2C initialization + the I^2C port
