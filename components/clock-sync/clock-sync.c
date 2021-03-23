@@ -106,11 +106,15 @@ int *clock_getCurrentTime(){
 
 void sayTime(void){
     // Retrieve time
-    int *time = clock_getCurrentTime();
-    if(time == NULL) {
-        ESP_LOGE(CLOCKTAG, "Time has not been set yet.");
-        return;
-    }
+    // int *time = clock_getCurrentTime();
+    // if(time == NULL) {
+    //     ESP_LOGE(CLOCKTAG, "Time has not been set yet.");
+    //     return;
+    // }
+
+    int *time = calloc(2, sizeof(int));
+    time[0] = 15;
+    time[1] = 0;
 
     // Initialize sounds list
     char *soundsToPlay[10];
@@ -141,20 +145,21 @@ void sayTime(void){
     // Set the minute sounds
     char minuteString[3];
     sprintf(minuteString, "%d", time[1]);
-    
+
     // temp variables (I dont know a better solution)
     char tempMinuteString1[2];
     char tempMinuteString2[3];
 
+    // If we have a full hour add nothing more to the list
+    if(minuteString[0] == '0'){
+        soundsToPlay[3] = soundsToPlay[4] = soundsToPlay[5] = soundsToPlay[6] = soundsToPlay[7] = "";
+    }
     // If we have minutes < 10 just add the string and "Minuten"
-    if(minuteString[1] == '\0'){
+    else if(minuteString[1] == '\0'){
         soundsToPlay[3] = "En";
         soundsToPlay[4] = minuteString;
         soundsToPlay[5] = "Minuten";
         soundsToPlay[6] = soundsToPlay[7] = "";
-    // If we have a full hour add nothing more to the list
-    } else if (minuteString[0] == '0') {
-        soundsToPlay[3] = soundsToPlay[4] = soundsToPlay[5] = soundsToPlay[6] = soundsToPlay[7] = "";
     // Else determine the minute sound fragments
     } else {
         soundsToPlay[3] = "En";
@@ -229,7 +234,7 @@ void sayTime(void){
     for(int i = 0; i < 10; i++){
         if(!strcmp(soundsToPlay[i], "")) { continue; }
         ESP_LOGI(CLOCKTAG, "%s", soundsToPlay[i]);
-        audio_pipeline_wait_for_stop(getPipeline());
-        play_song_with_ID(soundsToPlay[i]);
+        // audio_pipeline_wait_for_stop(getPipeline());
+        // play_song_with_ID(soundsToPlay[i]);
     }
 }
