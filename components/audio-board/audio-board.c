@@ -666,6 +666,9 @@ void startSayingTime(){
     
     vTaskDelay(2000 / portTICK_RATE_MS);
 
+    audio_pipeline_reset_ringbuffer(pipeline);
+    audio_pipeline_reset_elements(pipeline);
+
     sayTime();
 }
 
