@@ -27,7 +27,11 @@ static const char *REQUEST = "GET " WEB_PATH " HTTP/1.0\r\n"
 
 char response[1024];
 
+SemaphoreHandle_t mutex;
+
 void api_request(){
+    mutex = xSemaphoreCreateMutex();
+
     const struct addrinfo hints = {
         .ai_family = AF_INET,
         .ai_socktype = SOCK_STREAM,
@@ -90,31 +94,35 @@ void api_request(){
         int index = 0;
 
         /* Read HTTP response */
-        do {
-            bzero(recv_buf, sizeof(recv_buf));
-            r = read(s, recv_buf, sizeof(recv_buf)-1);
-            for(int i = 0; i < r; i++) {
-                if(recv_buf[i]=='{' || json){
-                    json = 1;
-                    response[index] = recv_buf[i];
-                    index++;
-                    putchar(recv_buf[i]);
+
+        if(xSemaphoreTake(mutex, (TickType_t) 10) == pdTRUE){
+            do {
+                bzero(recv_buf, sizeof(recv_buf));
+                r = read(s, recv_buf, sizeof(recv_buf)-1);
+                for(int i = 0; i < r; i++) {
+                    if(recv_buf[i]=='{' || json){
+                        json = 1;
+                        response[index] = recv_buf[i];
+                        index++;
+                        putchar(recv_buf[i]);
+                    }
                 }
-            }
-        } while(r > 0);
-
-        //ESP_LOGI(APITAG,"%d",index);
-        // cJSON *root = cJSON_Parse(&response[0]);
-        // cJSON *maan = cJSON_GetObjectItem(root, "main");
-        // double temp = cJSON_GetObjectItem(maan,"temp")->valuedouble;
-
-        //ESP_LOGI(APITAG,"temp: %f",temp);
+            } while(r > 0);
+            xSemaphoreGive(mutex);
+        }
+        else{
+            ESP_LOGE(APITAG, "Error: Could not get Semaphore");
+        }
 
         ESP_LOGI(APITAG, "... done reading from socket. Last read return=%d errno=%d.", r, errno);
         close(s);
 }
 
-char * http_request_get_response()
+char* http_request_get_response()
 {
-        return &response[0];
+    while (uxSemaphoreGetCount(mutex) == 0)
+    {
+        vTaskDelay(1 / portTICK_PERIOD_MS);
+    }
+    return &response[0];
 }
