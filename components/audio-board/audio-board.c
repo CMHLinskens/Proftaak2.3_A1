@@ -20,7 +20,7 @@
 #include "sdcard_scan.h"
 #include "freertos/event_groups.h"
 #include "http_stream.h"
-#include "esp_wifi.h"
+// #include "esp_wifi.h"
 #include "nvs_flash.h"
 #include "sdkconfig.h"
 #include "periph_wifi.h"
@@ -69,18 +69,18 @@ const char *radioChannels[AMOUNT_OF_RADIO_CHANNELS] = {
                         };
 
 //Event handler for all the radio messages.
-int http_stream_event_handle(http_stream_event_msg_t *msg)
-{
-    if (msg->event_id == HTTP_STREAM_RESOLVE_ALL_TRACKS) {
-        return ESP_OK;
-    }
+ int http_stream_event_handle(http_stream_event_msg_t *msg)
+ {
+//     if (msg->event_id == HTTP_STREAM_RESOLVE_ALL_TRACKS) {
+//         return ESP_OK;
+//     }
 
-    if (msg->event_id == HTTP_STREAM_FINISH_TRACK) {
-        return http_stream_next_track(msg->el);
-    }
-    if (msg->event_id == HTTP_STREAM_FINISH_PLAYLIST) {
-        return http_stream_fetch_again(msg->el);
-    }
+//     if (msg->event_id == HTTP_STREAM_FINISH_TRACK) {
+//         return http_stream_next_track(msg->el);
+//     }
+//     if (msg->event_id == HTTP_STREAM_FINISH_PLAYLIST) {
+//         return http_stream_fetch_again(msg->el);
+//     }
     return ESP_OK;
 }
 
@@ -90,7 +90,7 @@ audio_pipeline_handle_t get_pipeline(){
 }
 
 //Gets the current volume
-int getVolume(){
+int get_volume(){
     ESP_LOGI(AUDIOBOARDTAG, "Volume: %d", volume);
     return volume; 
 }
@@ -239,19 +239,29 @@ void play_song_with_ID(char* dir, char* url){
 }
 
 //Makes array of songs on the sd
-void get_all_songs_from_SDcard(){
-    
+void get_all_songs_from_SDcard(char* dir){
+    songList = NULL;
+
+    char sdcard_dir[80];
+    strcpy(sdcard_dir, "/sdcard/");
+    strcat(sdcard_dir, dir);
+
+    sdcard_scan(sdcard_url_save_cb, sdcard_dir, 0, (const char *[]) {"mp3"}, 1, sdcard_list_handle);
+
+
     sdcard_list_t *playlist = sdcard_list_handle->playlist;
     uint32_t pos = 0;
     uint16_t  size = 0;
     char* url = calloc(1, 2048);
+    free(songList);
     songList = calloc(playlist->url_num + 1, 80);
 
     fseek(playlist->save_file, 0, SEEK_SET);
     fseek(playlist->offset_file, 0, SEEK_SET);
 
     //First value is the array length
-    songList[0] = playlist->url_num;
+    char* first_value = (char*)playlist->url_num;
+    songList[0] = first_value;
     
     for(int i = 0; i < playlist->url_num; i++){
         //Gets songs from the SD, these lines are copied from sdcard_list_show
@@ -386,14 +396,28 @@ void audio_start(){
     audio_pipeline_set_listener(pipeline, evt);
 
     ESP_LOGI(AUDIOBOARDTAG, "[6.0] Creating songList");
-    get_all_songs_from_SDcard();
+    // get_all_songs_from_SDcard();
     
     //End configuration
 
-    radioChannelNames[0] = "Back";
-    radioChannelNames[1] = "Sky Radio";
-    radioChannelNames[2] = "NPO Radio 2";
-    radioChannelNames[3] = "Qmusic";
+    //Test
+    
+    get_all_songs_from_SDcard("music");
+    for(int i = 0; i < 6; i++){
+        ESP_LOGI(AUDIOBOARDTAG, "Music: %s", songList[i + 1]);
+    }
+
+    get_all_songs_from_SDcard("klok");
+    for(int i = 0; i < 22; i++){
+        ESP_LOGI(AUDIOBOARDTAG, "Klok: %s", songList[i + 1]);
+    }
+
+    //Endtest
+
+    // radioChannelNames[0] = "Back";
+    // radioChannelNames[1] = "Sky Radio";
+    // radioChannelNames[2] = "NPO Radio 2";
+    // radioChannelNames[3] = "Qmusic";
 
     //Main loop, waits for functions to be called
     while (1) {
