@@ -54,6 +54,7 @@ typedef struct sdcard_list {
 } sdcard_list_t;
 
 char** songList = NULL;
+static int array_index = 0;
 audio_pipeline_handle_t pipeline;
 audio_element_handle_t http_stream_reader, i2s_stream_writer, aac_decoder, mp3_decoder, fatfs_stream_reader, rsp_handle;
 playlist_operator_handle_t sdcard_list_handle = NULL;
@@ -252,7 +253,7 @@ void get_all_songs_from_SDcard(char* type){
     fseek(playlist->offset_file, 0, SEEK_SET);
 
     //Place in the array
-    int index = 0;
+    array_index = 0;
     //Loops through all the songs
     for(int i = 0; i < playlist->url_num; i++){
         //Reads the files on the SD, these lines are copied from sdcard_list_show
@@ -279,16 +280,15 @@ void get_all_songs_from_SDcard(char* type){
         if(strcmp(compare_char, type) == 0){
             //Adds url to array and removes the type
             strcpy(temp_url, temp_url + 1);
-            songList[index] = temp_url;
-            index++;
+            songList[array_index] = temp_url;
+            array_index++;
         }
     }
     free(url);
 }
 
 int get_array_size(){
-    sdcard_list_t *playlist = sdcard_list_handle->playlist;
-    return playlist->url_num;
+    return array_index;
 }
 
 //Returns all the songs on the SD card
@@ -399,22 +399,6 @@ void audio_start(){
     audio_pipeline_set_listener(pipeline, evt);
     
     //End configuration
-
-    //Test
-    
-    get_all_songs_from_SDcard("m");
-    for(int i = 0; i < 1; i++){
-        ESP_LOGI(AUDIOBOARDTAG, "Music: %s", songList[i]);
-    }
-
-    get_all_songs_from_SDcard("c");
-    for(int i = 0; i < 8; i++){
-        ESP_LOGI(AUDIOBOARDTAG, "Klok: %s", songList[i]);
-    }
-
-
-
-    //Endtest
 
     radioChannelNames[0] = "Back";
     radioChannelNames[1] = "Sky Radio";
