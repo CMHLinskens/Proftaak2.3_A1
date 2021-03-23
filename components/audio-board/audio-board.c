@@ -80,8 +80,8 @@ static int GOERTZEL_DETECT_FREQUENCY_COUNTERS[GOERTZEL_N_DETECTION] = {
     0
 };
 
-#define FREQ_COMMAND_THRESHOLD 5
-#define LISTEN_COMMAND_TIMEOUT 20
+#define FREQ_COMMAND_THRESHOLD 8
+#define LISTEN_COMMAND_TIMEOUT 30
 
 #define AUDIOBOARDTAG "AudioBoard"
 
@@ -582,16 +582,15 @@ static void goertzel_callback(struct goertzel_data_t* filter, float result)
         for(int i = 0; i < GOERTZEL_N_DETECTION; i++){
             if(filt->target_frequency == GOERTZEL_DETECT_FREQUENCIES[i]){
                 GOERTZEL_DETECT_FREQUENCY_COUNTERS[i]++;
-                // ESP_LOGW(AUDIOBOARDTAG, "Counter %d is now %d", i, GOERTZEL_DETECT_FREQUENCY_COUNTERS[i]);
+                ESP_LOGW(AUDIOBOARDTAG, "Counter %d is now %d", GOERTZEL_DETECT_FREQUENCIES[i], GOERTZEL_DETECT_FREQUENCY_COUNTERS[i]);
                 if(GOERTZEL_DETECT_FREQUENCY_COUNTERS[i] > FREQ_COMMAND_THRESHOLD){
-                    ESP_LOGW(AUDIOBOARDTAG, "Do something");
                     listenToMic = false;
                     ExecuteMicCommand(i);
                 }
             }
         }
         listenCounter++;
-        if(listenCounter > LISTEN_COMMAND_TIMEOUT){
+        if(listenCounter > LISTEN_COMMAND_TIMEOUT && listenToMic){
             ESP_LOGW(AUDIOBOARDTAG, "Reached listen timeout");
             listenToMic = false;
         }
@@ -667,7 +666,6 @@ void startSayingTime(){
     
     vTaskDelay(2000 / portTICK_RATE_MS);
 
-    ESP_LOGW(AUDIOBOARDTAG, "Say Time");
     sayTime();
 }
 
