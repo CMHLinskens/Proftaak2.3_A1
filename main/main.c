@@ -53,6 +53,7 @@ void rotary_task(void *);
 void clicked(void);
 void pressed(void);
 void onMove(int16_t);
+void test_custom_character_task(void);
 
 void http_get_task(void *pvParameters)
 {
@@ -87,7 +88,9 @@ static void component_init(void){
     qwiic_twist_rotary->onButtonPressed = &pressed;
     qwiic_twist_rotary->onMoved = &onMove;
     qwiic_twist_init(qwiic_twist_rotary);
+
 }
+
 
 void menu_task(void * pvParameter)
 {
@@ -97,7 +100,7 @@ void menu_task(void * pvParameter)
     menu_displayScrollMenu(menu);
 
     qwiic_twist_start_task(qwiic_twist_rotary);
-    
+
 
     while(1)
     {
@@ -160,6 +163,8 @@ void audio_task(void * pvParameter){
     audio_start();
 }
 
+
+
 void app_main()
 {
     ESP_ERROR_CHECK( nvs_flash_init() );
@@ -176,7 +181,7 @@ void app_main()
     // vTaskDelay(1000);
     
     //Starts task to start the sdcard
-    xTaskCreate(&audio_task, "audio task", 4096, NULL, 5, NULL);
+    //xTaskCreate(&audio_task, "audio task", 4096, NULL, 5, NULL);
     vTaskDelay(1000);
 
     //I^2C initialization + the I^2C port
@@ -187,8 +192,8 @@ void app_main()
     component_init();
 
     xTaskCreate(&menu_task, "menu_task", 4096, NULL, 5, NULL);
-    xTaskCreate(&clock_task, "clock_task", 4096, NULL, 5, NULL);
-    xTaskCreate(&alarm_task, "alarm_task", 4096, NULL, 5, NULL);
-    // xTaskCreate(&http_get_task, "http_get_task", 4096, NULL, 5, NULL);
+    //xTaskCreate(&clock_task, "clock_task", 4096, NULL, 5, NULL);
+    //xTaskCreate(&alarm_task, "alarm_task", 4096, NULL, 5, NULL);
+    //xTaskCreate(&http_get_task, "http_get_task", 4096, NULL, 5, NULL);
 }
 

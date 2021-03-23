@@ -240,7 +240,7 @@ static esp_err_t _write_command(const i2c_lcd1602_info_t * i2c_lcd1602_info, uin
 }
 
 // send data to controller
-static esp_err_t _write_data(const i2c_lcd1602_info_t * i2c_lcd1602_info, uint8_t data)
+static esp_err_t    _write_data(const i2c_lcd1602_info_t * i2c_lcd1602_info, uint8_t data)
 {
     ESP_LOGD(TAG, "_write_data 0x%02x", data);
     return _write(i2c_lcd1602_info, data, FLAG_RS_DATA);
@@ -588,11 +588,23 @@ esp_err_t i2c_lcd1602_define_char(const i2c_lcd1602_info_t * i2c_lcd1602_info, i
     return err;
 }
 
+esp_err_t i2c_lcd1602_write_custom_char(const i2c_lcd1602_info_t * i2c_lcd1602_info, i2c_lcd1602_custom_index_t index){
+    
+    esp_err_t err = ESP_FAIL;
+    if(_is_init(i2c_lcd1602_info)){
+        err = _write_command(i2c_lcd1602_info, COMMAND_SET_DDRAM_ADDR | (index << 3));
+        err = _write_data(i2c_lcd1602_info, index);
+    }
+
+    return err;
+}
+
 esp_err_t i2c_lcd1602_write_char(const i2c_lcd1602_info_t * i2c_lcd1602_info, uint8_t chr)
 {
     esp_err_t err = ESP_FAIL;
     if (_is_init(i2c_lcd1602_info))
     {
+        
         err = _write_data(i2c_lcd1602_info, chr);
     }
     return err;

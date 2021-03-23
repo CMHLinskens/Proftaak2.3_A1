@@ -27,6 +27,8 @@ void nextSong(void);
 void previousSong(void);
 void okPressSDPlay(void);
 
+void create_custom_characters(void);
+
 // Placeholder variables
 static int volume = 0;
 
@@ -124,7 +126,37 @@ menu_t *menu_createMenu()
         songList[i] = tempSongList[i - 1];
     }
 
+    create_custom_characters();
+
     return menuPointer;
+}
+
+void create_custom_characters(){
+    
+    uint8_t wifi[8] = {
+    0B00000,
+    0B00100,
+    0B01010,
+    0B10001,
+    0B00100,
+    0B01010,
+    0B00000,
+    0B00100
+    };
+
+  uint8_t mic[8] = {
+    0B00000,
+    0B00000,
+    0B01110,
+    0B01110,
+    0B01110,
+    0B01110,
+    0B00100,
+    0B01110
+    };
+
+    i2c_lcd1602_define_char(_menu->lcd_info, I2C_LCD1602_INDEX_CUSTOM_0, wifi);
+    i2c_lcd1602_define_char(_menu->lcd_info, I2C_LCD1602_INDEX_CUSTOM_1, mic);
 }
 
 // Frees memory used by menu pointer
@@ -203,7 +235,7 @@ void menu_writeScrollMenuItem(i2c_lcd1602_info_t *lcd_info, char* text, int line
 void menu_displayScrollMenu(menu_t *menu)
 {
     i2c_lcd1602_clear(menu->lcd_info);
-
+    
     // Gets title of scroll menu
     char *menuText = menu->menuItems[menu->currentMenuItemId].menuText[0];
     menu_writeScrollMenuItem(menu->lcd_info, menuText, 0);
@@ -224,6 +256,12 @@ void menu_displayScrollMenu(menu_t *menu)
     const char *cursor = "<";
     i2c_lcd1602_move_cursor(menu->lcd_info, 17, 2);
     i2c_lcd1602_write_string(menu->lcd_info, cursor);
+
+     
+    i2c_lcd1602_move_cursor(menu->lcd_info, 1, 3);
+    i2c_lcd1602_write_custom_char(menu->lcd_info, I2C_LCD1602_INDEX_CUSTOM_0);
+    i2c_lcd1602_move_cursor(menu->lcd_info, 1, 2);
+    i2c_lcd1602_write_custom_char(menu->lcd_info, I2C_LCD1602_INDEX_CUSTOM_1);
 }
 
 // Handles key press by switching to new item or doing an onKeyEvent
