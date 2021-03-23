@@ -400,6 +400,8 @@ void audio_start(){
             ESP_LOGE(AUDIOBOARDTAG, "Event interface error : %d", ret);
         }
     }
+
+    stop_audio();
 }
 
 void stop_audio(void){
@@ -447,6 +449,8 @@ void play_radio(int radioChannel){
         // Change linkage to radio
         const char *link_tag[3] = {"http", "mp3", "i2s"};
         audio_pipeline_link(pipeline, &link_tag[0], 3);
+
+        vTaskDelay(2000 / portTICK_RATE_MS);
     }
 
     playingRadio = true;
@@ -470,4 +474,6 @@ void stop_radio(){
     // Change linkage to SD
     const char *link_tag[4] = {"file", "mp3", "filter", "i2s"};
     audio_pipeline_link(pipeline, &link_tag[0], 4);
+
+    vTaskDelay(2000 / portTICK_RATE_MS);
 }
