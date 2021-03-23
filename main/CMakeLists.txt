@@ -16,6 +16,5 @@ set(COMPONENT_REQUIRES audio_pipeline
                        json
                        audio-board
                        goertzel
-                       microphone
                        alarm)
 register_component()
