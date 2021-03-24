@@ -342,8 +342,8 @@ void enterMenuItem(void) {
 void enterRadioVolume(void){
     enterMenuItem();
 
-    char volumeStr[3];
-    sprintf(volumeStr, "%d", volume);
+    char volumeStr[5];
+    sprintf(volumeStr, "%03d", volume);
 
     i2c_lcd1602_move_cursor(_lcd_info, 9, 1);
     i2c_lcd1602_write_string(_lcd_info, volumeStr);
@@ -352,21 +352,25 @@ void enterRadioVolume(void){
 void increaseVolume(void){
     volume++;
     if(volume > 100) volume = 100;
-    char volumeStr[3];
-    sprintf(volumeStr, "%d", volume);
+    char volumeStr[5];
+    sprintf(volumeStr, "%03d", volume);
 
     i2c_lcd1602_move_cursor(_lcd_info, 9, 1);
     i2c_lcd1602_write_string(_lcd_info, volumeStr);
+
+    setVolume(volume);
 }
 // Radio volume left press event
 void decreaseVolume(void){
     volume--;
     if(volume < 0) volume = 0;
-    char volumeStr[3];
-    sprintf(volumeStr, "%d", volume);
+    char volumeStr[5];
+    sprintf(volumeStr, "%03d", volume);
 
     i2c_lcd1602_move_cursor(_lcd_info, 9, 1);
     i2c_lcd1602_write_string(_lcd_info, volumeStr);
+
+    setVolume(volume);
 }
 
 // Radio channel enter event

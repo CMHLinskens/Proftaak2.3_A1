@@ -19,6 +19,10 @@ static const char *TAG = "QWIIC_TWIST";
 
 void qwiic_twist_task(void* pvParameters);
 
+static int volume = 0;
+static int r = 0;
+static int g = 255;
+
 /*
 initialize the rotary encoder, more specific in the settings of the encoder. Like the time of the task etc
 */
@@ -80,18 +84,33 @@ esp_err_t qwiic_twist_set_color(qwiic_twist_t* config, uint8_t r, uint8_t g, uin
 
 void set_volume_color(qwiic_twist_t* config){
 
+	int prevVolume = volume;
+	volume = getVolume();
+
 	if(volume == NULL){
 		ESP_LOGE(TAG, "Volume is not initiaised yet!");
 	}
 
-	//If volume is above 50, cap at 255.
-	int r = volume * 5.1 > 255 ? 255 : volume * 5.1;
-	int g = 255;
+	if(volume == 50){
+		r = 255;
+		g = 255;
 
-	if(volume > 50){
-		g =- volume * 5.1 - 255;
+	}else if(volume < 50 ){
+		r = RGB_STEP * volume;
+
+	} else if(volume > 50){
+		g = 255 - (RGB_STEP * volume);
 	}
-
+	
+	if(volume  == 0){
+		r = 0;
+		g = 255;
+	}
+	else if(volume == 100){
+		r = 255;
+		g = 0;
+	}
+	
 	qwiic_twist_set_color(config, r, g, 0);
 }
 
@@ -288,7 +307,6 @@ void qwiic_twist_task(void* pvParameters)
 	uint8_t result = 0;
 	esp_err_t err = 0;
 	int16_t movement = 0;
-	volume = getVolume();
 
 	set_volume_color(config);
 	

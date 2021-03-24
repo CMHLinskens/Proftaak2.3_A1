@@ -62,7 +62,7 @@ esp_periph_set_handle_t set;
 audio_event_iface_handle_t evt;
 periph_service_handle_t input_ser;
 bool playingRadio = false;
-int volume = 50;
+int volume = 0;
 
 char *radioChannels[AMOUNT_OF_RADIO_CHANNELS] = {
                         "https://22533.live.streamtheworld.com/SKYRADIO.mp3",
@@ -95,6 +95,10 @@ audio_pipeline_handle_t getPipeline(){
 int getVolume(){
     ESP_LOGI(AUDIOBOARDTAG, "Volume: %d", volume);
     return volume; 
+}
+
+void setVolume(int newVolume){
+    volume = newVolume;
 }
 
 //Handles touchpad events
