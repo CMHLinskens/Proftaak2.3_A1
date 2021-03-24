@@ -11,7 +11,7 @@
 
 char *radioChannelNames[AMOUNT_OF_RADIO_CHANNELS + 1];
 
-audio_pipeline_handle_t getPipeline(void);
+audio_pipeline_handle_t get_pipeline(void);
 int get_volume(void);
 int get_array_size(void);
 

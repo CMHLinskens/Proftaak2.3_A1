@@ -232,7 +232,7 @@ void sayTime(void){
     for(int i = 0; i < 10; i++){
         if(!strcmp(soundsToPlay[i], "")) { continue; }
         // ESP_LOGI(CLOCKTAG, "%s", soundsToPlay[i]);
-        audio_pipeline_wait_for_stop(getPipeline());
         play_song_with_ID(soundsToPlay[i], "c");
+        audio_pipeline_wait_for_stop(get_pipeline());
     }
 }

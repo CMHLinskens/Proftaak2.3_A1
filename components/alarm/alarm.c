@@ -129,7 +129,7 @@ void alarm_task(void*pvParameter){
                 //alarmTime[1] = minute
                 if(alarmTime[0] == current[0] && alarmTime[1] == current[1]){
                     ESP_LOGI(ALARMTAG, "Alarm going off %d, %d", alarmTime[1], current[1]);
-                    play_song_with_ID(tmp->song);
+                    play_song_with_ID(tmp->song, "m");
                     Remove(&head, tmp);
                     ESP_LOGI(ALARMTAG, "Removed element");
                 }

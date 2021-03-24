@@ -609,6 +609,7 @@ static void goertzel_callback(struct goertzel_data_t* filter, float result)
         if(listenCounter > LISTEN_COMMAND_TIMEOUT && listenToMic){
             ESP_LOGW(AUDIOBOARDTAG, "Reached listen timeout");
             listenToMic = false;
+            stopListening();
         }
     }
 }
@@ -651,14 +652,12 @@ void startListening(){
     // reset counters
     listenCounter = 0;
     memset(GOERTZEL_DETECT_FREQUENCY_COUNTERS, 0, sizeof(GOERTZEL_DETECT_FREQUENCY_COUNTERS));
-
-    stopListening();
 }
 
 void stopListening(){
     stopPipeline();
     
-    if(playingRadio){
+    if(playing_radio){
         // Change linkage to radio
         const char *link_tag[3] = {HTTP_READER, MP3_DECODER, I2S_WRITER};
         audio_pipeline_link(pipeline, &link_tag[0], 3);
@@ -698,6 +697,8 @@ void ExecuteMicCommand(int freqIndex){
         ESP_LOGW(AUDIOBOARDTAG, "No command found with given frequency. (ExecuteMicCommand())");
         break;
     }
+    
+    stopListening();
 }
 
 void stopPipeline(){
