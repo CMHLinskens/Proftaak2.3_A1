@@ -80,8 +80,6 @@ esp_err_t qwiic_twist_set_color(qwiic_twist_t* config, uint8_t r, uint8_t g, uin
 
 void set_volume_color(qwiic_twist_t* config){
 
-	int volume = getVolume();
-
 	if(volume == NULL){
 		ESP_LOGE(TAG, "Volume is not initiaised yet!");
 	}
@@ -290,6 +288,7 @@ void qwiic_twist_task(void* pvParameters)
 	uint8_t result = 0;
 	esp_err_t err = 0;
 	int16_t movement = 0;
+	volume = getVolume();
 
 	set_volume_color(config);
 	
@@ -301,6 +300,10 @@ void qwiic_twist_task(void* pvParameters)
 			ESP_LOGI(TAG, "Error in task: %d", err);
 		}
 		
+		if(getVolume() != volume){
+			set_volume_color(config);
+		}
+
 		// Check the result and fire callbacks
 		// Click event
 		if ((result & (1<<QWIIC_TWIST_STATUS_CLICKED)) > 0) {
