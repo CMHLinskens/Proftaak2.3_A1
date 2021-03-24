@@ -1,4 +1,7 @@
-#include"alarm.h"
+#include "alarm.h"
+
+#include <stdlib.h>
+#include <string.h>
 
 Node head, node;
 
@@ -12,7 +15,9 @@ Node CreateAlarm(int* time, char* song)
         return NULL;
     }
     alarm->song = song;
-    alarm->time = time;
+    alarm->time = calloc(2, 2 * sizeof(int));
+    memcpy(alarm->time, time, 2 * sizeof(int));
+    // alarm->time = time;
     alarm->next = NULL;
     return alarm;
 };
@@ -125,5 +130,12 @@ void alarm_task(void*pvParameter){
 void alarm_add(int* time, char* song){
     Node newNode = CreateAlarm(time, song);
     Prepend(&head, newNode);
+}
 
+//Clears the global head node in this file 
+void clear_global_list(){
+    Clear(head);
+}
+void print_global_list(){
+    PrintList(head);
 }

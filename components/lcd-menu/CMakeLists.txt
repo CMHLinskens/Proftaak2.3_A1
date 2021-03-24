@@ -6,5 +6,5 @@ set(COMPONENT_PRIV_REQUIRES esp32-i2c-lcd1602
                             audio-board 
                             json 
                             http_request
-                            )
+                            alarm)
 register_component()

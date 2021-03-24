@@ -9,6 +9,7 @@
 #include "clock-sync.h"
 #include "http_request.h"
 #include "audio-board.h"
+#include "alarm.h"
 
 #define MENUTAG "menu"
 
@@ -582,7 +583,8 @@ void leaveAgendaNewMenu(void){
 }
 void AddAgendaNewMenu(void){
     // Add alarm to list
-    
+    alarm_add(tempSelectedTime, tempSelectedSong);
+    print_global_list();
 
     // Reset temp variables
     resetTempAgendaVariables();
@@ -592,11 +594,13 @@ void AddAgendaNewMenu(void){
 }
 void ClearAgenda(void){
     // Clear agenda list
+    clear_global_list();
+    print_global_list();
 }
 
 void resetTempAgendaVariables(void){
-    memset(tempSelectedSong, 0, strlen(tempSelectedSong));
-    memset(tempSelectedTime, 0, 2 * sizeof(int));
+    tempSelectedTime[0] = 0;
+    tempSelectedTime[1] = 0;
 }
 
 // Goes to given menu item
