@@ -106,28 +106,23 @@ int *clock_getCurrentTime(){
     return time;
 }
 
-char*clock_getDate(){
+char* clock_getDate(){
     if(dateString == NULL){ return NULL; }
     return dateString;
 }
 
 void sayTime(void){
     // Retrieve time
-    // int *time = clock_getCurrentTime();
-    // if(time == NULL) {
-    //     ESP_LOGE(CLOCKTAG, "Time has not been set yet.");
-    //     return;
-    // }
-
-    int *time = calloc(2, sizeof(int));
-    time[0] = 15;
-    time[1] = 0;
+    int *time = clock_getCurrentTime();
+    if(time == NULL) {
+        ESP_LOGE(CLOCKTAG, "Time has not been set yet.");
+        return;
+    }
 
     // Initialize sounds list
     char *soundsToPlay[10];
     soundsToPlay[0] = "Het is nu";
     soundsToPlay[2] = "Uur";
-    //soundsToPlay[3] = "En";
     soundsToPlay[8] = "In de";
 
     // Check if we are in the morning, afternoon or evening
@@ -240,7 +235,6 @@ void sayTime(void){
     // Play all sounds
     for(int i = 0; i < 10; i++){
         if(!strcmp(soundsToPlay[i], "")) { continue; }
-        // ESP_LOGI(CLOCKTAG, "%s", soundsToPlay[i]);
         play_song_with_ID(soundsToPlay[i], "c");
         audio_pipeline_wait_for_stop(get_pipeline());
     }

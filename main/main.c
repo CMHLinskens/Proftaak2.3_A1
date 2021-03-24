@@ -102,7 +102,6 @@ void menu_task(void * pvParameter)
     while(1)
     {
         vTaskDelay(2500 / portTICK_RATE_MS);
-        // sayTime();
     }
 
     menu_freeMenu(menu);
@@ -170,7 +169,7 @@ void app_main()
     ESP_ERROR_CHECK(wifi_connect());
     
     //Starts task to start the sdcard
-    //xTaskCreate(&audio_task, "audio task", 4096, NULL, 5, NULL);
+    xTaskCreate(&audio_task, "audio task", 4096, NULL, 5, NULL);
     vTaskDelay(1000);
 
     // //I^2C initialization + the I^2C port

@@ -17,7 +17,7 @@
 #define LCD_NUM_VIS_COLUMNS		 20
 
 // Menu size settings
-#define MAX_MENU_ITEMS 13
+#define MAX_MENU_ITEMS 22
 #define MAX_MENU_KEYS 3
 #define MAX_LCD_LINES 4
 
@@ -43,17 +43,15 @@
 #define MENU_SD_ID_1 11
 #define MENU_SD_ID_2 12
 
-#define MENU_AGENDA_ID_0 12
-#define MENU_AGENDA_ID_1 13
-#define MENU_AGENDA_ID_2 14
-
-#define MENU_SETTINGS_ID_0 15
-#define MENU_SETTINGS_ID_1 16
-#define MENU_SETTINGS_ID_2 17
-
-#define MENU_LIGHTS_ID_0 18
-#define MENU_LIGHTS_ID_1 19
-#define MENU_LIGHTS_ID_2 20
+#define MENU_AGENDA_ID_0 13
+#define MENU_AGENDA_ID_1 14
+#define MENU_AGENDA_ID_2 15
+#define MENU_AGENDA_ID_3 16
+#define MENU_AGENDA_ID_4 17
+#define MENU_AGENDA_ID_5 18
+#define MENU_AGENDA_ID_6 19
+#define MENU_AGENDA_ID_7 20
+#define MENU_AGENDA_ID_8 21
 
 typedef struct {
     unsigned int id;
