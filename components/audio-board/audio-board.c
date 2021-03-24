@@ -250,7 +250,7 @@ void sdcard_url_save_cb(void *user_data, char *url){
 //Sets the volume of the audio_board
 void set_volume(int volume_value) {
     if(board_handle == NULL) {
-        audio_board_init(board_handle);
+        board_handle = audio_board_init();
     }
     if(volume_value > 100) volume_value = 100;
     if(volume_value < 0) volume_value = 0;
@@ -263,6 +263,23 @@ void set_volume(int volume_value) {
  int get_volume(){
 
     return volume;
+}
+
+void skip(){
+    
+    char url[50];
+
+    //Stops music, terminates current pipeline and looks up the next audio file on the SD card
+    audio_pipeline_stop(pipeline);
+    audio_pipeline_wait_for_stop(pipeline);
+    audio_pipeline_terminate(pipeline);
+    sdcard_list_next(sdcard_list_handle, 1, &url);
+
+    //Resets pipeline and starts the new audio file
+    audio_element_set_uri(fatfs_stream_reader, url);
+    audio_pipeline_reset_ringbuffer(pipeline);
+    audio_pipeline_reset_elements(pipeline);
+    audio_pipeline_run(pipeline);
 }
 
 //Pauses audio
