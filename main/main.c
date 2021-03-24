@@ -158,19 +158,17 @@ void audio_task(void * pvParameter){
     vTaskDelete(NULL);
 }
 
-
-
 void app_main()
 {
-    ESP_ERROR_CHECK( nvs_flash_init() );
+    ESP_ERROR_CHECK(nvs_flash_init());
     ESP_ERROR_CHECK(esp_netif_init());
-    ESP_ERROR_CHECK( esp_event_loop_create_default() );
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
     
     /* This helper function configures Wi-Fi as selected in menuconfig. */
     ESP_ERROR_CHECK(wifi_connect());
     
     //Starts task to start the sdcard
-    //xTaskCreate(&audio_task, "audio task", 4096, NULL, 5, NULL);
+    xTaskCreate(&audio_task, "audio task", 4096, NULL, 5, NULL);
     vTaskDelay(1000);
 
     // //I^2C initialization + the I^2C port
