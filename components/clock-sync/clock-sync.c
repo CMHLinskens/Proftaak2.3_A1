@@ -11,8 +11,10 @@
 #include "lcd-menu.h"
 #include "audio-board.h"
 
-static const char *CLOCKTAG = "clock";
+#define CLOCKTAG "clock"
+
 char *timeString;
+char *dateString;
 char **clockSounds;
 
 void time_sync_notification_cb(struct timeval *tv)
@@ -64,7 +66,7 @@ void clock_task(void*pvParameter){
         time(&now);
 
         char strftime_buf[64];
-        // char strftime_buf2[64];
+        char strftime_buf2[64];
 
         // set timezone
         setenv("TZ", "CET-1", 1);
@@ -74,9 +76,11 @@ void clock_task(void*pvParameter){
         // convert time to string
         //strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
         strftime(strftime_buf, sizeof(strftime_buf), "%H:%M", &timeinfo); // time
-        // strftime(strftime_buf2, sizeof(strftime_buf), "%x", &timeinfo); // date
+        strftime(strftime_buf2, sizeof(strftime_buf), "%x", &timeinfo); // date
 
         timeString = strftime_buf;
+        dateString = strftime_buf2;
+
         menu_displayTime(timeString);
 
         vTaskDelay(60000 / portTICK_PERIOD_MS);
@@ -100,6 +104,11 @@ int *clock_getCurrentTime(){
         time[i] = tempTime;
     }
     return time;
+}
+
+char*clock_getDate(){
+    if(dateString == NULL){ return NULL; }
+    return dateString;
 }
 
 void sayTime(void){
