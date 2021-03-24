@@ -107,7 +107,7 @@ void api_request(){
                 }
             }
         } while(r > 0);
-        ESP_LOGI(APITAG, "size = %d \n response:\n%s", index, &response[0]);
+        ESP_LOGI(APITAG, "... done reading from socket. Last read return=%d errno=%d.", r, errno);
         close(s);
 }
 

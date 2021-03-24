@@ -246,9 +246,7 @@ static esp_err_t _write_data(const i2c_lcd1602_info_t * i2c_lcd1602_info, uint8_
     return _write(i2c_lcd1602_info, data, FLAG_RS_DATA);
 }
 
-
 // Public API
-
 i2c_lcd1602_info_t * i2c_lcd1602_malloc(void)
 {
     i2c_lcd1602_info_t * i2c_lcd1602_info = malloc(sizeof(*i2c_lcd1602_info));

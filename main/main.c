@@ -32,11 +32,10 @@
 
 //components that we made
 #include "lcd-menu.h"
-#include "wifi_connect.h"
+#include "wifi-connect.h"
 #include "http_request.h"
 #include "audio-board.h"
 #include "alarm.h"
-
 #include "cJSON.h"
 #include "goertzel.h"
 
@@ -58,8 +57,7 @@ void http_get_task(void *pvParameters)
     while(1){
       api_request();  
       vTaskDelay(60000/portTICK_RATE_MS);
-    }
-    
+    }  
 }
 
 void i2c_master_init(void)
@@ -116,23 +114,23 @@ char * toString(int number) {
 }
 
 /*
-this method handles the key event "OK", this is necessary for navigating through the menu.
-*/
+ * This method handles the key event "OK", this is necessary for navigating through the menu.
+ */
 void clicked(void){
     ESP_LOGI(MAINTAG, "clicked rotary encoder");
     menu_handleKeyEvent(menu, MENU_KEY_OK);
 }
 
 /*
-this method is only here for not getting the error of the presed function. can be fixed by deleting the pressed method out of the struct.
-*/
+ *  This method is only here for not getting the error of the presed function. can be fixed by deleting the pressed method out of the struct.
+ */
 void pressed(void){
     ESP_LOGI(MAINTAG, "pressed rotary encoder");
 }
 
 /*
-this method handles the key event for going left or right. This is necessary for navigating through the menu, cause this is the scrolling event.
-*/
+ *  This method handles the key event for going left or right. This is necessary for navigating through the menu, cause this is the scrolling event.
+ */
 void onMove(int16_t move_value){
     if(move_value > 0){
         menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
@@ -152,12 +150,9 @@ void rotary_task(void * pvParameter)
     vTaskDelete(NULL);
 }
 
-// void microphone_task(void * pvParameter ){
-//     init_microphone();
-// }
-
 void audio_task(void * pvParameter){
     audio_start();
+    vTaskDelete(NULL);
 }
 
 void app_main()
@@ -166,29 +161,23 @@ void app_main()
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK( esp_event_loop_create_default() );
     
-    /* This helper function configures Wi-Fi or Ethernet, as selected in menuconfig.
-     * Read "Establishing Wi-Fi or Ethernet Connection" section in
-     * examples/protocols/README.md for more information about this function.
-     */
+    /* This helper function configures Wi-Fi as selected in menuconfig. */
     ESP_ERROR_CHECK(wifi_connect());
-
-    // xTaskCreate(&microphone_task, "init_microphone_task", 4096, NULL, 5, NULL);
-    // vTaskDelay(1000);
     
     //Starts task to start the sdcard
     xTaskCreate(&audio_task, "audio task", 4096, NULL, 5, NULL);
     vTaskDelay(1000);
 
-    //I^2C initialization + the I^2C port
+    // //I^2C initialization + the I^2C port
     i2c_master_init();
     i2c_num = I2C_MASTER_NUM;
 
-    //initialize the components
+    // //initialize the components
     component_init();
 
     xTaskCreate(&menu_task, "menu_task", 4096, NULL, 5, NULL);
     xTaskCreate(&clock_task, "clock_task", 4096, NULL, 5, NULL);
     xTaskCreate(&alarm_task, "alarm_task", 4096, NULL, 5, NULL);
-    // xTaskCreate(&http_get_task, "http_get_task", 4096, NULL, 5, NULL);
+    xTaskCreate(&http_get_task, "http_get_task", 4096, NULL, 5, NULL);
 }
 
