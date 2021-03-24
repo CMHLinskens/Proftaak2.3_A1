@@ -80,7 +80,7 @@ esp_err_t qwiic_twist_set_color(qwiic_twist_t* config, uint8_t r, uint8_t g, uin
 
 void set_volume_color(qwiic_twist_t* config){
 
-	int volume = getVolume();
+	int volume = get_volume();
 
 	if(volume == NULL){
 		ESP_LOGE(TAG, "Volume is not initiaised yet!");

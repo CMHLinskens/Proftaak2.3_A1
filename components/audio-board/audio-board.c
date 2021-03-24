@@ -18,7 +18,6 @@
 #include "board.h"
 #include "sdcard_list.h"
 #include "sdcard_scan.h"
-
 #include "freertos/event_groups.h"
 #include "http_stream.h"
 #include "esp_wifi.h"
@@ -84,6 +83,7 @@ static int GOERTZEL_DETECT_FREQUENCY_COUNTERS[GOERTZEL_N_DETECTION] = {
 #define LISTEN_COMMAND_TIMEOUT 30
 
 #define AUDIOBOARDTAG "AudioBoard"
+#define MAX_FILE_LENGTH 2048
 
 typedef struct sdcard_list {
     char *save_file_name;                // Name of file to save URLs
@@ -97,19 +97,20 @@ typedef struct sdcard_list {
     uint32_t total_size_offset_file;     // Size of file to save offset
 } sdcard_list_t;
 
-char** songList = NULL;
+char** song_list = NULL;
+static int array_index = 0;
 audio_pipeline_handle_t pipeline;
 audio_element_handle_t http_stream_reader, i2s_stream_writer, aac_decoder, mp3_decoder, fatfs_stream_reader, rsp_handle, i2s_stream_reader, mic_filter, raw_read;
 playlist_operator_handle_t sdcard_list_handle = NULL;
 esp_periph_set_handle_t set;
 audio_event_iface_handle_t evt;
 periph_service_handle_t input_ser;
-bool playingRadio = false;
+bool playing_radio = false;
 int volume = 50;
 bool listenToMic = false;
 goertzel_data_t** configs;
 
-char *radioChannels[AMOUNT_OF_RADIO_CHANNELS] = {
+const char *radio_channels[AMOUNT_OF_RADIO_CHANNELS] = {
                         "https://22533.live.streamtheworld.com/SKYRADIO.mp3",
                         "https://icecast.omroep.nl/radio2-bb-mp3",
                         "https://icecast-qmusicnl-cdp.triple-it.nl/Qmusic_nl_live_96.mp3"
@@ -123,8 +124,8 @@ void stopPipeline();
 void ExecuteMicCommand(int freqIndex);
 
 //Event handler for all the radio messages.
-int _http_stream_event_handle(http_stream_event_msg_t *msg)
-{
+ int http_stream_event_handle(http_stream_event_msg_t *msg)
+ {
     if (msg->event_id == HTTP_STREAM_RESOLVE_ALL_TRACKS) {
         return ESP_OK;
     }
@@ -139,12 +140,12 @@ int _http_stream_event_handle(http_stream_event_msg_t *msg)
 }
 
 //Gets the pipeline object;
-audio_pipeline_handle_t getPipeline(){
+audio_pipeline_handle_t get_pipeline(){
     return pipeline;
 }
 
 //Gets the current volume
-int getVolume(){
+int get_volume(){
     ESP_LOGI(AUDIOBOARDTAG, "Volume: %d", volume);
     return volume; 
 }
@@ -254,28 +255,29 @@ void sdcard_url_save_cb(void *user_data, char *url){
 }
 
 //Pauses audio
-void pauseSound(){
+void pause_sound(){
 
     audio_pipeline_pause(pipeline);
     ESP_LOGI(AUDIOBOARDTAG, "Paused");
 }
 
 //Resumes audio
-void resumeSound(){
+void resume_sound(){
 
     audio_pipeline_resume(pipeline);
     ESP_LOGI(AUDIOBOARDTAG, "Resumed");
 }
 
 //Plays audio with given ID/URL
-void play_song_with_ID(char* url){
+void play_song_with_ID(char* url, char *type){
     //Extends the URL so the SD card can find it
-    char extendedUrl[80];
-    strcpy(extendedUrl, "file://sdcard/");
-    strcat(extendedUrl, url);
-    strcat(extendedUrl, ".mp3");
+    char extended_url[80];
+    strcpy(extended_url, "file://sdcard/");
+    strcat(extended_url, type);
+    strcat(extended_url, url);
+    strcat(extended_url, ".mp3");
     
-    if(playingRadio){
+    if(playing_radio){
         stop_radio();
     } else {
         //Stops audio, terminates current pipeline
@@ -283,61 +285,78 @@ void play_song_with_ID(char* url){
     }
 
     //Resets pipeline and starts the new audio file
-    audio_element_set_uri(fatfs_stream_reader, extendedUrl);
+    audio_element_set_uri(fatfs_stream_reader, extended_url);
     audio_pipeline_reset_ringbuffer(pipeline);
     audio_pipeline_reset_elements(pipeline);
     audio_pipeline_change_state(pipeline, AEL_STATE_INIT);
     audio_pipeline_run(pipeline);
 
-    ESP_LOGI(AUDIOBOARDTAG, "Song %s is playing", extendedUrl);
+    ESP_LOGI(AUDIOBOARDTAG, "Song %s is playing", extended_url);
 }
 
 //Makes array of songs on the sd
-void get_all_songs_from_SDcard(){
-    
+void get_all_songs_from_SDcard(char* type){
+    //Init playlist and array
     sdcard_list_t *playlist = sdcard_list_handle->playlist;
     uint32_t pos = 0;
     uint16_t  size = 0;
-    char* url = calloc(1, 2048);
-    songList = calloc(playlist->url_num, 80);
+    char* url = malloc(MAX_FILE_LENGTH);
+    free(song_list);
+    song_list = calloc(playlist->url_num + 1, 80);
 
+    //Goes to the first position on the file
     fseek(playlist->save_file, 0, SEEK_SET);
     fseek(playlist->offset_file, 0, SEEK_SET);
-    
+
+    //Place in the array
+    array_index = 0;
+    //Loops through all the songs
     for(int i = 0; i < playlist->url_num; i++){
-        //Gets songs from the SD, these lines are copied from sdcard_list_show
+        //Reads the files on the SD, these lines are copied from sdcard_list_show
         memset(url, 0, 2048);
         fread(&pos, 1, sizeof(uint32_t), playlist->offset_file);
         fread(&size, 1, sizeof(uint16_t), playlist->offset_file);
-        fseek(playlist->save_file, pos, SEEK_SET) ;
+        fseek(playlist->save_file, pos, SEEK_SET);
         fread(url, 1, size, playlist->save_file);
 
         //Copy's the url so the array doesnt point to a pointer.
         char *temp_url = calloc(1, 80);
         //Gets the 14'th char, because we dont want the file name to go with it
         strcpy(temp_url, url + 14);
-
         //Removes the suffix .mp3
         int length = strlen(temp_url);
-        //Adds 0 character to mark end of the string
         temp_url[length-4] = '\0';
 
-        //Adds url to array
-        songList[i] = temp_url;
+        //Looks if the fist char equals the type. ex: c means clock, m means music etc...
+        char compare_char[80];
+        strcpy(compare_char, temp_url);
+        compare_char[1] = '\0';
+
+        //If equal
+        if(strcmp(compare_char, type) == 0){
+            //Adds url to array and removes the type
+            strcpy(temp_url, temp_url + 1);
+            song_list[array_index] = temp_url;
+            array_index++;
+        }
     }
     free(url);
 }
 
+int get_array_size(){
+    return array_index;
+}
+
 //Returns all the songs on the SD card
-char** getSongList(){
-    if(songList == NULL){
+char** get_song_list(){
+    if(song_list == NULL){
         ESP_LOGE(AUDIOBOARDTAG, "Songlist not created yet!");
         //Songlist doesn't exist/have any songs so we return an array with a warning.
-        songList = calloc(1, 19);
-        songList[0] = "No songs in sdcard";
-        return songList;
+        song_list = calloc(1, 19);
+        song_list[0] = "No songs in sdcard";
+        return song_list;
     } else {
-        return songList;
+        return song_list;
     }
 }
 
@@ -402,7 +421,7 @@ void audio_start(){
 
     ESP_LOGI(AUDIOBOARDTAG, "[4.2] Create http stream to read data");
     http_stream_cfg_t http_cfg = HTTP_STREAM_CFG_DEFAULT();
-    http_cfg.event_handle = _http_stream_event_handle;
+    http_cfg.event_handle = http_stream_event_handle;
     http_cfg.type = AUDIO_STREAM_READER;
     http_cfg.enable_playlist_parser = true;
     http_stream_reader = http_stream_init(&http_cfg);
@@ -460,9 +479,6 @@ void audio_start(){
 
     ESP_LOGI(AUDIOBOARDTAG, "[5.1] Listen for all pipeline events");
     audio_pipeline_set_listener(pipeline, evt);
-
-    ESP_LOGI(AUDIOBOARDTAG, "[6.0] Creating songList");
-    get_all_songs_from_SDcard();
 
     // Config goertzel filters
     configs = goertzel_malloc(GOERTZEL_N_DETECTION); // Alloc mem
@@ -540,7 +556,7 @@ void play_radio(int radioChannel){
     stopPipeline();
 
     
-    if(playingRadio == false) {      
+    if(playing_radio == false) {      
         // Change linkage to radio
         const char *link_tag[3] = {HTTP_READER, MP3_DECODER, I2S_WRITER};
         audio_pipeline_link(pipeline, &link_tag[0], 3);
@@ -548,10 +564,10 @@ void play_radio(int radioChannel){
         vTaskDelay(2000 / portTICK_RATE_MS);
     }
 
-    playingRadio = true;
+    playing_radio = true;
 
     // Start radio
-    audio_element_set_uri(http_stream_reader, radioChannels[radioChannel]);
+    audio_element_set_uri(http_stream_reader, radio_channels[radioChannel]);
     audio_pipeline_reset_ringbuffer(pipeline);
     audio_pipeline_reset_elements(pipeline);
     audio_pipeline_change_state(pipeline, AEL_STATE_INIT);
@@ -559,7 +575,7 @@ void play_radio(int radioChannel){
 }
 
 void stop_radio(){
-    playingRadio = false;
+    playing_radio = false;
 
     // Stop playing 
     stopPipeline();
