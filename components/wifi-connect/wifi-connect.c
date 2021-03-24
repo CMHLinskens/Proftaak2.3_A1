@@ -37,7 +37,6 @@ static esp_netif_t* wifi_start(void);
 static void wifi_stop(void);
 #endif
 
-
 /**
  * @brief Checks the netif description if it contains specified prefix.
  * All netifs created withing common connect component are prefixed with the module WIFITAG,
@@ -185,7 +184,6 @@ static void wifi_stop(void)
     s_esp_netif = NULL;
 }
 #endif // CONFIG_CONNECT_WIFI
-
 
 esp_netif_t *get_netif(void)
 {
