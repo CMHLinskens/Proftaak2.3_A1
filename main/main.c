@@ -117,7 +117,7 @@ char * toString(int number) {
 }
 
 /*
- * This method handles the key event "OK", this is necessary for navigating through the menu.
+ * This method handles the key event "OK" (onButtonClicked), this is necessary for navigating through the menu.
  */
 void clicked(void){
     ESP_LOGI(MAINTAG, "clicked rotary encoder");
@@ -125,14 +125,14 @@ void clicked(void){
 }
 
 /*
- *  This method is only here for not getting the error of the presed function. can be fixed by deleting the pressed method out of the struct.
+ *  This method is not used. Its a placeholder method (onButtonPressed).
  */
 void pressed(void){
     ESP_LOGI(MAINTAG, "pressed rotary encoder");
 }
 
 /*
- *  This method handles the key event for going left or right. This is necessary for navigating through the menu, cause this is the scrolling event.
+ *  This method handles the key event turning left and right (onMoved). This is necessary for navigating through the menu, cause this is the scrolling event.
  */
 void onMove(int16_t move_value){
     if(move_value > 0){
@@ -158,13 +158,11 @@ void audio_task(void * pvParameter){
     vTaskDelete(NULL);
 }
 
-
-
 void app_main()
 {
-    ESP_ERROR_CHECK( nvs_flash_init() );
+    ESP_ERROR_CHECK(nvs_flash_init());
     ESP_ERROR_CHECK(esp_netif_init());
-    ESP_ERROR_CHECK( esp_event_loop_create_default() );
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
     
     /* This helper function configures Wi-Fi as selected in menuconfig. */
     ESP_ERROR_CHECK(wifi_connect());

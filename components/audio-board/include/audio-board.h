@@ -31,11 +31,6 @@ int get_array_size(void);
 
 // SD Card
 /**
- * @brief  Callback used to save data to the SD card with the given url.
- */
-void sdcard_url_save_cb(void *user_data, char *url);
-
-/**
  * @brief  Plays audio with the given ID/URL/save file location.
  * @param  url: the file location.
  * @param  type: the type of audio file (c for clock, m for music).

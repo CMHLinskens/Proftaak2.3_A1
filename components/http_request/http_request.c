@@ -47,9 +47,7 @@ void api_request(){
             vTaskDelay(1000 / portTICK_PERIOD_MS);
         }
 
-        /* Code to print the resolved IP.
-
-           Note: inet_ntoa is non-reentrant, look at ipaddr_ntoa_r for "real" code */
+        /* Code to print the resolved IP. */
         addr = &((struct sockaddr_in *)res->ai_addr)->sin_addr;
         ESP_LOGI(APITAG, "DNS lookup succeeded. IP=%s", inet_ntoa(*addr));
 

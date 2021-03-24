@@ -70,6 +70,4 @@ menu "Weather api Configuration"
         help
             The key used to request api data.
 
-
-
 endmenu
