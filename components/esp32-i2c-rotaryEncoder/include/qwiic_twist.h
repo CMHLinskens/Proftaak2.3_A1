@@ -17,7 +17,7 @@
 
 #include <math.h>
 
-#define QWIIC_TWIST_ADDRESS 0x3F
+#define QWIIC_TWIST_ADDRESS 0x08
 
 #define QWIIC_TWIST_STATUS_CLICKED 2
 #define QWIIC_TWIST_STATUS_PRESSED 1
@@ -99,5 +99,7 @@ esp_err_t qwiic_twist_timeSinceLastPress(qwiic_twist_t* config, uint16_t* result
 
 
 esp_err_t qwiic_twist_get_version(qwiic_twist_t* config, uint16_t* version);
+
+void changeRGB(qwiic_twist_t*, int R, int G, int B);
 
 #endif

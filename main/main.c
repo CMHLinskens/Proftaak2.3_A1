@@ -1,41 +1,69 @@
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/event_groups.h"
+#include "freertos/semphr.h"
 #include "esp_system.h"
 #include "driver/gpio.h"
 #include "driver/i2c.h"
 #include "esp_log.h"
 #include "sdkconfig.h"
 #include "esp32/rom/uart.h"
-
+#include <string.h>
+#include <time.h>
+#include <sys/time.h>
+#include "esp_event.h"
+#include "esp_attr.h"
+#include "esp_sleep.h"
+#include "nvs_flash.h"
+#include "esp_sntp.h"
+#include "esp_task_wdt.h"
 #include "smbus.h"
 #include "qwiic_twist.h"
 #include "i2c-lcd1602.h"
+#include "clock-sync.h"
+#include "esp_wifi.h" 
 
-#undef USE_STDIN
+#include "lwip/err.h"
+#include "lwip/sockets.h"
+#include "lwip/sys.h"
+#include "lwip/netdb.h"
+#include "lwip/dns.h"
 
-#define I2C_MASTER_NUM           I2C_NUM_0
-#define I2C_MASTER_TX_BUF_LEN    0                     // disabled
-#define I2C_MASTER_RX_BUF_LEN    0                     // disabled
-#define I2C_MASTER_FREQ_HZ       100000
-#define I2C_MASTER_SDA_IO        CONFIG_I2C_MASTER_SDA
-#define I2C_MASTER_SCL_IO        CONFIG_I2C_MASTER_SCL
-#define LCD_NUM_ROWS			 4
-#define LCD_NUM_COLUMNS			 40
-#define LCD_NUM_VIS_COLUMNS		 20
+//components that we made
+#include "lcd-menu.h"
+#include "wifi_connect.h"
+#include "http_request.h"
+#include "audio-board.h"
+#include "alarm.h"
 
-#define MENUTAG "menu"
+#include "cJSON.h"
+#include "goertzel.h"
+#include "microphone.h"
 
-static const char *TAG = "MAIN";
+#define MAINTAG "main"
+#define CLOCKTAG "clock"
+#define APITAG "api"
 
 i2c_port_t i2c_num;
-i2c_lcd1602_info_t *lcd_info;
 qwiic_twist_t *qwiic_twist_rotary;
+menu_t *menu;
 
+void rotary_task(void *);
+void clicked(void);
 void pressed(void);
 void onMove(int16_t);
 
-static void i2c_master_init(void)
+void http_get_task(void *pvParameters)
+{
+    while(1){
+      api_request();  
+      vTaskDelay(60000/portTICK_RATE_MS);
+    }
+    
+}
+
+void i2c_master_init(void)
 {
     int i2c_master_port = I2C_MASTER_NUM;
     i2c_config_t conf;
@@ -51,79 +79,33 @@ static void i2c_master_init(void)
                        I2C_MASTER_TX_BUF_LEN, 0);
 }
 
-
-static uint8_t _wait_for_user(void)
-{
-    uint8_t c = 0;
-#ifdef USE_STDIN
-    while (!c)
-    {
-       STATUS s = uart_rx_one_char(&c);
-       if (s == OK) {
-          printf("%c", c);
-       }
-    }
-#else
-    vTaskDelay(1000 / portTICK_RATE_MS);
-#endif
-    return c;
-}
-
-i2c_lcd1602_info_t * lcd_init(){
-    uint8_t address = CONFIG_LCD1602_I2C_ADDRESS;
-
-    // Set up the SMBus
-    smbus_info_t * smbus_info = smbus_malloc();
-    smbus_init(smbus_info, i2c_num, address);
-    smbus_set_timeout(smbus_info, 1000 / portTICK_RATE_MS);
-
-    // Set up the LCD1602 device with backlight off
-    i2c_lcd1602_info_t * lcd_info = i2c_lcd1602_malloc();
-    i2c_lcd1602_init(lcd_info, smbus_info, true, LCD_NUM_ROWS, LCD_NUM_COLUMNS, LCD_NUM_VIS_COLUMNS);
-
-    // turn off backlight
-    ESP_LOGI(MENUTAG, "backlight off");
-    _wait_for_user();
-    i2c_lcd1602_set_backlight(lcd_info, false);
-
-    // turn on backlight
-    ESP_LOGI(MENUTAG, "backlight on");
-    //_wait_for_user();
-    i2c_lcd1602_set_backlight(lcd_info, true);
-
-    ESP_LOGI(MENUTAG, "cursor on");
-    _wait_for_user();
-    i2c_lcd1602_set_cursor(lcd_info, true);
-
-    return lcd_info;
-}
-
-
 static void component_init(void){
-    //INIT lcd
-    lcd_info = lcd_init();
-
-    //INIT rotary encoder
+    //INIT rotary encoder, and the qwiic_twist_init will set the oher settings for the rotary encoder
     qwiic_twist_rotary = (qwiic_twist_t*)malloc(sizeof(*qwiic_twist_rotary));
     qwiic_twist_rotary->port = i2c_num;
-    qwiic_twist_rotary->onButtonClicked = &pressed;
+    qwiic_twist_rotary->onButtonClicked = &clicked;
+    qwiic_twist_rotary->onButtonPressed = &pressed;
     qwiic_twist_rotary->onMoved = &onMove;
     qwiic_twist_init(qwiic_twist_rotary);
 }
 
-
-void display_welcome_message(i2c_lcd1602_info_t * lcd_info)
+void menu_task(void * pvParameter)
 {
+    menu = menu_createMenu();
 
-    i2c_lcd1602_set_cursor(lcd_info, false);
-    i2c_lcd1602_move_cursor(lcd_info, 6, 1);
+    menu_displayWelcomeMessage(menu);
+    menu_displayScrollMenu(menu);
 
-    i2c_lcd1602_write_string(lcd_info, "Welcome");
-    i2c_lcd1602_move_cursor(lcd_info, 8, 2);
-    i2c_lcd1602_write_string(lcd_info, "User");
+    qwiic_twist_start_task(qwiic_twist_rotary);
+    
 
-    vTaskDelay(2500 / portTICK_RATE_MS);
-    i2c_lcd1602_clear(lcd_info);
+    while(1)
+    {
+        vTaskDelay(2500 / portTICK_RATE_MS);
+    }
+
+    menu_freeMenu(menu);
+    vTaskDelete(NULL);
 }
 
 char * toString(int number) {
@@ -133,75 +115,70 @@ char * toString(int number) {
     return str;
 }
 
-void display_number(i2c_lcd1602_info_t * lcd_info, int number){
-    i2c_lcd1602_set_cursor(lcd_info, false);
-    i2c_lcd1602_write_string(lcd_info, toString(number));
+/*
+this method handles the key event "OK", this is necessary for navigating through the menu.
+*/
+void clicked(void){
+    ESP_LOGI(MAINTAG, "clicked rotary encoder");
+    menu_handleKeyEvent(menu, MENU_KEY_OK);
 }
 
+/*
+this method is only here for not getting the error of the presed function. can be fixed by deleting the pressed method out of the struct.
+*/
 void pressed(void){
-    ESP_LOGI(TAG, "pressed rotary encoder");
-    display_welcome_message(lcd_info);
+    ESP_LOGI(MAINTAG, "pressed rotary encoder");
 }
 
+/*
+this method handles the key event for going left or right. This is necessary for navigating through the menu, cause this is the scrolling event.
+*/
 void onMove(int16_t move_value){
-    static int counter = 0;
-    ESP_LOGI(TAG, "rotary encoder moved");
-    ESP_LOGI(TAG, "rotary value: %d", move_value);
     if(move_value > 0){
-        counter++;
+        menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
     }
     else if(move_value < 0){
-        counter--;
+        menu_handleKeyEvent(menu, MENU_KEY_LEFT);
     }
-    i2c_lcd1602_clear(lcd_info);
-    display_number(lcd_info, counter);
 }
 
-void display_counter_rotary(i2c_lcd1602_info_t * lcd_info, int number)
+void rotary_task(void * pvParameter)
 {
-    i2c_lcd1602_set_cursor(lcd_info, false);
-    i2c_lcd1602_move_cursor(lcd_info, 6, 1);
-
-    i2c_lcd1602_write_char(lcd_info, number);
-
-    // vTaskDelay(2500 / portTICK_RATE_MS);
-    // i2c_lcd1602_clear(lcd_info);
-}
-
-void menu_task(void * pvParameter)
-{
-    display_welcome_message(lcd_info);
-
-    while(1)
-    {
-        vTaskDelay(100 / portTICK_RATE_MS);
-    }
-
-    vTaskDelete(NULL);
-}
-
-void rotary_test_task(void * pvParameter)
-{
-    //COLOR TEST WITH THE ROTARY ENCODER
-    //smbus_info_t * smbus_info_rotary = smbus_malloc();
-    // ESP_ERROR_CHECK(smbus_init(smbus_info_rotary, i2c_num, 0x3F));
-    // ESP_ERROR_CHECK(smbus_set_timeout(smbus_info_rotary, 1000 / portTICK_RATE_MS));
-    // smbus_write_byte(smbus_info_rotary, 0x0D, 255);
-    // smbus_write_byte(smbus_info_rotary, 0x0E, 255);
-    // smbus_write_byte(smbus_info_rotary, 0x0F, 255);
-
     qwiic_twist_start_task(qwiic_twist_rotary);
     while(1){
-        vTaskDelay(100 / portTICK_RATE_MS);
+        vTaskDelay(1000 / portTICK_RATE_MS);
     }
 
     vTaskDelete(NULL);
 }
 
+void microphone_task(void * pvParameter ){
+    init_microphone();
+}
 
+void audio_task(void * pvParameter){
+    audio_start();
+}
 
 void app_main()
 {
+    ESP_ERROR_CHECK( nvs_flash_init() );
+    ESP_ERROR_CHECK(esp_netif_init());
+    ESP_ERROR_CHECK( esp_event_loop_create_default() );
+    
+    /* This helper function configures Wi-Fi or Ethernet, as selected in menuconfig.
+     * Read "Establishing Wi-Fi or Ethernet Connection" section in
+     * examples/protocols/README.md for more information about this function.
+     */
+    ESP_ERROR_CHECK(wifi_connect());
+
+    // xTaskCreate(&microphone_task, "init_microphone_task", 4096, NULL, 5, NULL);
+    // vTaskDelay(1000);
+    
+    //Starts task to start the sdcard
+    //xTaskCreate(&audio_task, "audio task", 4096, NULL, 5, NULL);
+    vTaskDelay(1000);
+
     //I^2C initialization + the I^2C port
     i2c_master_init();
     i2c_num = I2C_MASTER_NUM;
@@ -209,7 +186,9 @@ void app_main()
     //initialize the components
     component_init();
 
-    //TaskCreate(&menu_task, "menu_task", 4096, NULL, 5, NULL);
-    xTaskCreate(&rotary_test_task, "rotary_test_task", 4096, NULL, 5, NULL);
+    xTaskCreate(&menu_task, "menu_task", 4096, NULL, 5, NULL);
+    xTaskCreate(&clock_task, "clock_task", 4096, NULL, 5, NULL);
+    xTaskCreate(&alarm_task, "alarm_task", 4096, NULL, 5, NULL);
+    // xTaskCreate(&http_get_task, "http_get_task", 4096, NULL, 5, NULL);
 }
 
