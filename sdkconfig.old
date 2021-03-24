@@ -121,25 +121,27 @@ CONFIG_PARTITION_TABLE_MD5=y
 # end of Partition Table
 
 #
-# esp32-i2c-lcd1602-example Configuration
+# esp32-i2c-lcd1602 Configuration
 #
 CONFIG_I2C_MASTER_SCL=23
 CONFIG_I2C_MASTER_SDA=18
 CONFIG_LCD1602_I2C_ADDRESS=0x27
-# end of esp32-i2c-lcd1602-example Configuration
+# end of esp32-i2c-lcd1602 Configuration
 
 #
 # Wifi Connection Configuration
 #
 CONFIG_CONNECT_WIFI=y
-CONFIG_WIFI_SSID="Ziggo136B821"
-CONFIG_WIFI_PASSWORD="uXp4pueftJjw"
-CONFIG_CONNECT_IPV6=y
-CONFIG_CONNECT_IPV6_PREF_LOCAL_LINK=y
-# CONFIG_CONNECT_IPV6_PREF_GLOBAL is not set
-# CONFIG_CONNECT_IPV6_PREF_SITE_LOCAL is not set
-# CONFIG_CONNECT_IPV6_PREF_UNIQUE_LOCAL is not set
+CONFIG_WIFI_SSID="P10 plus"
+CONFIG_WIFI_PASSWORD="dspokemon"
 # end of Wifi Connection Configuration
+
+#
+# Weather api Configuration
+#
+CONFIG_API_CITY="Rotterdam"
+CONFIG_API_KEY="8a844dfb8a5c5fef30713f8ca4fb4aca"
+# end of Weather api Configuration
 
 #
 # Audio HAL

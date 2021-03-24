@@ -55,3 +55,21 @@ menu "Wifi Connection Configuration"
     endif
 
 endmenu
+
+menu "Weather api Configuration"
+
+    config API_CITY
+        string "API Location"
+        default "Amsterdam"
+        help
+            The location of which the api will retrieve the data from.
+
+    config API_KEY
+        string "API Key"
+        default "8a844dfb8a5c5fef30713f8ca4fb4aca"
+        help
+            The key used to request api data.
+
+
+
+endmenu

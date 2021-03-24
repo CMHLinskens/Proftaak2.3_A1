@@ -10,18 +10,15 @@
 #include "lwip/sys.h"
 #include "lwip/netdb.h"
 #include "lwip/dns.h"
+#include "sdkconfig.h"
 
 #include "cJSON.h"
 
 #define APITAG "API"
 
-#define CITY "Amsterdam"
-#define KEY "8a844dfb8a5c5fef30713f8ca4fb4aca"
-
-/* Constants that aren't configurable in menuconfig */
 #define WEB_SERVER "api.openweathermap.org"
 #define WEB_PORT "80"
-#define WEB_PATH "http://api.openweathermap.org/data/2.5/weather?q="CITY"&appid="KEY
+#define WEB_PATH "http://api.openweathermap.org/data/2.5/weather?q="CONFIG_API_CITY"&appid="CONFIG_API_KEY
 
 static const char *REQUEST = "GET " WEB_PATH " HTTP/1.0\r\n"
     "Host: "WEB_SERVER":"WEB_PORT"\r\n"
@@ -31,6 +28,7 @@ static const char *REQUEST = "GET " WEB_PATH " HTTP/1.0\r\n"
 char response[1024];
 
 void api_request(){
+
     memset(response, 0, sizeof(response));
 
     const struct addrinfo hints = {
