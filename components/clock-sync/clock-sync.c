@@ -231,8 +231,8 @@ void sayTime(void){
     // Play all sounds
     for(int i = 0; i < 10; i++){
         if(!strcmp(soundsToPlay[i], "")) { continue; }
-        ESP_LOGI(CLOCKTAG, "%s", soundsToPlay[i]);
-        // audio_pipeline_wait_for_stop(getPipeline());
-        // play_song_with_ID(soundsToPlay[i]);
+        // ESP_LOGI(CLOCKTAG, "%s", soundsToPlay[i]);
+        audio_pipeline_wait_for_stop(getPipeline());
+        play_song_with_ID(soundsToPlay[i]);
     }
 }
