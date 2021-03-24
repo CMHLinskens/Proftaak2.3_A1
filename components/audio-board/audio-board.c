@@ -105,6 +105,7 @@ playlist_operator_handle_t sdcard_list_handle = NULL;
 esp_periph_set_handle_t set;
 audio_event_iface_handle_t evt;
 periph_service_handle_t input_ser;
+audio_board_handle_t board_handle;
 bool playing_radio = false;
 int volume = 50;
 bool listenToMic = false;
@@ -144,19 +145,13 @@ audio_pipeline_handle_t get_pipeline(){
     return pipeline;
 }
 
-//Gets the current volume
-int get_volume(){
-    ESP_LOGI(AUDIOBOARDTAG, "Volume: %d", volume);
-    return volume; 
-}
 
 //Handles touchpad events
 static esp_err_t input_key_service_cb(periph_service_handle_t handle, periph_service_event_t *evt, void *ctx){
 
     //Touch pad init
-    audio_board_handle_t board_handle = (audio_board_handle_t) ctx;
-    int player_volume;
-    audio_hal_get_volume(board_handle->audio_hal, &player_volume);
+    board_handle = (audio_board_handle_t) ctx;
+    audio_hal_set_volume(board_handle->audio_hal, volume);
 
     //Touchpad event started
     if (evt->type == INPUT_KEY_SERVICE_ACTION_CLICK_RELEASE){
@@ -214,28 +209,26 @@ static esp_err_t input_key_service_cb(periph_service_handle_t handle, periph_ser
             case INPUT_KEY_USER_ID_VOLUP:
                 //Sets volume up
                 ESP_LOGI(AUDIOBOARDTAG, "Volume went up");
-                player_volume += 10;
-                if (player_volume > 100) {
-                    player_volume = 100;
+                volume += 10;
+                if (volume > 100) {
+                    volume = 100;
                 }
-                volume = player_volume;
 
-                audio_hal_set_volume(board_handle->audio_hal, player_volume);
-                ESP_LOGI(AUDIOBOARDTAG, "Volume set to %d %%", player_volume);
+                audio_hal_set_volume(board_handle->audio_hal, volume);
+                ESP_LOGI(AUDIOBOARDTAG, "Volume set to %d %%", volume);
                 break;
 
             //Volume down button is pressed
             case INPUT_KEY_USER_ID_VOLDOWN:
                 //Sets volume down
                 ESP_LOGI(AUDIOBOARDTAG, "Volume went down");
-                player_volume -= 10;
-                if (player_volume < 0) {
-                    player_volume = 0;
+                volume -= 10;
+                if (volume < 0) {
+                    volume = 0;
                 }
-                volume = player_volume;
 
-                audio_hal_set_volume(board_handle->audio_hal, player_volume);
-                ESP_LOGI(AUDIOBOARDTAG, "Volume set to %d %%", player_volume);
+                audio_hal_set_volume(board_handle->audio_hal, volume);
+                ESP_LOGI(AUDIOBOARDTAG, "Volume set to %d %%", volume);
                 break;
         }
     }
@@ -252,6 +245,24 @@ void sdcard_url_save_cb(void *user_data, char *url){
     if (ret != ESP_OK){
         ESP_LOGE(AUDIOBOARDTAG, "Fail to save sdcard url to sdcard playlist");
     }
+}
+
+//Sets the volume of the audio_board
+void set_volume(int volume_value) {
+    if(board_handle == NULL) {
+        audio_board_init(board_handle);
+    }
+    if(volume_value > 100) volume_value = 100;
+    if(volume_value < 0) volume_value = 0;
+    volume = volume_value;
+    audio_hal_set_volume(board_handle->audio_hal, volume);
+    ESP_LOGI(AUDIOBOARDTAG, "Volume has been set to: %d", volume);
+}
+
+//Gets the volume of the audio_board
+ int get_volume(){
+
+    return volume;
 }
 
 //Pauses audio
@@ -391,7 +402,7 @@ void audio_start(){
     sdcard_scan(sdcard_url_save_cb, "/sdcard", 0, (const char *[]) {"mp3"}, 1, sdcard_list_handle);
 
     ESP_LOGI(AUDIOBOARDTAG, "[ 2 ] Start codec chip");
-    audio_board_handle_t board_handle = audio_board_init();
+    board_handle = audio_board_init();
     audio_hal_ctrl_codec(board_handle->audio_hal, AUDIO_HAL_CODEC_MODE_DECODE, AUDIO_HAL_CTRL_START);
 
     ESP_LOGI(AUDIOBOARDTAG, "[ 3 ] Create and start input key service");
