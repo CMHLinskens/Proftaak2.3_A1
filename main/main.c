@@ -39,7 +39,6 @@
 
 #include "cJSON.h"
 #include "goertzel.h"
-#include "microphone.h"
 
 #define MAINTAG "main"
 #define CLOCKTAG "clock"
@@ -102,6 +101,7 @@ void menu_task(void * pvParameter)
     while(1)
     {
         vTaskDelay(2500 / portTICK_RATE_MS);
+        sayTime();
     }
 
     menu_freeMenu(menu);
@@ -152,9 +152,9 @@ void rotary_task(void * pvParameter)
     vTaskDelete(NULL);
 }
 
-void microphone_task(void * pvParameter ){
-    init_microphone();
-}
+// void microphone_task(void * pvParameter ){
+//     init_microphone();
+// }
 
 void audio_task(void * pvParameter){
     audio_start();
