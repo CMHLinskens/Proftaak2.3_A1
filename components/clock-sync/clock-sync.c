@@ -11,7 +11,8 @@
 #include "lcd-menu.h"
 #include "audio-board.h"
 
-static const char *CLOCKTAG = "clock";
+#define CLOCKTAG "clock"
+
 char *timeString;
 char **clockSounds;
 

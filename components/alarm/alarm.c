@@ -1,25 +1,4 @@
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "clock-sync.h"
-#include <stdio.h>
-#include <stdlib.h>
-
-#include "esp_log.h"
-
-#include "audio-board.h"
-
-#define ALARMTAG "alarm"
-
-//Struct for all the alarm nodes
-//songs is what will be playes when the alarm goes off
-// time is the time when the alarm goes off
-struct ALARM{
-    char* song;
-    int* time;
-    struct ALARM *next;
-};
-
-typedef struct ALARM *Node;
+#include"alarm.h"
 
 Node head, node;
 
