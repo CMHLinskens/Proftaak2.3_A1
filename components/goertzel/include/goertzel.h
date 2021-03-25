@@ -34,18 +34,58 @@ typedef struct
 	goertzel_cb_t goertzel_cb;							///< Callback with results
 } goertzel_data_t;
 
-
+/**
+ * @brief  Allocate number of Goertzel filters
+ * @param  numOfConfigurations: The number of configurations
+ * @return The goertzel configs
+ */
 goertzel_data_t** goertzel_malloc(int numOfConfigurations);
 
+/**
+ * @brief  Initialize goertzel configuration per configuration
+ * @param  configs: Goertzel configuration
+ * @return ESP_ERROR constant (ESP_OK and ESP_FAIL)
+ */
 esp_err_t goertzel_init_config(goertzel_data_t* config);
+
+/**
+ * @brief  Initialize goertzel configuration for multiple configurations
+ * @param  configs: Goertzel configurations
+ * @param  numOfConfigurations: The number of configurations
+ * @return ESP_ERROR constant (ESP_OK and ESP_FAIL)
+ */
 esp_err_t goertzel_init_configs(goertzel_data_t** configs, int numOfConfigurations);
 
+/**
+ * @brief  Reset goertzel filter for a single configuration
+ * @param  configs: Goertzel configurations
+ * @return ESP_ERROR constant (ESP_OK and ESP_FAIL)
+ */
 esp_err_t goertzel_reset(goertzel_data_t* configs);
+
+/**
+ * @brief  Reset goertzel filters for multiple configurations
+ * @param  configs: Goertzel configurations
+ * @param  numOfConfigurations: The number of configurations
+ * @return ESP_ERROR constant (ESP_OK and ESP_FAIL)
+ */
 esp_err_t goertzel_resets(goertzel_data_t** configs, int numOfConfigurations);
 
+/**
+ * @brief  Process all samples for all goertzel filters
+ * @param  configs: Goertzel configurations
+ * @param  numOfConfigurations: The number of configurations
+ * @param  samples: The buffer with the raw data.
+ * @param  numOfSamples: The size of the buffer.
+ * @return ESP_ERROR constant (ESP_OK and ESP_FAIL)
+ */
 esp_err_t goertzel_proces(goertzel_data_t** configs, int numOfConfigurations, int16_t* samples, int numOfSamples);
 
-
+/**
+ * @brief  Free all goertzel configurations
+ * @param  configs: Goertzel configurations
+ * @return ESP_ERROR constant (ESP_OK and ESP_FAIL)
+ */
 esp_err_t goertzel_free(goertzel_data_t** configs);
 
 #ifdef __cplusplus

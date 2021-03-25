@@ -24,13 +24,11 @@
 #include "nvs_flash.h"
 #include "sdkconfig.h"
 #include "periph_wifi.h"
-
 #include <stdlib.h>
 #include <math.h>
 #include "raw_stream.h"
 #include "goertzel.h"
 #include "clock-sync.h"
-
 #include "audio-board.h"
 
 #define I2S_READER "i2s_reader"
@@ -42,7 +40,6 @@
 #define SD_FILTER "sd_filter"
 #define MIC_FILTER "mic_filter"
 
-// Radio
 #if __has_include("esp_idf_version.h")
 #include "esp_idf_version.h"
 #else
@@ -99,16 +96,16 @@ typedef struct sdcard_list {
 
 char** song_list = NULL;
 static int array_index = 0;
+int volume = 50;
 audio_pipeline_handle_t pipeline;
-audio_element_handle_t http_stream_reader, i2s_stream_writer, aac_decoder, mp3_decoder, fatfs_stream_reader, rsp_handle, i2s_stream_reader, mic_filter, raw_read;
+audio_element_handle_t http_stream_reader, i2s_stream_writer, mp3_decoder, fatfs_stream_reader, rsp_handle, i2s_stream_reader, mic_filter, raw_read;
 playlist_operator_handle_t sdcard_list_handle = NULL;
 esp_periph_set_handle_t set;
 audio_event_iface_handle_t evt;
 periph_service_handle_t input_ser;
-bool playing_radio = false;
-int volume = 50;
-bool listenToMic = false;
 goertzel_data_t** configs;
+bool playing_radio = false;
+bool listenToMic = false;
 
 const char *radio_channels[AMOUNT_OF_RADIO_CHANNELS] = {
                         "https://22533.live.streamtheworld.com/SKYRADIO.mp3",
@@ -522,27 +519,44 @@ void stop_audio(void){
     ESP_LOGI(AUDIOBOARDTAG, "Stop audio_pipeline");
     stop_pipeline();
 
-    audio_pipeline_unregister(pipeline, mp3_decoder);
-    audio_pipeline_unregister(pipeline, i2s_stream_writer);
-    audio_pipeline_unregister(pipeline, rsp_handle);
-
     // Terminate the pipeline before removing the listener
     audio_pipeline_remove_listener(pipeline);
+
+    audio_pipeline_unregister(pipeline, http_stream_reader);
+    audio_pipeline_unregister(pipeline, i2s_stream_writer);
+    audio_pipeline_unregister(pipeline, mp3_decoder);
+    audio_pipeline_unregister(pipeline, fatfs_stream_reader);
+    audio_pipeline_unregister(pipeline, rsp_handle);
+    audio_pipeline_unregister(pipeline, i2s_stream_reader);
+    audio_pipeline_unregister(pipeline, mic_filter); 
+    audio_pipeline_unregister(pipeline, raw_read);
 
     // Stop all peripherals before removing the listener 
     esp_periph_set_stop_all(set);
     audio_event_iface_remove_listener(esp_periph_set_get_event_iface(set), evt);
 
     // Make sure audio_pipeline_remove_listener & audio_event_iface_remove_listener are called before destroying event_iface 
-    audio_event_iface_destroy(evt);
+    periph_service_stop(input_ser);
+
+    goertzel_resets(configs, GOERTZEL_N_DETECTION);
 
     // Release all resources 
     audio_pipeline_deinit(pipeline);
+    audio_element_deinit(http_stream_reader);
     audio_element_deinit(i2s_stream_writer);
     audio_element_deinit(mp3_decoder);
+    audio_element_deinit(fatfs_stream_reader);
     audio_element_deinit(rsp_handle);
+    audio_element_deinit(i2s_stream_reader);
+    audio_element_deinit(mic_filter); 
+    audio_element_deinit(raw_read);
+
+    //Destroy the handles
     esp_periph_set_destroy(set);
+    playlist_destroy(sdcard_list_handle);
+    audio_event_iface_destroy(evt);
     periph_service_destroy(input_ser);
+    goertzel_free(configs);
 }
 
 void play_radio(int radioChannel){

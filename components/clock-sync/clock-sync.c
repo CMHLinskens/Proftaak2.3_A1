@@ -74,7 +74,6 @@ void clock_task(void*pvParameter){
         localtime_r(&now, &timeinfo);
 
         // convert time to string
-        //strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
         strftime(strftime_buf, sizeof(strftime_buf), "%H:%M", &timeinfo); // time
         strftime(strftime_buf2, sizeof(strftime_buf), "%x", &timeinfo); // date
 
@@ -240,7 +239,6 @@ void sayTime(void){
     // Play all sounds
     for(int i = 0; i < 10; i++){
         if(!strcmp(soundsToPlay[i], "")) { continue; }
-        // ESP_LOGI(CLOCKTAG, "%s", soundsToPlay[i]);
         play_song_with_ID(soundsToPlay[i], "c");
         audio_pipeline_wait_for_stop(get_pipeline());
     }
