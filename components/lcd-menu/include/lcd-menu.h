@@ -76,7 +76,6 @@ menu_t *menu_createMenu(void);
 void menu_freeMenu(menu_t *menu);
 void menu_displayTime(char *time);
 void menu_displayWelcomeMessage(menu_t *menu);
-void menu_displayMic(void);
 void menu_displayScrollMenu(menu_t *menu);
 void menu_displayMenuItem(menu_t *menu, int menuItemId);
 void menu_handleKeyEvent(menu_t *menu, int key);

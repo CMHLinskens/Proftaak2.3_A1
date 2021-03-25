@@ -30,6 +30,7 @@
 #include "raw_stream.h"
 #include "goertzel.h"
 #include "clock-sync.h"
+#include "lcd-menu.h"
 
 #include "audio-board.h"
 
@@ -194,20 +195,6 @@ static esp_err_t input_key_service_cb(periph_service_handle_t handle, periph_ser
 
                 if(!listenToMic)
                     startListening();
-                // listenToMic = !listenToMic;
-                // char *url = NULL;
-
-                // //Stops music, terminates current pipeline and looks up the next audio file on the SD card
-                // audio_pipeline_stop(pipeline);
-                // audio_pipeline_wait_for_stop(pipeline);
-                // audio_pipeline_terminate(pipeline);
-                // sdcard_list_next(sdcard_list_handle, 1, &url);
-
-                // //Resets pipeline and starts the new audio file
-                // audio_element_set_uri(fatfs_stream_reader, url);
-                // audio_pipeline_reset_ringbuffer(pipeline);
-                // audio_pipeline_reset_elements(pipeline);
-                // audio_pipeline_run(pipeline);
                 break;
 
             //Volume up button is pressed
@@ -657,7 +644,7 @@ void startListening(){
     memset(GOERTZEL_DETECT_FREQUENCY_COUNTERS, 0, sizeof(GOERTZEL_DETECT_FREQUENCY_COUNTERS));
 }
 
-void stopListening(){
+void stopListening(){    
     stopPipeline();
     
     if(playing_radio){

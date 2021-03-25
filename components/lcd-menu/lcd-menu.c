@@ -28,6 +28,8 @@ void previousSong(void);
 void okPressSDPlay(void);
 
 void create_custom_characters(void);
+void menu_displayMic(void);
+void menu_clearMic(void);
 
 // Placeholder variables
 static int volume = 0;
@@ -164,6 +166,11 @@ void create_custom_characters(){
 }
 
 void menu_mic(bool listening){
+    if(listening)
+        menu_displayMic();
+    else
+        menu_clearMic();
+
     isListening = listening;
 }
 
@@ -196,6 +203,11 @@ void menu_displayWelcomeMessage(menu_t *menu)
 void menu_displayMic(void){
     i2c_lcd1602_move_cursor(_lcd_info, 0, 2);
     i2c_lcd1602_write_custom_char(_lcd_info, I2C_LCD1602_INDEX_CUSTOM_1); //Mic character
+}
+
+void menu_clearMic(void){
+    i2c_lcd1602_move_cursor(_lcd_info, 0, 2);
+    i2c_lcd1602_write_char(_lcd_info, ' '); // Clear mic character
 }
 
 // Displays time in top right corner of lcd
@@ -386,7 +398,7 @@ void displayRadioChannels(){
 // Default enter event, displays time
 void enterMenuItem(void) {
     if(isListening){
-        menu
+        menu_displayMic();
     }
     menu_displayTemperature(http_request_get_response());
     menu_displayTime(clock_getTimeString());

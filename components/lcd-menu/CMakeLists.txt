@@ -5,6 +5,5 @@ set(COMPONENT_PRIV_REQUIRES esp32-i2c-lcd1602
                             clock-sync 
                             audio-board 
                             json 
-                            http_request
-                            )
+                            http_request)
 register_component()
