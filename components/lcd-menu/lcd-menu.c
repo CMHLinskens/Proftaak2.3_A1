@@ -584,7 +584,6 @@ void leaveAgendaNewMenu(void){
 void AddAgendaNewMenu(void){
     // Add alarm to list
     alarm_add(tempSelectedTime, tempSelectedSong);
-    print_global_list();
 
     // Reset temp variables
     resetTempAgendaVariables();

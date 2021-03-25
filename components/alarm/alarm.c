@@ -50,7 +50,7 @@ void Append(Node *head, Node node){
 }
 
 //Removes a node
-Node Remove(Node *head, Node node){
+void Remove(Node *head, Node node){
     Node tmp = *head;
     if(*head == NULL){
         return;
@@ -120,8 +120,7 @@ void alarm_task(void*pvParameter){
                 tmp = tmp->next;
             }
         }
-        //PrintList(head);
-        vTaskDelay(60000/ portTICK_RATE_MS);
+        vTaskDelay(30000/ portTICK_RATE_MS);
     }
     
 }
@@ -135,6 +134,7 @@ void alarm_add(int* time, char* song){
 //Clears the global head node in this file 
 void clear_global_list(){
     Clear(head);
+    head = NULL;
 }
 void print_global_list(){
     PrintList(head);
