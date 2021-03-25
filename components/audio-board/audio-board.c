@@ -96,8 +96,8 @@ typedef struct sdcard_list {
 
 char** song_list = NULL;
 static int array_index = 0;
-int volume = 50;
 audio_pipeline_handle_t pipeline;
+audio_board_handle_t board_handle;
 audio_element_handle_t http_stream_reader, i2s_stream_writer, mp3_decoder, fatfs_stream_reader, rsp_handle, i2s_stream_reader, mic_filter, raw_read;
 playlist_operator_handle_t sdcard_list_handle = NULL;
 esp_periph_set_handle_t set;
@@ -157,12 +157,20 @@ audio_pipeline_handle_t getPipeline(){
 
 //Gets the current volume
 int getVolume(){
-    ESP_LOGI(AUDIOBOARDTAG, "Volume: %d", volume);
     return volume; 
 }
 
+// Sets the new volume
 void setVolume(int newVolume){
     volume = newVolume;
+
+    int player_volume;
+    audio_hal_get_volume(board_handle->audio_hal, &player_volume);
+
+    player_volume = volume;
+
+    audio_hal_set_volume(board_handle->audio_hal, player_volume);
+    ESP_LOGI(AUDIOBOARDTAG, "Volume set to %d %%", player_volume);
 }
 
 /**
@@ -407,7 +415,7 @@ void audio_start(){
     sdcard_scan(sdcard_url_save_cb, "/sdcard", 0, (const char *[]) {"mp3"}, 1, sdcard_list_handle);
 
     ESP_LOGI(AUDIOBOARDTAG, "[ 2 ] Start codec chip");
-    audio_board_handle_t board_handle = audio_board_init();
+    board_handle = audio_board_init();
     audio_hal_ctrl_codec(board_handle->audio_hal, AUDIO_HAL_CODEC_MODE_DECODE, AUDIO_HAL_CTRL_START);
 
     ESP_LOGI(AUDIOBOARDTAG, "[ 3 ] Create and start input key service");
@@ -569,7 +577,6 @@ void stop_audio(void){
 
     //Destroy the handles
     esp_periph_set_destroy(set);
-    playlist_destroy(sdcard_list_handle);
     audio_event_iface_destroy(evt);
     periph_service_destroy(input_ser);
     goertzel_free(configs);
