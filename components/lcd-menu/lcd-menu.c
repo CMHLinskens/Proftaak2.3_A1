@@ -9,12 +9,15 @@
 #include "clock-sync.h"
 #include "http_request.h"
 #include "audio-board.h"
+#include "alarm.h"
 
 #define MENUTAG "menu"
 
-// Menu event functions
+// Default menu event functions
 void enterMenuItem(void);
 void exitMenuItem(void);
+
+// Radio menu event functions
 void enterRadioVolume(void);
 void enterRadioChannel(void);
 void increaseVolume(void);
@@ -22,12 +25,28 @@ void decreaseVolume(void);
 void nextChannel(void);
 void previousChannel(void);
 void okPressRadioChannel(void);
+
+// SD menu event functions
 void enterSDPlay(void);
 void nextSong(void);
 void previousSong(void);
 void okPressSDPlay(void);
 
+// Agenda menu event functions
+void enterAgendaNewTime(void);
+void decreaseAgendaNewTime(void);
+void increaseAgendaNewTime(void);
+void enterAgendaNewSound(void);
+void previousAgendaNewSound(void);
+void nextAgendaNewSound(void);
+void okPressAgendaNewSound(void);
+void leaveAgendaNewMenu(void);
+void AddAgendaNewMenu(void);
+void ClearAgenda(void);
+
 void create_custom_characters(void);
+void gotoMenuItem(int menuItem);
+void resetTempAgendaVariables(void);
 
 // Placeholder variables
 static int volume = 0;
@@ -38,6 +57,11 @@ int songIndex = 0;
 
 // Variables for Radio menu
 int channelIndex = 0;
+
+// Variables for Agenda menu
+int *tempSelectedTime;
+char *tempSelectedSong;
+
 
 static i2c_lcd1602_info_t *_lcd_info;
 static menu_t *_menu;
@@ -82,7 +106,7 @@ menu_t *menu_createMenu()
         {MENU_MAIN_ID_0, {MENU_RADIO_ID_0, MENU_MAIN_ID_4, MENU_MAIN_ID_1}, {"MAIN MENU", "Radio"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
         {MENU_MAIN_ID_1, {MENU_SD_ID_0, MENU_MAIN_ID_0, MENU_MAIN_ID_2}, {"MAIN MENU", "SD"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
         {MENU_MAIN_ID_2, {MENU_MAIN_ID_2, MENU_MAIN_ID_1, MENU_MAIN_ID_3}, {"MAIN MENU", "Lights"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
-        {MENU_MAIN_ID_3, {MENU_MAIN_ID_3, MENU_MAIN_ID_2, MENU_MAIN_ID_4}, {"MAIN MENU", "Agenda"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_MAIN_ID_3, {MENU_AGENDA_ID_0, MENU_MAIN_ID_2, MENU_MAIN_ID_4}, {"MAIN MENU", "Agenda"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
         {MENU_MAIN_ID_4, {MENU_MAIN_ID_4, MENU_MAIN_ID_3, MENU_MAIN_ID_0}, {"MAIN MENU", "Settings"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
         
         {MENU_RADIO_ID_0, {MENU_RADIO_ID_4, MENU_RADIO_ID_2, MENU_RADIO_ID_1}, {"RADIO", "Channel"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
@@ -95,7 +119,19 @@ menu_t *menu_createMenu()
         {MENU_SD_ID_0, {MENU_SD_ID_2, MENU_SD_ID_1, MENU_SD_ID_1}, {"SD", "Play"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
         {MENU_SD_ID_1, {MENU_MAIN_ID_1, MENU_SD_ID_0, MENU_SD_ID_0}, {"SD", "Back"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
 
-        {MENU_SD_ID_2, {MENU_SD_ID_2, MENU_SD_ID_2, MENU_SD_ID_2}, {"SD", " ", "", ""}, {okPressSDPlay, previousSong, nextSong}, enterSDPlay, NULL}
+        {MENU_SD_ID_2, {MENU_SD_ID_2, MENU_SD_ID_2, MENU_SD_ID_2}, {"SD", " ", "", ""}, {okPressSDPlay, previousSong, nextSong}, enterSDPlay, NULL},
+    
+        {MENU_AGENDA_ID_0, {MENU_AGENDA_ID_3, MENU_AGENDA_ID_2, MENU_AGENDA_ID_1}, {"AGENDA", "New"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_AGENDA_ID_1, {MENU_AGENDA_ID_1, MENU_AGENDA_ID_0, MENU_AGENDA_ID_2}, {"AGENDA", "Clear"}, {ClearAgenda, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_AGENDA_ID_2, {MENU_MAIN_ID_3, MENU_AGENDA_ID_1, MENU_AGENDA_ID_0}, {"AGENDA", "Back"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        
+        {MENU_AGENDA_ID_3, {MENU_AGENDA_ID_7, MENU_AGENDA_ID_6, MENU_AGENDA_ID_4}, {"NEW", "Time"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_AGENDA_ID_4, {MENU_AGENDA_ID_8, MENU_AGENDA_ID_3, MENU_AGENDA_ID_5}, {"NEW", "Sound"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_AGENDA_ID_5, {MENU_AGENDA_ID_5, MENU_AGENDA_ID_4, MENU_AGENDA_ID_6}, {"NEW", "Add"}, {AddAgendaNewMenu, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_AGENDA_ID_6, {MENU_AGENDA_ID_6, MENU_AGENDA_ID_5, MENU_AGENDA_ID_3}, {"NEW", "Back"}, {leaveAgendaNewMenu, NULL, NULL}, enterMenuItem, NULL},
+
+        {MENU_AGENDA_ID_7, {MENU_AGENDA_ID_3, MENU_AGENDA_ID_7, MENU_AGENDA_ID_7}, {"TIME", " ", "", ""}, {NULL, decreaseAgendaNewTime, increaseAgendaNewTime}, enterAgendaNewTime, NULL},
+        {MENU_AGENDA_ID_8, {MENU_AGENDA_ID_8, MENU_AGENDA_ID_8, MENU_AGENDA_ID_8}, {"SOUND", " ", "", ""}, {okPressAgendaNewSound, previousAgendaNewSound, nextAgendaNewSound}, enterAgendaNewSound, NULL}
     };
     
     _lcd_info = lcd_init();
@@ -126,6 +162,12 @@ menu_t *menu_createMenu()
     for(int i = 1; i < get_array_size() + 1; i++){
         songList[i] = tempSongList[i - 1];
     }
+
+    // Init agenda temp variables
+    tempSelectedSong = calloc(1, 30);
+    tempSelectedTime = calloc(2, sizeof(int));
+    tempSelectedTime[0] = 0;
+    tempSelectedTime[1] = 0;
 
     create_custom_characters();
 
@@ -298,11 +340,11 @@ void menu_handleKeyEvent(menu_t *menu, int key)
 }
 
 // Displays songsList in a scroll menu form
-void displaySongs(){
+void displaySongs(char *titleText){
     i2c_lcd1602_clear(_lcd_info);
 
     // Display scroll menu title
-    char *menuText = "SD";
+    char *menuText = titleText;
     menu_writeScrollMenuItem(_lcd_info, menuText, 0);
 
     // Loop back around if songIndex exeeds songList size
@@ -381,8 +423,8 @@ void enterMenuItem(void) {
 void enterRadioVolume(void){
     enterMenuItem();
 
-    char volumeStr[3];
-    sprintf(volumeStr, "%d", volume);
+    char volumeStr[5];
+    sprintf(volumeStr, "%03d", volume);
 
     i2c_lcd1602_move_cursor(_lcd_info, 9, 1);
     i2c_lcd1602_write_string(_lcd_info, volumeStr);
@@ -391,8 +433,8 @@ void enterRadioVolume(void){
 void increaseVolume(void){
     volume++;
     if(volume > 100) volume = 100;
-    char volumeStr[3];
-    sprintf(volumeStr, "%d", volume);
+    char volumeStr[5];
+    sprintf(volumeStr, "%03d", volume);
 
     i2c_lcd1602_move_cursor(_lcd_info, 9, 1);
     i2c_lcd1602_write_string(_lcd_info, volumeStr);
@@ -401,8 +443,8 @@ void increaseVolume(void){
 void decreaseVolume(void){
     volume--;
     if(volume < 0) volume = 0;
-    char volumeStr[3];
-    sprintf(volumeStr, "%d", volume);
+    char volumeStr[5];
+    sprintf(volumeStr, "%03d", volume);
 
     i2c_lcd1602_move_cursor(_lcd_info, 9, 1);
     i2c_lcd1602_write_string(_lcd_info, volumeStr);
@@ -446,32 +488,126 @@ void okPressRadioChannel(){
 void enterSDPlay(void){
     enterMenuItem();
 
-    displaySongs();
+    displaySongs("SD");
 }
 // SD play right press event 
 void nextSong(void){
     songIndex++;
-    displaySongs();
+    displaySongs("SD");
 }
 // SD play left press event
 void previousSong(void){
     songIndex--;
-    displaySongs();
+    displaySongs("SD");
 }
 // SD play ok press event
 void okPressSDPlay(){
     // If pressed Back, go back to SD scroll menu
     if(strcmp(songList[songIndex], "Back") == 0){
-        _menu->currentMenuItemId = MENU_SD_ID_0;
-
-        menu_displayScrollMenu(_menu);
-
-        if(_menu->menuItems[_menu->currentMenuItemId].fpOnMenuEntryEvent != NULL) {
-            (*_menu->menuItems[_menu->currentMenuItemId].fpOnMenuEntryEvent)();
-        }
-
+       gotoMenuItem(MENU_SD_ID_0);
     } else {
         // else play selected song
         play_song_with_ID(songList[songIndex], "m");
+    }
+}
+
+void enterAgendaNewTime(void){
+    enterMenuItem();
+
+    tempSelectedTime = clock_getCurrentTime();
+
+    i2c_lcd1602_move_cursor(_lcd_info, 8, 1);
+    i2c_lcd1602_write_string(_lcd_info, clock_getTimeString());
+}
+void decreaseAgendaNewTime(void){
+    tempSelectedTime[1]--;
+    if(tempSelectedTime[1] < 0) {
+        tempSelectedTime[0]--;
+        tempSelectedTime[1] = 59;
+        if (tempSelectedTime[0] < 0){
+            tempSelectedTime[0] = 23;
+        }
+    }
+
+    char *selectedTimeString = calloc(1, 6);
+    sprintf(selectedTimeString, "%02d:%02d", tempSelectedTime[0], tempSelectedTime[1]);
+
+    i2c_lcd1602_move_cursor(_lcd_info, 8, 1);
+    i2c_lcd1602_write_string(_lcd_info, selectedTimeString);
+}
+void increaseAgendaNewTime(void){
+    tempSelectedTime[1]++;
+    if(tempSelectedTime[1] > 59) {
+        tempSelectedTime[0]++;
+        tempSelectedTime[1] = 0;
+        if (tempSelectedTime[0] > 23){
+            tempSelectedTime[0] = 0;
+        }
+    }
+
+    char *selectedTimeString = calloc(1, 6);
+    sprintf(selectedTimeString, "%02d:%02d", tempSelectedTime[0], tempSelectedTime[1]);
+
+    i2c_lcd1602_move_cursor(_lcd_info, 8, 1);
+    i2c_lcd1602_write_string(_lcd_info, selectedTimeString);
+}
+
+void enterAgendaNewSound(void){
+    enterMenuItem();
+
+    displaySongs("SOUND");
+}
+void previousAgendaNewSound(void){
+    songIndex--;
+    displaySongs("SOUND");
+}
+void nextAgendaNewSound(void){
+    songIndex++;
+    displaySongs("SOUND");
+}
+void okPressAgendaNewSound(void){
+    // If a song was pressed set this as the selected song
+    if(strcmp(songList[songIndex], "Back") != 0){
+        tempSelectedSong = songList[songIndex];
+    }
+
+    // Return to New Agenda menu
+    gotoMenuItem(MENU_AGENDA_ID_4);
+}
+void leaveAgendaNewMenu(void){
+    // Reset temp variables
+    resetTempAgendaVariables();
+
+    // Return to Agenda menu
+    gotoMenuItem(MENU_AGENDA_ID_0);
+}
+void AddAgendaNewMenu(void){
+    // Add alarm to list
+    alarm_add(tempSelectedTime, tempSelectedSong);
+
+    // Reset temp variables
+    resetTempAgendaVariables();
+
+    // Return to Agenda menu
+    gotoMenuItem(MENU_AGENDA_ID_0);
+}
+void ClearAgenda(void){
+    // Clear agenda list
+    clear_global_list();
+}
+
+void resetTempAgendaVariables(void){
+    tempSelectedTime[0] = 0;
+    tempSelectedTime[1] = 0;
+}
+
+// Goes to given menu item
+void gotoMenuItem(int menuItem){
+    _menu->currentMenuItemId = menuItem;
+
+    menu_displayScrollMenu(_menu);
+
+    if(_menu->menuItems[_menu->currentMenuItemId].fpOnMenuEntryEvent != NULL) {
+        (*_menu->menuItems[_menu->currentMenuItemId].fpOnMenuEntryEvent)();
     }
 }

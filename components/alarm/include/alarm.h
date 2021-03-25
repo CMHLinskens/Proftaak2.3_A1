@@ -29,7 +29,10 @@ void alarm_task(void*pvParameter);
 
 //Method to add an alarm to the list
 //time is desired time for the alarm to go off
-//sonf is desired song to play when alarm goes off
+//song is desired song to play when alarm goes off
 void alarm_add(int* time, char* song);
+
+void clear_global_list();
+void print_global_list();
 
 #endif
