@@ -39,6 +39,9 @@ int songIndex = 0;
 // Variables for Radio menu
 int channelIndex = 0;
 
+//Variable for mic character
+bool isListening;
+
 static i2c_lcd1602_info_t *_lcd_info;
 static menu_t *_menu;
 
@@ -160,6 +163,11 @@ void create_custom_characters(){
     i2c_lcd1602_define_char(_menu->lcd_info, I2C_LCD1602_INDEX_CUSTOM_1, mic);
 }
 
+void menu_mic(bool listening){
+    isListening = listening;
+}
+
+
 // Frees memory used by menu pointer
 void menu_freeMenu(menu_t *menu)
 {
@@ -183,6 +191,11 @@ void menu_displayWelcomeMessage(menu_t *menu)
 
     vTaskDelay(2500 / portTICK_RATE_MS);
     i2c_lcd1602_clear(menu->lcd_info);
+}
+
+void menu_displayMic(void){
+    i2c_lcd1602_move_cursor(_lcd_info, 0, 2);
+    i2c_lcd1602_write_custom_char(_lcd_info, I2C_LCD1602_INDEX_CUSTOM_1); //Mic character
 }
 
 // Displays time in top right corner of lcd
@@ -259,10 +272,8 @@ void menu_displayScrollMenu(menu_t *menu)
     i2c_lcd1602_write_string(menu->lcd_info, cursor);
 
      
-    i2c_lcd1602_move_cursor(menu->lcd_info, 1, 3);
-    i2c_lcd1602_write_custom_char(menu->lcd_info, I2C_LCD1602_INDEX_CUSTOM_0);
-    i2c_lcd1602_move_cursor(menu->lcd_info, 1, 2);
-    i2c_lcd1602_write_custom_char(menu->lcd_info, I2C_LCD1602_INDEX_CUSTOM_1);
+    i2c_lcd1602_move_cursor(menu->lcd_info, 0, 1);
+    i2c_lcd1602_write_custom_char(menu->lcd_info, I2C_LCD1602_INDEX_CUSTOM_0); //Wifi character
 }
 
 // Handles key press by switching to new item or doing an onKeyEvent
@@ -374,7 +385,10 @@ void displayRadioChannels(){
 
 // Default enter event, displays time
 void enterMenuItem(void) {
-    // menu_displayTemperature(http_request_get_response());
+    if(isListening){
+        menu
+    }
+    menu_displayTemperature(http_request_get_response());
     menu_displayTime(clock_getTimeString());
 }
 // Radio volume enter event

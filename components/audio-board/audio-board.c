@@ -601,6 +601,7 @@ static void goertzel_callback(struct goertzel_data_t* filter, float result)
                 ESP_LOGW(AUDIOBOARDTAG, "Counter %d is now %d", GOERTZEL_DETECT_FREQUENCIES[i], GOERTZEL_DETECT_FREQUENCY_COUNTERS[i]);
                 if(GOERTZEL_DETECT_FREQUENCY_COUNTERS[i] > FREQ_COMMAND_THRESHOLD){
                     listenToMic = false;
+                    menu_mic(listenToMic);
                     ExecuteMicCommand(i);
                 }
             }
@@ -616,6 +617,8 @@ static void goertzel_callback(struct goertzel_data_t* filter, float result)
 
 void startListening(){
     listenToMic = true;
+
+    menu_mic(listenToMic);
 
     // Stop playing audio
     stopPipeline();
