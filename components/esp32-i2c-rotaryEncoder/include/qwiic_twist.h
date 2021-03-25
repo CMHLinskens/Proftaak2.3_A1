@@ -17,11 +17,13 @@
 
 #include <math.h>
 
-#define QWIIC_TWIST_ADDRESS 0x08
+#define QWIIC_TWIST_ADDRESS 0x3F
 
 #define QWIIC_TWIST_STATUS_CLICKED 2
 #define QWIIC_TWIST_STATUS_PRESSED 1
 #define QWIIC_TWIST_STATUS_MOVED 0
+
+#define RGB_STEP 5.1
 
 
 typedef uint8_t qwiic_twist_reg_t;

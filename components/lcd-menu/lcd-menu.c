@@ -438,6 +438,8 @@ void increaseVolume(void){
 
     i2c_lcd1602_move_cursor(_lcd_info, 9, 1);
     i2c_lcd1602_write_string(_lcd_info, volumeStr);
+
+    setVolume(volume);
 }
 // Radio volume left press event
 void decreaseVolume(void){
@@ -448,6 +450,8 @@ void decreaseVolume(void){
 
     i2c_lcd1602_move_cursor(_lcd_info, 9, 1);
     i2c_lcd1602_write_string(_lcd_info, volumeStr);
+
+    setVolume(volume);
 }
 
 // Radio channel enter event

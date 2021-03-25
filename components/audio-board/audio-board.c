@@ -106,6 +106,7 @@ periph_service_handle_t input_ser;
 goertzel_data_t** configs;
 bool playing_radio = false;
 bool listenToMic = false;
+int volume = 0;
 
 const char *radio_channels[AMOUNT_OF_RADIO_CHANNELS] = {
                         "https://22533.live.streamtheworld.com/SKYRADIO.mp3",
@@ -147,6 +148,21 @@ int get_array_size(){
         return http_stream_fetch_again(msg->el);
     }
     return ESP_OK;
+}
+
+//Gets the pipeline object;
+audio_pipeline_handle_t getPipeline(){
+    return pipeline;
+}
+
+//Gets the current volume
+int getVolume(){
+    ESP_LOGI(AUDIOBOARDTAG, "Volume: %d", volume);
+    return volume; 
+}
+
+void setVolume(int newVolume){
+    volume = newVolume;
 }
 
 /**
