@@ -423,7 +423,7 @@ void enterMenuItem(void) {
 void enterRadioVolume(void){
     enterMenuItem();
 
-    char volumeStr[4];
+    char volumeStr[5];
     sprintf(volumeStr, "%03d", volume);
 
     i2c_lcd1602_move_cursor(_lcd_info, 9, 1);
@@ -433,7 +433,7 @@ void enterRadioVolume(void){
 void increaseVolume(void){
     volume++;
     if(volume > 100) volume = 100;
-    char volumeStr[4];
+    char volumeStr[5];
     sprintf(volumeStr, "%03d", volume);
 
     i2c_lcd1602_move_cursor(_lcd_info, 9, 1);
@@ -443,7 +443,7 @@ void increaseVolume(void){
 void decreaseVolume(void){
     volume--;
     if(volume < 0) volume = 0;
-    char volumeStr[4];
+    char volumeStr[5];
     sprintf(volumeStr, "%03d", volume);
 
     i2c_lcd1602_move_cursor(_lcd_info, 9, 1);
@@ -595,7 +595,6 @@ void AddAgendaNewMenu(void){
 void ClearAgenda(void){
     // Clear agenda list
     clear_global_list();
-    print_global_list();
 }
 
 void resetTempAgendaVariables(void){

@@ -14,10 +14,10 @@ Node CreateAlarm(int* time, char* song)
         ESP_LOGE(ALARMTAG, "Error: not enough memory.");
         return NULL;
     }
-    alarm->song = song;
+    alarm->song = calloc(1, 30);
+    memcpy(alarm->song, song, 30);
     alarm->time = calloc(2, 2 * sizeof(int));
     memcpy(alarm->time, time, 2 * sizeof(int));
-    // alarm->time = time;
     alarm->next = NULL;
     return alarm;
 };
