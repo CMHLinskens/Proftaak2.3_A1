@@ -23,6 +23,8 @@
 #define QWIIC_TWIST_STATUS_PRESSED 1
 #define QWIIC_TWIST_STATUS_MOVED 0
 
+#define RGB_STEP 5.1
+
 
 typedef uint8_t qwiic_twist_reg_t;
 
@@ -99,5 +101,7 @@ esp_err_t qwiic_twist_timeSinceLastPress(qwiic_twist_t* config, uint16_t* result
 
 
 esp_err_t qwiic_twist_get_version(qwiic_twist_t* config, uint16_t* version);
+
+void changeRGB(qwiic_twist_t*, int R, int G, int B);
 
 #endif

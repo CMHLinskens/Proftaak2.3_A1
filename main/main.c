@@ -21,7 +21,6 @@
 #include "smbus.h"
 #include "qwiic_twist.h"
 #include "i2c-lcd1602.h"
-#include "lcd-menu.h"
 #include "clock-sync.h"
 #include "esp_wifi.h" 
 
@@ -31,12 +30,18 @@
 #include "lwip/netdb.h"
 #include "lwip/dns.h"
 
-#include "wifi_connect.h"
-#include "sdcard_player.h"
+//components that we made
+#include "lcd-menu.h"
+#include "wifi-connect.h"
 #include "http_request.h"
+#include "audio-board.h"
+#include "alarm.h"
+#include "cJSON.h"
+#include "goertzel.h"
 
 #define MAINTAG "main"
 #define CLOCKTAG "clock"
+#define APITAG "api"
 
 i2c_port_t i2c_num;
 qwiic_twist_t *qwiic_twist_rotary;
@@ -46,10 +51,14 @@ void rotary_task(void *);
 void clicked(void);
 void pressed(void);
 void onMove(int16_t);
+void test_custom_character_task(void);
 
-static void http_get_task(void *pvParameters)
+void http_get_task(void *pvParameters)
 {
-    api_request();
+    while(1){
+      api_request();  
+      vTaskDelay(60000/portTICK_RATE_MS);
+    }  
 }
 
 void i2c_master_init(void)
@@ -69,31 +78,33 @@ void i2c_master_init(void)
 }
 
 static void component_init(void){
-    //INIT rotary encoder
+    //INIT rotary encoder, and the qwiic_twist_init will set the oher settings for the rotary encoder
     qwiic_twist_rotary = (qwiic_twist_t*)malloc(sizeof(*qwiic_twist_rotary));
     qwiic_twist_rotary->port = i2c_num;
     qwiic_twist_rotary->onButtonClicked = &clicked;
     qwiic_twist_rotary->onButtonPressed = &pressed;
     qwiic_twist_rotary->onMoved = &onMove;
     qwiic_twist_init(qwiic_twist_rotary);
+
 }
+
 
 void menu_task(void * pvParameter)
 {
-    menu = menu_createMenu();
+    menu = menu_create_menu();
 
-    menu_displayWelcomeMessage(menu);
-    menu_displayScrollMenu(menu);
+    menu_display_welcome_message(menu);
+    menu_display_scroll_menu(menu);
 
     qwiic_twist_start_task(qwiic_twist_rotary);
-    
+
 
     while(1)
     {
-        vTaskDelay(1000 / portTICK_RATE_MS);
+        vTaskDelay(2500 / portTICK_RATE_MS);
     }
 
-    menu_freeMenu(menu);
+    menu_free_menu(menu);
     vTaskDelete(NULL);
 }
 
@@ -104,33 +115,35 @@ char * toString(int number) {
     return str;
 }
 
+/*
+ * This method handles the key event "OK" (onButtonClicked), this is necessary for navigating through the menu.
+ */
 void clicked(void){
     ESP_LOGI(MAINTAG, "clicked rotary encoder");
-    menu_handleKeyEvent(menu, MENU_KEY_OK);
+    menu_handle_key_event(menu, MENU_KEY_OK);
 }
+
+/*
+ *  This method is not used. Its a placeholder method (onButtonPressed).
+ */
 void pressed(void){
     ESP_LOGI(MAINTAG, "pressed rotary encoder");
 }
 
+/*
+ *  This method handles the key event turning left and right (onMoved). This is necessary for navigating through the menu, cause this is the scrolling event.
+ */
 void onMove(int16_t move_value){
     if(move_value > 0){
-        menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
+        menu_handle_key_event(menu, MENU_KEY_RIGHT);
     }
     else if(move_value < 0){
-        menu_handleKeyEvent(menu, MENU_KEY_LEFT);
+        menu_handle_key_event(menu, MENU_KEY_LEFT);
     }
 }
 
 void rotary_task(void * pvParameter)
 {
-    //COLOR TEST WITH THE ROTARY ENCODER
-    //smbus_info_t * smbus_info_rotary = smbus_malloc();
-    // ESP_ERROR_CHECK(smbus_init(smbus_info_rotary, i2c_num, 0x3F));
-    // ESP_ERROR_CHECK(smbus_set_timeout(smbus_info_rotary, 1000 / portTICK_RATE_MS));
-    // smbus_write_byte(smbus_info_rotary, 0x0D, 255);
-    // smbus_write_byte(smbus_info_rotary, 0x0E, 255);
-    // smbus_write_byte(smbus_info_rotary, 0x0F, 255);
-
     qwiic_twist_start_task(qwiic_twist_rotary);
     while(1){
         vTaskDelay(1000 / portTICK_RATE_MS);
@@ -139,30 +152,34 @@ void rotary_task(void * pvParameter)
     vTaskDelete(NULL);
 }
 
+void audio_task(void * pvParameter){
+    audio_start();
+    vTaskDelete(NULL);
+}
+
 void app_main()
 {
-    ESP_ERROR_CHECK( nvs_flash_init() );
+    ESP_ERROR_CHECK(nvs_flash_init());
     ESP_ERROR_CHECK(esp_netif_init());
-    ESP_ERROR_CHECK( esp_event_loop_create_default() );
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
     
-    /* This helper function configures Wi-Fi or Ethernet, as selected in menuconfig.
-     * Read "Establishing Wi-Fi or Ethernet Connection" section in
-     * examples/protocols/README.md for more information about this function.
-     */
-    ESP_ERROR_CHECK(example_connect());
+    /* This helper function configures Wi-Fi as selected in menuconfig. */
+    ESP_ERROR_CHECK(wifi_connect());
     
-    //start_sdcard_task();
-    //vTaskDelay(1000);
+    //Starts task to start the sdcard
+    xTaskCreate(&audio_task, "audio task", 4096, NULL, 5, NULL);
+    vTaskDelay(1000);
 
     //I^2C initialization + the I^2C port
-    //i2c_master_init();
-    //i2c_num = I2C_MASTER_NUM;
+    i2c_master_init();
+    i2c_num = I2C_MASTER_NUM;
 
     //initialize the components
-    //component_init();
+    component_init();
 
-    //xTaskCreate(&menu_task, "menu_task", 4096, NULL, 5, NULL);
-    //xTaskCreate(&clock_task, "clock_task", 4096, NULL, 5, NULL);
-    xTaskCreate(&http_get_task, "http_get_task", 4096, NULL, 5, NULL);
+    xTaskCreate(&menu_task, "menu_task", 4096, NULL, 5, NULL);
+    xTaskCreate(&clock_task, "clock_task", 4096, NULL, 5, NULL);
+    xTaskCreate(&alarm_task, "alarm_task", 4096, NULL, 5, NULL);
+    // xTaskCreate(&http_get_task, "http_get_task", 4096, NULL, 5, NULL);
 }
 

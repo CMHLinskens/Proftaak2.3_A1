@@ -90,7 +90,7 @@ typedef struct
  */
 typedef enum
 {
-    I2C_LCD1602_INDEX_CUSTOM_0 = 0,                     ///< Index of first user-defined custom symbol
+    I2C_LCD1602_INDEX_CUSTOM_0,                         ///< Index of first user-defined custom symbol
     I2C_LCD1602_INDEX_CUSTOM_1,                         ///< Index of second user-defined custom symbol
     I2C_LCD1602_INDEX_CUSTOM_2,                         ///< Index of third user-defined custom symbol
     I2C_LCD1602_INDEX_CUSTOM_3,                         ///< Index of fourth user-defined custom symbol
@@ -325,6 +325,9 @@ esp_err_t i2c_lcd1602_write_char(const i2c_lcd1602_info_t * i2c_lcd1602_info, ui
  * @return ESP_OK if successful, otherwise an error constant.
  */
 esp_err_t i2c_lcd1602_write_string(const i2c_lcd1602_info_t * i2c_lcd1602_info, const char * string);
+
+
+esp_err_t i2c_lcd1602_write_custom_char(const i2c_lcd1602_info_t * i2c_lcd1602_info, i2c_lcd1602_custom_index_t index);
 
 #ifdef __cplusplus
 }

@@ -12,12 +12,20 @@ Author: P.S.M.Goossens
 #include "esp_event.h"
 #include "esp_log.h"
 #include "esp_attr.h"
+#include "audio-board.h"
 #include <string.h>
 
 static const char *TAG = "QWIIC_TWIST";
 
 void qwiic_twist_task(void* pvParameters);
 
+static int volume = 0;
+static int r = 0;
+static int g = 255;
+
+/*
+initialize the rotary encoder, more specific in the settings of the encoder. Like the time of the task etc
+*/
 esp_err_t qwiic_twist_init(qwiic_twist_t* config) {
 
     // Set up the SMBus
@@ -41,10 +49,12 @@ bool qwiic_twist_conntected(qwiic_twist_t* config) {
 	return true;
 }
 
+/*
+this method will change the color of the rotary encoder, by writing each value to a specific address
+*/
 esp_err_t qwiic_twist_set_color(qwiic_twist_t* config, uint8_t r, uint8_t g, uint8_t b) {
 	
 	//uint32_t data = (uint32_t)r << 0 | (uint32_t)g << 8 | (uint32_t)b << 16;
-	
 	//esp_err_t err = smbus_write_block(config->smbus_info, QWIIC_TWIST_LED_BRIGHTNESS_RED, (uint8_t*)&data, 3);
 	
 	xSemaphoreTake( config->xMutex, portMAX_DELAY );
@@ -72,6 +82,39 @@ esp_err_t qwiic_twist_set_color(qwiic_twist_t* config, uint8_t r, uint8_t g, uin
 	return err;
 }
 
+void set_volume_color(qwiic_twist_t* config){
+	volume = get_volume();
+
+	if(volume < 0){
+		ESP_LOGE(TAG, "Volume is not initiaised yet!");
+	}
+
+	if(volume == 50){
+		r = 255;
+		g = 255;
+
+	}else if(volume < 50 ){
+		r = RGB_STEP * volume;
+
+	} else if(volume > 50){
+		g = 255 - (RGB_STEP * volume);
+	}
+	
+	if(volume  == 0){
+		r = 0;
+		g = 255;
+	}
+	else if(volume == 100){
+		r = 255;
+		g = 0;
+	}
+	
+	qwiic_twist_set_color(config, r, g, 0);
+}
+
+/*
+this method gets the color of the rotary encoder, by reading each value of a specific address
+*/
 esp_err_t qwiic_twist_get_color(qwiic_twist_t* config, uint8_t *r, uint8_t *g, uint8_t *b) {
 	
 	xSemaphoreTake( config->xMutex, portMAX_DELAY );
@@ -85,6 +128,9 @@ esp_err_t qwiic_twist_get_color(qwiic_twist_t* config, uint8_t *r, uint8_t *g, u
 	return err;
 }
 
+/*
+gets the current version of the rotary encoder by reading a specific byte
+*/
 esp_err_t qwiic_twist_get_version(qwiic_twist_t* config, uint16_t* version) {
 	
 	xSemaphoreTake( config->xMutex, portMAX_DELAY );
@@ -98,6 +144,9 @@ esp_err_t qwiic_twist_get_version(qwiic_twist_t* config, uint16_t* version) {
 	return err;
 }
 
+/*
+gets the count by reading a specific byte
+*/
 esp_err_t qwiic_twist_get_count(qwiic_twist_t* config, int16_t *count) {
 	
 	xSemaphoreTake( config->xMutex, portMAX_DELAY );
@@ -109,6 +158,9 @@ esp_err_t qwiic_twist_get_count(qwiic_twist_t* config, int16_t *count) {
 	return err;
 }
 
+/*
+sets the count by writing a specific byte
+*/
 esp_err_t qwiic_twist_set_count(qwiic_twist_t* config, int16_t count) {
 	
 	xSemaphoreTake( config->xMutex, portMAX_DELAY );
@@ -135,6 +187,10 @@ esp_err_t qwiic_twist_get_diff(qwiic_twist_t* config, int16_t *count, bool clear
 	return err;
 }
 
+
+/*
+gets the status by reading a specific byte. 
+*/
 esp_err_t qwiic_twist_get_status(qwiic_twist_t* config, uint8_t* result) {
 	
 	xSemaphoreTake( config->xMutex, portMAX_DELAY );
@@ -149,6 +205,9 @@ esp_err_t qwiic_twist_get_status(qwiic_twist_t* config, uint8_t* result) {
 }
 
 
+/*
+checks if the rotary encoder is moved by reading a specific address
+*/
 esp_err_t qwiic_twist_is_moved(qwiic_twist_t* config, bool* result) {
 	
 	xSemaphoreTake( config->xMutex, portMAX_DELAY );
@@ -165,6 +224,9 @@ esp_err_t qwiic_twist_is_moved(qwiic_twist_t* config, bool* result) {
 	return err;
 }
 
+/*
+checks if the rotary encoder is pressed by reading a specific address
+*/
 esp_err_t qwiic_twist_is_pressed(qwiic_twist_t* config, bool* result) {
 	
 	xSemaphoreTake( config->xMutex, portMAX_DELAY );
@@ -181,6 +243,9 @@ esp_err_t qwiic_twist_is_pressed(qwiic_twist_t* config, bool* result) {
 	return err;
 }
 
+/*
+checks if the rotary encoder is clicked by reading a specific address
+*/
 esp_err_t qwiic_twist_is_clicked(qwiic_twist_t* config, bool* result) {
 	
 	xSemaphoreTake( config->xMutex, portMAX_DELAY );
@@ -229,27 +294,33 @@ esp_err_t qwiic_twist_timeSinceLastPress(qwiic_twist_t* config, uint16_t* result
 	return err;
 }    
 
+
+/*
+this task works like a event handler. when this task is active, this method checks the input of the rotary encoder constantly. 
+When a specific input has been occurd, a method will be called.
+*/
 void qwiic_twist_task(void* pvParameters)
 {
-	
 	qwiic_twist_t* config = (qwiic_twist_t*)pvParameters;
-	
 	uint8_t result = 0;
 	esp_err_t err = 0;
 	int16_t movement = 0;
+
+	set_volume_color(config);
 	
     while (config->task_enabled) {
 		
 		//xSemaphoreTake( config->xMutex, portMAX_DELAY );
-		
-		
 		err = qwiic_twist_get_status(config, &result);
 		if (err != ESP_OK) {
 			ESP_LOGI(TAG, "Error in task: %d", err);
 		}
 		
+		if(get_volume() != volume){
+			set_volume_color(config);
+		}
+
 		// Check the result and fire callbacks
-		
 		// Click event
 		if ((result & (1<<QWIIC_TWIST_STATUS_CLICKED)) > 0) {
 			if (config->onButtonClicked != NULL) {
@@ -273,17 +344,17 @@ void qwiic_twist_task(void* pvParameters)
 				config->onMoved(movement);
 			}
 		}
-
 		//xSemaphoreGive( config->xMutex );
 		vTaskDelay(config->task_time / portTICK_RATE_MS);
-
     }
 	
 	ESP_LOGI(TAG, "task stopped");
     vTaskDelete(NULL);
 }
 
-
+/*
+starts the task to check the input
+*/
 esp_err_t qwiic_twist_start_task(qwiic_twist_t* config) {
 	config->task_enabled = true;
 	if (config->task_time == 0) {
@@ -295,6 +366,9 @@ esp_err_t qwiic_twist_start_task(qwiic_twist_t* config) {
 	return ESP_OK;
 }
 
+/*
+stops the task to check the input
+*/
 esp_err_t qwiic_twist_stop_task(qwiic_twist_t* config) {
 	config->task_enabled = false;
 	

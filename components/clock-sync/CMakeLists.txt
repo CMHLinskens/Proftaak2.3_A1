@@ -1,5 +1,8 @@
 set(COMPONENT_ADD_INCLUDEDIRS include)
 set(COMPONENT_SRCS "clock-sync.c")
-set(EXTRA_COMPONENT_DIRS $ENV{IDF_PATH}/examples/common_components/protocol_examples_common)
-set(COMPONENT_PRIV_REQUIRES "lcd-menu" "esp32-i2c-lcd1602" "esp32-smbus")
+set(COMPONENT_PRIV_REQUIRES lcd-menu 
+                            esp32-i2c-lcd1602 
+                            esp32-smbus
+                            audio-board
+                            )
 register_component()
