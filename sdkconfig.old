@@ -139,7 +139,7 @@ CONFIG_WIFI_PASSWORD="dspokemon"
 #
 # Weather api Configuration
 #
-CONFIG_API_CITY="Rotterdam"
+CONFIG_API_CITY="Breda"
 CONFIG_API_KEY="8a844dfb8a5c5fef30713f8ca4fb4aca"
 # end of Weather api Configuration
 

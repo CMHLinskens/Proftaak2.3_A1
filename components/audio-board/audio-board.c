@@ -630,6 +630,8 @@ void stop_radio(){
 void start_listening(){
     listenToMic = true;
 
+    // menu_mic(listenToMic);
+
     // Stop playing audio
     stop_pipeline();
 
@@ -671,6 +673,8 @@ void start_listening(){
  * @brief  Stops the audio input through the microphone. 
  */
 void stop_listening(){
+    // menu_mic(listenToMic);
+
     stop_pipeline();
     
     if(playing_radio){
