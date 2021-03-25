@@ -4,6 +4,7 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/semphr.h"
 
 #include "lwip/err.h"
 #include "lwip/sockets.h"
@@ -27,7 +28,11 @@ static const char *REQUEST = "GET " WEB_PATH " HTTP/1.0\r\n"
 
 char response[1024];
 
+SemaphoreHandle_t xMutex = xSemaphoreCreateMutex();
+
 void api_request(){
+
+    if (xSemaphoreTake(xMutex, portMAX_DELAY) == pdTRUE){  
 
     memset(response, 0, sizeof(response));
 
@@ -105,9 +110,16 @@ void api_request(){
         } while(r > 0);
         ESP_LOGI(APITAG, "... done reading from socket. Last read return=%d errno=%d.", r, errno);
         close(s);
+
+        xSemaphoreGive(xMutex);  
+    }
 }
 
 char* http_request_get_response()
 {
+    while (uxSemaphoreGetCount(xMutex) == 0)
+    {
+        vTaskDelay(1 / portTICK_PERIOD_MS);
+    }
     return &response[0]; 
 }

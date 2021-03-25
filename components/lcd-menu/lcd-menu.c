@@ -5,6 +5,8 @@
 #include "esp_log.h"
 #include <stdio.h>
 #include "cJSON.h"
+#include "freertos/semphr.h"
+
 
 #include "clock-sync.h"
 #include "http_request.h"
@@ -247,6 +249,7 @@ void menu_displayTemperature(char* response){
 
     i2c_lcd1602_move_cursor(_lcd_info, 0, 0);
     i2c_lcd1602_write_string(_lcd_info, &temp_in_string[0]);
+
 }
 
 // Displays menu all lines from menu item on lcd 
@@ -412,8 +415,8 @@ void enterMenuItem(void) {
     if(isListening)
         menu_displayMic();
 
-    // menu_displayTemperature(http_request_get_response());
     menu_displayTime(clock_getTimeString());
+    menu_displayTemperature(http_request_get_response());
 }
 
 // Radio channel enter event
