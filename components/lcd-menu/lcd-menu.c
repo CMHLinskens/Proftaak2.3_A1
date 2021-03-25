@@ -307,11 +307,8 @@ void menu_displayScrollMenu(menu_t *menu)
     i2c_lcd1602_move_cursor(menu->lcd_info, 17, 2);
     i2c_lcd1602_write_string(menu->lcd_info, cursor);
 
-     
-    i2c_lcd1602_move_cursor(menu->lcd_info, 1, 3);
+    i2c_lcd1602_move_cursor(menu->lcd_info, 0, 1);
     i2c_lcd1602_write_custom_char(menu->lcd_info, I2C_LCD1602_INDEX_CUSTOM_0);
-    i2c_lcd1602_move_cursor(menu->lcd_info, 1, 2);
-    i2c_lcd1602_write_custom_char(menu->lcd_info, I2C_LCD1602_INDEX_CUSTOM_1);
 }
 
 // Handles key press by switching to new item or doing an onKeyEvent
