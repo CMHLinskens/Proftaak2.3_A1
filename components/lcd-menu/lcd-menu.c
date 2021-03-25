@@ -18,10 +18,7 @@ void enterMenuItem(void);
 void exitMenuItem(void);
 
 // Radio menu event functions
-void enterRadioVolume(void);
 void enterRadioChannel(void);
-void increaseVolume(void);
-void decreaseVolume(void);
 void nextChannel(void);
 void previousChannel(void);
 void okPressRadioChannel(void);
@@ -43,6 +40,11 @@ void okPressAgendaNewSound(void);
 void leaveAgendaNewMenu(void);
 void AddAgendaNewMenu(void);
 void ClearAgenda(void);
+
+// Settings menu event funtions
+void enterSettingsVolume(void);
+void increaseVolume(void);
+void decreaseVolume(void);
 
 void create_custom_characters(void);
 void gotoMenuItem(int menuItem);
@@ -103,18 +105,15 @@ menu_t *menu_createMenu()
 
     // Temporary array of menu items to copy from
     menu_item_t menuItems[MAX_MENU_ITEMS] = {
-        {MENU_MAIN_ID_0, {MENU_RADIO_ID_0, MENU_MAIN_ID_4, MENU_MAIN_ID_1}, {"MAIN MENU", "Radio"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_MAIN_ID_0, {MENU_RADIO_ID_0, MENU_MAIN_ID_3, MENU_MAIN_ID_1}, {"MAIN MENU", "Radio"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
         {MENU_MAIN_ID_1, {MENU_SD_ID_0, MENU_MAIN_ID_0, MENU_MAIN_ID_2}, {"MAIN MENU", "SD"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
-        {MENU_MAIN_ID_2, {MENU_MAIN_ID_2, MENU_MAIN_ID_1, MENU_MAIN_ID_3}, {"MAIN MENU", "Lights"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
-        {MENU_MAIN_ID_3, {MENU_AGENDA_ID_0, MENU_MAIN_ID_2, MENU_MAIN_ID_4}, {"MAIN MENU", "Agenda"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
-        {MENU_MAIN_ID_4, {MENU_MAIN_ID_4, MENU_MAIN_ID_3, MENU_MAIN_ID_0}, {"MAIN MENU", "Settings"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_MAIN_ID_2, {MENU_AGENDA_ID_0, MENU_MAIN_ID_1, MENU_MAIN_ID_3}, {"MAIN MENU", "Agenda"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_MAIN_ID_3, {MENU_SETTINGS_ID_0, MENU_MAIN_ID_2, MENU_MAIN_ID_0}, {"MAIN MENU", "Settings"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
         
-        {MENU_RADIO_ID_0, {MENU_RADIO_ID_4, MENU_RADIO_ID_2, MENU_RADIO_ID_1}, {"RADIO", "Channel"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
-        {MENU_RADIO_ID_1, {MENU_RADIO_ID_3, MENU_RADIO_ID_0, MENU_RADIO_ID_2}, {"RADIO", "Volume"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
-        {MENU_RADIO_ID_2, {MENU_MAIN_ID_0, MENU_RADIO_ID_1, MENU_RADIO_ID_0}, {"RADIO", "Back"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_RADIO_ID_0, {MENU_RADIO_ID_2, MENU_RADIO_ID_1, MENU_RADIO_ID_1}, {"RADIO", "Channel"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_RADIO_ID_1, {MENU_MAIN_ID_0, MENU_RADIO_ID_0, MENU_RADIO_ID_0}, {"RADIO", "Back"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
         
-        {MENU_RADIO_ID_3, {MENU_RADIO_ID_1, MENU_RADIO_ID_3, MENU_RADIO_ID_3}, {"VOLUME", " ", "", ""}, {NULL, decreaseVolume, increaseVolume}, enterRadioVolume, NULL},
-        {MENU_RADIO_ID_4, {MENU_RADIO_ID_4, MENU_RADIO_ID_4, MENU_RADIO_ID_4}, {"CHANNEL", " ", "", ""}, {okPressRadioChannel, previousChannel, nextChannel}, enterRadioChannel, NULL},
+        {MENU_RADIO_ID_2, {MENU_RADIO_ID_2, MENU_RADIO_ID_2, MENU_RADIO_ID_2}, {"CHANNEL", " ", "", ""}, {okPressRadioChannel, previousChannel, nextChannel}, enterRadioChannel, NULL},
 
         {MENU_SD_ID_0, {MENU_SD_ID_2, MENU_SD_ID_1, MENU_SD_ID_1}, {"SD", "Play"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
         {MENU_SD_ID_1, {MENU_MAIN_ID_1, MENU_SD_ID_0, MENU_SD_ID_0}, {"SD", "Back"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
@@ -123,7 +122,7 @@ menu_t *menu_createMenu()
     
         {MENU_AGENDA_ID_0, {MENU_AGENDA_ID_3, MENU_AGENDA_ID_2, MENU_AGENDA_ID_1}, {"AGENDA", "New"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
         {MENU_AGENDA_ID_1, {MENU_AGENDA_ID_1, MENU_AGENDA_ID_0, MENU_AGENDA_ID_2}, {"AGENDA", "Clear"}, {ClearAgenda, NULL, NULL}, enterMenuItem, NULL},
-        {MENU_AGENDA_ID_2, {MENU_MAIN_ID_3, MENU_AGENDA_ID_1, MENU_AGENDA_ID_0}, {"AGENDA", "Back"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_AGENDA_ID_2, {MENU_MAIN_ID_2, MENU_AGENDA_ID_1, MENU_AGENDA_ID_0}, {"AGENDA", "Back"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
         
         {MENU_AGENDA_ID_3, {MENU_AGENDA_ID_7, MENU_AGENDA_ID_6, MENU_AGENDA_ID_4}, {"NEW", "Time"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
         {MENU_AGENDA_ID_4, {MENU_AGENDA_ID_8, MENU_AGENDA_ID_3, MENU_AGENDA_ID_5}, {"NEW", "Sound"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
@@ -131,7 +130,12 @@ menu_t *menu_createMenu()
         {MENU_AGENDA_ID_6, {MENU_AGENDA_ID_6, MENU_AGENDA_ID_5, MENU_AGENDA_ID_3}, {"NEW", "Back"}, {leaveAgendaNewMenu, NULL, NULL}, enterMenuItem, NULL},
 
         {MENU_AGENDA_ID_7, {MENU_AGENDA_ID_3, MENU_AGENDA_ID_7, MENU_AGENDA_ID_7}, {"TIME", " ", "", ""}, {NULL, decreaseAgendaNewTime, increaseAgendaNewTime}, enterAgendaNewTime, NULL},
-        {MENU_AGENDA_ID_8, {MENU_AGENDA_ID_8, MENU_AGENDA_ID_8, MENU_AGENDA_ID_8}, {"SOUND", " ", "", ""}, {okPressAgendaNewSound, previousAgendaNewSound, nextAgendaNewSound}, enterAgendaNewSound, NULL}
+        {MENU_AGENDA_ID_8, {MENU_AGENDA_ID_8, MENU_AGENDA_ID_8, MENU_AGENDA_ID_8}, {"SOUND", " ", "", ""}, {okPressAgendaNewSound, previousAgendaNewSound, nextAgendaNewSound}, enterAgendaNewSound, NULL},
+    
+        {MENU_SETTINGS_ID_0, {MENU_SETTINGS_ID_2, MENU_SETTINGS_ID_1, MENU_SETTINGS_ID_1}, {"SETTINGS", "Volume"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_SETTINGS_ID_1, {MENU_MAIN_ID_3, MENU_SETTINGS_ID_0, MENU_SETTINGS_ID_0}, {"SETTINGS", "Back"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+
+        {MENU_SETTINGS_ID_2, {MENU_SETTINGS_ID_0, MENU_SETTINGS_ID_2, MENU_SETTINGS_ID_2}, {"VOLUME", " ", "", ""}, {NULL, decreaseVolume, increaseVolume}, enterSettingsVolume, NULL}
     };
     
     _lcd_info = lcd_init();
@@ -419,40 +423,6 @@ void enterMenuItem(void) {
     // menu_displayTemperature(http_request_get_response());
     menu_displayTime(clock_getTimeString());
 }
-// Radio volume enter event
-void enterRadioVolume(void){
-    enterMenuItem();
-
-    char volumeStr[5];
-    sprintf(volumeStr, "%03d", volume);
-
-    i2c_lcd1602_move_cursor(_lcd_info, 9, 1);
-    i2c_lcd1602_write_string(_lcd_info, volumeStr);
-}
-// Radio volume right press event
-void increaseVolume(void){
-    volume++;
-    if(volume > 100) volume = 100;
-    char volumeStr[5];
-    sprintf(volumeStr, "%03d", volume);
-
-    i2c_lcd1602_move_cursor(_lcd_info, 9, 1);
-    i2c_lcd1602_write_string(_lcd_info, volumeStr);
-
-    setVolume(volume);
-}
-// Radio volume left press event
-void decreaseVolume(void){
-    volume--;
-    if(volume < 0) volume = 0;
-    char volumeStr[5];
-    sprintf(volumeStr, "%03d", volume);
-
-    i2c_lcd1602_move_cursor(_lcd_info, 9, 1);
-    i2c_lcd1602_write_string(_lcd_info, volumeStr);
-
-    setVolume(volume);
-}
 
 // Radio channel enter event
 void enterRadioChannel(void){
@@ -614,4 +584,39 @@ void gotoMenuItem(int menuItem){
     if(_menu->menuItems[_menu->currentMenuItemId].fpOnMenuEntryEvent != NULL) {
         (*_menu->menuItems[_menu->currentMenuItemId].fpOnMenuEntryEvent)();
     }
+}
+
+// Settings volume enter event
+void enterSettingsVolume(void){
+    enterMenuItem();
+
+    char volumeStr[5];
+    sprintf(volumeStr, "%03d", volume);
+
+    i2c_lcd1602_move_cursor(_lcd_info, 9, 1);
+    i2c_lcd1602_write_string(_lcd_info, volumeStr);
+}
+// Volume right press event
+void increaseVolume(void){
+    volume++;
+    if(volume > 100) volume = 100;
+    char volumeStr[5];
+    sprintf(volumeStr, "%03d", volume);
+
+    i2c_lcd1602_move_cursor(_lcd_info, 9, 1);
+    i2c_lcd1602_write_string(_lcd_info, volumeStr);
+
+    setVolume(volume);
+}
+// Volume left press event
+void decreaseVolume(void){
+    volume--;
+    if(volume < 0) volume = 0;
+    char volumeStr[5];
+    sprintf(volumeStr, "%03d", volume);
+
+    i2c_lcd1602_move_cursor(_lcd_info, 9, 1);
+    i2c_lcd1602_write_string(_lcd_info, volumeStr);
+
+    setVolume(volume);
 }
