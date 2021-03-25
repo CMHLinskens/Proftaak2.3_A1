@@ -4,7 +4,6 @@
 
 #define GOERTZELTAG "goertzel"
 
-// Allocate number of Goertzel filter
 goertzel_data_t** goertzel_malloc(int numOfConfigurations) {
 
     goertzel_data_t** configs;
@@ -26,7 +25,6 @@ goertzel_data_t** goertzel_malloc(int numOfConfigurations) {
 	return configs;
 }
 
-// Initialize goertzel configuration per configuration
 esp_err_t goertzel_init_config(goertzel_data_t* config) {
 	
     float floatnumSamples = (float) config->samples;
@@ -43,8 +41,6 @@ esp_err_t goertzel_init_config(goertzel_data_t* config) {
 	return ESP_OK;
 }
 
-
-// Initialize goertzel configuration for multiple configurations
 esp_err_t goertzel_init_configs(goertzel_data_t** configs, int numOfConfigurations) {
 	for (int i = 0; i < numOfConfigurations; i++) {
 		esp_err_t ret = goertzel_init_config(configs[i]);
@@ -56,7 +52,6 @@ esp_err_t goertzel_init_configs(goertzel_data_t** configs, int numOfConfiguratio
 	return ESP_OK;
 }
 
-// Reset goertzel filters for a single configuration
 esp_err_t goertzel_reset(goertzel_data_t* config) {
 	
 	config->q0 = 0.0f;
@@ -66,7 +61,6 @@ esp_err_t goertzel_reset(goertzel_data_t* config) {
 	return ESP_OK;
 }
 
-// Reset goertzel filters for multiple configurations
 esp_err_t goertzel_resets(goertzel_data_t** configs, int numOfConfigurations) {
 	for (int i = 0; i < numOfConfigurations; i++) {
 		goertzel_reset(configs[i]);
@@ -74,7 +68,6 @@ esp_err_t goertzel_resets(goertzel_data_t** configs, int numOfConfigurations) {
 	return ESP_OK;
 }
 
-// Process all samples for all goertzel filters
 esp_err_t goertzel_proces(goertzel_data_t** configs, int numOfConfigurations, int16_t* samples, int numOfSamples) {
 	
 	for (int idx = 0; idx < numOfSamples; idx++) {
@@ -110,7 +103,6 @@ esp_err_t goertzel_proces(goertzel_data_t** configs, int numOfConfigurations, in
 	return ESP_OK;
 }
 
-// Free all goertzel configurations
 esp_err_t goertzel_free(goertzel_data_t** configs) {
 	if (configs != NULL && (*configs != NULL)) {
         ESP_LOGD(GOERTZELTAG, "free goertzel_data_t %p", *configs);
