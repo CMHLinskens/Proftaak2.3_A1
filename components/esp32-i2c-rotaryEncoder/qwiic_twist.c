@@ -83,11 +83,9 @@ esp_err_t qwiic_twist_set_color(qwiic_twist_t* config, uint8_t r, uint8_t g, uin
 }
 
 void set_volume_color(qwiic_twist_t* config){
+	volume = get_volume();
 
-	int prevVolume = volume;
-	volume = getVolume();
-
-	if(volume == NULL){
+	if(volume < 0){
 		ESP_LOGE(TAG, "Volume is not initiaised yet!");
 	}
 
@@ -318,7 +316,7 @@ void qwiic_twist_task(void* pvParameters)
 			ESP_LOGI(TAG, "Error in task: %d", err);
 		}
 		
-		if(getVolume() != volume){
+		if(get_volume() != volume){
 			set_volume_color(config);
 		}
 

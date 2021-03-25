@@ -14,44 +14,44 @@
 #define MENUTAG "menu"
 
 // Default menu event functions
-void enterMenuItem(void);
-void exitMenuItem(void);
+void enter_menu_item(void);
+void exit_menu_item(void);
 
 // Radio menu event functions
-void enterRadioChannel(void);
-void nextChannel(void);
-void previousChannel(void);
-void okPressRadioChannel(void);
+void enter_radio_channel(void);
+void next_channel(void);
+void previous_channel(void);
+void ok_press_radio_channel(void);
 
 // SD menu event functions
-void enterSDPlay(void);
-void nextSong(void);
-void previousSong(void);
-void okPressSDPlay(void);
+void enter_SD_play(void);
+void next_song(void);
+void previous_song(void);
+void ok_press_SD_play(void);
 
 // Agenda menu event functions
-void enterAgendaNewTime(void);
-void decreaseAgendaNewTime(void);
-void increaseAgendaNewTime(void);
-void enterAgendaNewSound(void);
-void previousAgendaNewSound(void);
-void nextAgendaNewSound(void);
-void okPressAgendaNewSound(void);
-void leaveAgendaNewMenu(void);
-void AddAgendaNewMenu(void);
-void ClearAgenda(void);
+void enter_agenda_new_time(void);
+void decrease_agenda_new_time(void);
+void increase_agenda_new_time(void);
+void enter_agenda_new_sound(void);
+void previous_agenda_new_sound(void);
+void next_agenda_new_sound(void);
+void ok_press_agenda_new_sound(void);
+void leave_agenda_new_menu(void);
+void add_agenda_new_menu(void);
+void clear_agenda(void);
 
 // Settings menu event funtions
-void enterSettingsVolume(void);
-void increaseVolume(void);
-void decreaseVolume(void);
+void enter_settings_volume(void);
+void increase_volume(void);
+void decrease_volume(void);
 
 void create_custom_characters(void);
-void gotoMenuItem(int menuItem);
-void resetTempAgendaVariables(void);
+void goto_menu_item(int menuItem);
+void reset_temp_agenda_variables(void);
 
-void menu_displayMic();
-void menu_clearMic();
+void menu_display_mic();
+void menu_clear_mic();
 
 // Placeholder variables
 static int volume = 0;
@@ -104,43 +104,43 @@ i2c_lcd1602_info_t * lcd_init()
 }
 
 // Creates and returnes a pointer to the menu 
-menu_t *menu_createMenu()
+menu_t *menu_create_menu()
 {
     menu_t *menuPointer = malloc(sizeof(menu_t));
 
     // Temporary array of menu items to copy from
     menu_item_t menuItems[MAX_MENU_ITEMS] = {
-        {MENU_MAIN_ID_0, {MENU_RADIO_ID_0, MENU_MAIN_ID_3, MENU_MAIN_ID_1}, {"MAIN MENU", "Radio"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
-        {MENU_MAIN_ID_1, {MENU_SD_ID_0, MENU_MAIN_ID_0, MENU_MAIN_ID_2}, {"MAIN MENU", "SD"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
-        {MENU_MAIN_ID_2, {MENU_AGENDA_ID_0, MENU_MAIN_ID_1, MENU_MAIN_ID_3}, {"MAIN MENU", "Agenda"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
-        {MENU_MAIN_ID_3, {MENU_SETTINGS_ID_0, MENU_MAIN_ID_2, MENU_MAIN_ID_0}, {"MAIN MENU", "Settings"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_MAIN_ID_0, {MENU_RADIO_ID_0, MENU_MAIN_ID_3, MENU_MAIN_ID_1}, {"MAIN MENU", "Radio"}, {NULL, NULL, NULL}, enter_menu_item, NULL},
+        {MENU_MAIN_ID_1, {MENU_SD_ID_0, MENU_MAIN_ID_0, MENU_MAIN_ID_2}, {"MAIN MENU", "SD"}, {NULL, NULL, NULL}, enter_menu_item, NULL},
+        {MENU_MAIN_ID_2, {MENU_AGENDA_ID_0, MENU_MAIN_ID_1, MENU_MAIN_ID_3}, {"MAIN MENU", "Agenda"}, {NULL, NULL, NULL}, enter_menu_item, NULL},
+        {MENU_MAIN_ID_3, {MENU_SETTINGS_ID_0, MENU_MAIN_ID_2, MENU_MAIN_ID_0}, {"MAIN MENU", "Settings"}, {NULL, NULL, NULL}, enter_menu_item, NULL},
         
-        {MENU_RADIO_ID_0, {MENU_RADIO_ID_2, MENU_RADIO_ID_1, MENU_RADIO_ID_1}, {"RADIO", "Channel"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
-        {MENU_RADIO_ID_1, {MENU_MAIN_ID_0, MENU_RADIO_ID_0, MENU_RADIO_ID_0}, {"RADIO", "Back"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_RADIO_ID_0, {MENU_RADIO_ID_2, MENU_RADIO_ID_1, MENU_RADIO_ID_1}, {"RADIO", "Channel"}, {NULL, NULL, NULL}, enter_menu_item, NULL},
+        {MENU_RADIO_ID_1, {MENU_MAIN_ID_0, MENU_RADIO_ID_0, MENU_RADIO_ID_0}, {"RADIO", "Back"}, {NULL, NULL, NULL}, enter_menu_item, NULL},
         
-        {MENU_RADIO_ID_2, {MENU_RADIO_ID_2, MENU_RADIO_ID_2, MENU_RADIO_ID_2}, {"CHANNEL", " ", "", ""}, {okPressRadioChannel, previousChannel, nextChannel}, enterRadioChannel, NULL},
+        {MENU_RADIO_ID_2, {MENU_RADIO_ID_2, MENU_RADIO_ID_2, MENU_RADIO_ID_2}, {"CHANNEL", " ", "", ""}, {ok_press_radio_channel, previous_channel, next_channel}, enter_radio_channel, NULL},
 
-        {MENU_SD_ID_0, {MENU_SD_ID_2, MENU_SD_ID_1, MENU_SD_ID_1}, {"SD", "Play"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
-        {MENU_SD_ID_1, {MENU_MAIN_ID_1, MENU_SD_ID_0, MENU_SD_ID_0}, {"SD", "Back"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_SD_ID_0, {MENU_SD_ID_2, MENU_SD_ID_1, MENU_SD_ID_1}, {"SD", "Play"}, {NULL, NULL, NULL}, enter_menu_item, NULL},
+        {MENU_SD_ID_1, {MENU_MAIN_ID_1, MENU_SD_ID_0, MENU_SD_ID_0}, {"SD", "Back"}, {NULL, NULL, NULL}, enter_menu_item, NULL},
 
-        {MENU_SD_ID_2, {MENU_SD_ID_2, MENU_SD_ID_2, MENU_SD_ID_2}, {"SD", " ", "", ""}, {okPressSDPlay, previousSong, nextSong}, enterSDPlay, NULL},
+        {MENU_SD_ID_2, {MENU_SD_ID_2, MENU_SD_ID_2, MENU_SD_ID_2}, {"SD", " ", "", ""}, {ok_press_SD_play, previous_song, next_song}, enter_SD_play, NULL},
     
-        {MENU_AGENDA_ID_0, {MENU_AGENDA_ID_3, MENU_AGENDA_ID_2, MENU_AGENDA_ID_1}, {"AGENDA", "New"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
-        {MENU_AGENDA_ID_1, {MENU_AGENDA_ID_1, MENU_AGENDA_ID_0, MENU_AGENDA_ID_2}, {"AGENDA", "Clear"}, {ClearAgenda, NULL, NULL}, enterMenuItem, NULL},
-        {MENU_AGENDA_ID_2, {MENU_MAIN_ID_2, MENU_AGENDA_ID_1, MENU_AGENDA_ID_0}, {"AGENDA", "Back"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_AGENDA_ID_0, {MENU_AGENDA_ID_3, MENU_AGENDA_ID_2, MENU_AGENDA_ID_1}, {"AGENDA", "New"}, {NULL, NULL, NULL}, enter_menu_item, NULL},
+        {MENU_AGENDA_ID_1, {MENU_AGENDA_ID_1, MENU_AGENDA_ID_0, MENU_AGENDA_ID_2}, {"AGENDA", "Clear"}, {clear_agenda, NULL, NULL}, enter_menu_item, NULL},
+        {MENU_AGENDA_ID_2, {MENU_MAIN_ID_2, MENU_AGENDA_ID_1, MENU_AGENDA_ID_0}, {"AGENDA", "Back"}, {NULL, NULL, NULL}, enter_menu_item, NULL},
         
-        {MENU_AGENDA_ID_3, {MENU_AGENDA_ID_7, MENU_AGENDA_ID_6, MENU_AGENDA_ID_4}, {"NEW", "Time"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
-        {MENU_AGENDA_ID_4, {MENU_AGENDA_ID_8, MENU_AGENDA_ID_3, MENU_AGENDA_ID_5}, {"NEW", "Sound"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
-        {MENU_AGENDA_ID_5, {MENU_AGENDA_ID_5, MENU_AGENDA_ID_4, MENU_AGENDA_ID_6}, {"NEW", "Add"}, {AddAgendaNewMenu, NULL, NULL}, enterMenuItem, NULL},
-        {MENU_AGENDA_ID_6, {MENU_AGENDA_ID_6, MENU_AGENDA_ID_5, MENU_AGENDA_ID_3}, {"NEW", "Back"}, {leaveAgendaNewMenu, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_AGENDA_ID_3, {MENU_AGENDA_ID_7, MENU_AGENDA_ID_6, MENU_AGENDA_ID_4}, {"NEW", "Time"}, {NULL, NULL, NULL}, enter_menu_item, NULL},
+        {MENU_AGENDA_ID_4, {MENU_AGENDA_ID_8, MENU_AGENDA_ID_3, MENU_AGENDA_ID_5}, {"NEW", "Sound"}, {NULL, NULL, NULL}, enter_menu_item, NULL},
+        {MENU_AGENDA_ID_5, {MENU_AGENDA_ID_5, MENU_AGENDA_ID_4, MENU_AGENDA_ID_6}, {"NEW", "Add"}, {add_agenda_new_menu, NULL, NULL}, enter_menu_item, NULL},
+        {MENU_AGENDA_ID_6, {MENU_AGENDA_ID_6, MENU_AGENDA_ID_5, MENU_AGENDA_ID_3}, {"NEW", "Back"}, {leave_agenda_new_menu, NULL, NULL}, enter_menu_item, NULL},
 
-        {MENU_AGENDA_ID_7, {MENU_AGENDA_ID_3, MENU_AGENDA_ID_7, MENU_AGENDA_ID_7}, {"TIME", " ", "", ""}, {NULL, decreaseAgendaNewTime, increaseAgendaNewTime}, enterAgendaNewTime, NULL},
-        {MENU_AGENDA_ID_8, {MENU_AGENDA_ID_8, MENU_AGENDA_ID_8, MENU_AGENDA_ID_8}, {"SOUND", " ", "", ""}, {okPressAgendaNewSound, previousAgendaNewSound, nextAgendaNewSound}, enterAgendaNewSound, NULL},
+        {MENU_AGENDA_ID_7, {MENU_AGENDA_ID_3, MENU_AGENDA_ID_7, MENU_AGENDA_ID_7}, {"TIME", " ", "", ""}, {NULL, decrease_agenda_new_time, increase_agenda_new_time}, enter_agenda_new_time, NULL},
+        {MENU_AGENDA_ID_8, {MENU_AGENDA_ID_8, MENU_AGENDA_ID_8, MENU_AGENDA_ID_8}, {"SOUND", " ", "", ""}, {ok_press_agenda_new_sound, previous_agenda_new_sound, next_agenda_new_sound}, enter_agenda_new_sound, NULL},
     
-        {MENU_SETTINGS_ID_0, {MENU_SETTINGS_ID_2, MENU_SETTINGS_ID_1, MENU_SETTINGS_ID_1}, {"SETTINGS", "Volume"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
-        {MENU_SETTINGS_ID_1, {MENU_MAIN_ID_3, MENU_SETTINGS_ID_0, MENU_SETTINGS_ID_0}, {"SETTINGS", "Back"}, {NULL, NULL, NULL}, enterMenuItem, NULL},
+        {MENU_SETTINGS_ID_0, {MENU_SETTINGS_ID_2, MENU_SETTINGS_ID_1, MENU_SETTINGS_ID_1}, {"SETTINGS", "Volume"}, {NULL, NULL, NULL}, enter_menu_item, NULL},
+        {MENU_SETTINGS_ID_1, {MENU_MAIN_ID_3, MENU_SETTINGS_ID_0, MENU_SETTINGS_ID_0}, {"SETTINGS", "Back"}, {NULL, NULL, NULL}, enter_menu_item, NULL},
 
-        {MENU_SETTINGS_ID_2, {MENU_SETTINGS_ID_0, MENU_SETTINGS_ID_2, MENU_SETTINGS_ID_2}, {"VOLUME", " ", "", ""}, {NULL, decreaseVolume, increaseVolume}, enterSettingsVolume, NULL}
+        {MENU_SETTINGS_ID_2, {MENU_SETTINGS_ID_0, MENU_SETTINGS_ID_2, MENU_SETTINGS_ID_2}, {"VOLUME", " ", "", ""}, {NULL, decrease_volume, increase_volume}, enter_settings_volume, NULL}
     };
     
     _lcd_info = lcd_init();
@@ -200,7 +200,7 @@ void create_custom_characters(){
 }
 
 // Frees memory used by menu pointer
-void menu_freeMenu(menu_t *menu)
+void menu_free_menu(menu_t *menu)
 {
     free(menu->lcd_info);
     menu->lcd_info = NULL;
@@ -211,7 +211,7 @@ void menu_freeMenu(menu_t *menu)
 }
 
 // Displays a welcome message on lcd
-void menu_displayWelcomeMessage(menu_t *menu)
+void menu_display_welcome_message(menu_t *menu)
 {
     i2c_lcd1602_set_cursor(menu->lcd_info, false);
     i2c_lcd1602_move_cursor(menu->lcd_info, 6, 1);
@@ -225,13 +225,13 @@ void menu_displayWelcomeMessage(menu_t *menu)
 }
 
 // Displays time in top right corner of lcd
-void menu_displayTime(char *time)
+void menu_display_time(char *time)
 {
     i2c_lcd1602_move_cursor(_lcd_info, 15, 0);
     i2c_lcd1602_write_string(_lcd_info, time);
 }
 
-void menu_displayTemperature(char* response){
+void menu_display_temperature(char* response){
     if(response == NULL)
         return;
 
@@ -250,7 +250,7 @@ void menu_displayTemperature(char* response){
 }
 
 // Displays menu all lines from menu item on lcd 
-void menu_displayMenuItem(menu_t *menu, int menuItemId)
+void menu_display_menu_item(menu_t *menu, int menuItemId)
 {
     i2c_lcd1602_clear(menu->lcd_info);
 
@@ -263,7 +263,7 @@ void menu_displayMenuItem(menu_t *menu, int menuItemId)
 }
 
 // Writes an menu item on given line
-void menu_writeScrollMenuItem(i2c_lcd1602_info_t *lcd_info, char* text, int line)
+void menu_write_scroll_menu_item(i2c_lcd1602_info_t *lcd_info, char* text, int line)
 {
     int textPosition = 10 - ((strlen(text) + 1) / 2);
     i2c_lcd1602_move_cursor(lcd_info, textPosition, line);
@@ -272,36 +272,36 @@ void menu_writeScrollMenuItem(i2c_lcd1602_info_t *lcd_info, char* text, int line
 
 // Displays menu scroll menu on lcd
 // by writing currentMenuItem and the item before and after
-void menu_displayScrollMenu(menu_t *menu)
+void menu_display_scroll_menu(menu_t *menu)
 {
     i2c_lcd1602_clear(menu->lcd_info);
     
     // Gets title of scroll menu
     char *menuText = menu->menuItems[menu->currentMenuItemId].menuText[0];
-    menu_writeScrollMenuItem(menu->lcd_info, menuText, 0);
+    menu_write_scroll_menu_item(menu->lcd_info, menuText, 0);
 
     // Get item before currentMenuItem
     menuText = menu->menuItems[menu->menuItems[menu->currentMenuItemId].otherIds[MENU_KEY_LEFT]].menuText[1];
-    menu_writeScrollMenuItem(menu->lcd_info, menuText, 1);
+    menu_write_scroll_menu_item(menu->lcd_info, menuText, 1);
 
     // Get currentMenuItem
     menuText = menu->menuItems[menu->currentMenuItemId].menuText[1];
-    menu_writeScrollMenuItem(menu->lcd_info, menuText, 2);
+    menu_write_scroll_menu_item(menu->lcd_info, menuText, 2);
 
     // Get item after currentMenuItem
     menuText = menu->menuItems[menu->menuItems[menu->currentMenuItemId].otherIds[MENU_KEY_RIGHT]].menuText[1];
-    menu_writeScrollMenuItem(menu->lcd_info, menuText, 3);
+    menu_write_scroll_menu_item(menu->lcd_info, menuText, 3);
 
     // Display cursor
     const char *cursor = "<";
     i2c_lcd1602_move_cursor(menu->lcd_info, 17, 2);
     i2c_lcd1602_write_string(menu->lcd_info, cursor);
 
-    
+
 }
 
 // Handles key press by switching to new item or doing an onKeyEvent
-void menu_handleKeyEvent(menu_t *menu, int key)
+void menu_handle_key_event(menu_t *menu, int key)
 {
     // If key press leads to the same ID as the currentMenuItemId
     // do not switch to a new menu item, instead call the onKey event
@@ -320,9 +320,9 @@ void menu_handleKeyEvent(menu_t *menu, int key)
 
         // Display menu on LCD
         if(strcmp(menu->menuItems[menu->currentMenuItemId].menuText[1], " ") == 0) {
-            menu_displayMenuItem(menu, menu->currentMenuItemId);
+            menu_display_menu_item(menu, menu->currentMenuItemId);
         } else {
-            menu_displayScrollMenu(menu);
+            menu_display_scroll_menu(menu);
         }
 
         // Call the onMenuEntry event function if there is one
@@ -333,12 +333,12 @@ void menu_handleKeyEvent(menu_t *menu, int key)
 }
 
 // Displays songsList in a scroll menu form
-void displaySongs(char *titleText){
+void display_songs(char *titleText){
     i2c_lcd1602_clear(_lcd_info);
 
     // Display scroll menu title
     char *menuText = titleText;
-    menu_writeScrollMenuItem(_lcd_info, menuText, 0);
+    menu_write_scroll_menu_item(_lcd_info, menuText, 0);
 
     // Loop back around if songIndex exeeds songList size
     if(songIndex + 1 > get_array_size() + 1){
@@ -351,31 +351,31 @@ void displaySongs(char *titleText){
     // if below 0 loop back to top
     int previousSongIndex = songIndex - 1 < 0? get_array_size() : songIndex - 1;
     menuText = songList[previousSongIndex];
-    menu_writeScrollMenuItem(_lcd_info, menuText, 1);
+    menu_write_scroll_menu_item(_lcd_info, menuText, 1);
 
     menuText = songList[songIndex];
-    menu_writeScrollMenuItem(_lcd_info, menuText, 2);
+    menu_write_scroll_menu_item(_lcd_info, menuText, 2);
 
     // Get the song index after current selected song
     // if after 24 loop back to beginning
     int nextSongIndex = songIndex + 1 > get_array_size()? 0 : songIndex + 1;
     menuText = songList[nextSongIndex];
-    menu_writeScrollMenuItem(_lcd_info, menuText, 3);  
+    menu_write_scroll_menu_item(_lcd_info, menuText, 3);  
     
     // Display cursor
     const char *cursor = "<";
     i2c_lcd1602_move_cursor(_lcd_info, 17, 2);
     i2c_lcd1602_write_string(_lcd_info, cursor);
 
-    enterMenuItem();
+    enter_menu_item();
 }
 
-void displayRadioChannels(){
+void display_radio_channels(){
     i2c_lcd1602_clear(_lcd_info);
 
     // Display scroll menu title
     char *menuText = "CHANNEL";
-    menu_writeScrollMenuItem(_lcd_info, menuText, 0);
+    menu_write_scroll_menu_item(_lcd_info, menuText, 0);
 
     // Loop back around if radioIndex exeeds AMOUNT_OF_RADIO_CHANNELS size
     if(channelIndex + 1 > AMOUNT_OF_RADIO_CHANNELS + 1){
@@ -388,57 +388,57 @@ void displayRadioChannels(){
     // if below 0 loop back to top
     int previousChannelIndex = channelIndex - 1 < 0? AMOUNT_OF_RADIO_CHANNELS : channelIndex - 1;
     menuText = radioChannelNames[previousChannelIndex];
-    menu_writeScrollMenuItem(_lcd_info, menuText, 1);
+    menu_write_scroll_menu_item(_lcd_info, menuText, 1);
 
     menuText = radioChannelNames[channelIndex];
-    menu_writeScrollMenuItem(_lcd_info, menuText, 2);
+    menu_write_scroll_menu_item(_lcd_info, menuText, 2);
 
     // Get the channel index after current selected song
     // if after AMOUNT_OF_RADIO_CHANNELS loop back to beginning
     int nextChannelIndex = channelIndex + 1 > AMOUNT_OF_RADIO_CHANNELS? 0 : channelIndex + 1;
     menuText = radioChannelNames[nextChannelIndex];
-    menu_writeScrollMenuItem(_lcd_info, menuText, 3);  
+    menu_write_scroll_menu_item(_lcd_info, menuText, 3);  
     
     // Display cursor
     const char *cursor = "<";
     i2c_lcd1602_move_cursor(_lcd_info, 17, 2);
     i2c_lcd1602_write_string(_lcd_info, cursor);
 
-    enterMenuItem();
+    enter_menu_item();
 }
 
 // Default enter event, displays time
-void enterMenuItem(void) {
+void enter_menu_item(void) {
     if(isListening)
-        menu_displayMic();
+        menu_display_mic();
 
     // menu_displayTemperature(http_request_get_response());
-    menu_displayTime(clock_getTimeString());
+    menu_display_time(clock_getTimeString());
 }
 
 // Radio channel enter event
-void enterRadioChannel(void){
-    enterMenuItem();
+void enter_radio_channel(void){
+    enter_menu_item();
 
-    displayRadioChannels();
+    display_radio_channels();
 }
 // Radio channel right press event
-void  nextChannel(void){
+void next_channel(void){
     channelIndex++;
-    displayRadioChannels();
+    display_radio_channels();
 }
 // Radio channel left press event
-void previousChannel(void){
+void previous_channel(void){
     channelIndex--;
-    displayRadioChannels();
+    display_radio_channels();
 }
-void okPressRadioChannel(){
+void ok_press_radio_channel(){
     // User pressed back
     if(channelIndex == 0){
         // Switch back to radio menu
         _menu->currentMenuItemId = MENU_RADIO_ID_0;
 
-        menu_displayScrollMenu(_menu);
+        menu_display_scroll_menu(_menu);
 
         if(_menu->menuItems[_menu->currentMenuItemId].fpOnMenuEntryEvent != NULL) {
             (*_menu->menuItems[_menu->currentMenuItemId].fpOnMenuEntryEvent)();
@@ -451,41 +451,41 @@ void okPressRadioChannel(){
 }
 
 // SD play enter event
-void enterSDPlay(void){
-    enterMenuItem();
+void enter_SD_play(void){
+    enter_menu_item();
 
-    displaySongs("SD");
+    display_songs("SD");
 }
 // SD play right press event 
-void nextSong(void){
+void next_song(void){
     songIndex++;
-    displaySongs("SD");
+    display_songs("SD");
 }
 // SD play left press event
-void previousSong(void){
+void previous_song(void){
     songIndex--;
-    displaySongs("SD");
+    display_songs("SD");
 }
 // SD play ok press event
-void okPressSDPlay(){
+void ok_press_SD_play(){
     // If pressed Back, go back to SD scroll menu
     if(strcmp(songList[songIndex], "Back") == 0){
-       gotoMenuItem(MENU_SD_ID_0);
+       goto_menu_item(MENU_SD_ID_0);
     } else {
         // else play selected song
         play_song_with_ID(songList[songIndex], "m");
     }
 }
 
-void enterAgendaNewTime(void){
-    enterMenuItem();
+void enter_agenda_new_time(void){
+    enter_menu_item();
 
     tempSelectedTime = clock_getCurrentTime();
 
     i2c_lcd1602_move_cursor(_lcd_info, 8, 1);
     i2c_lcd1602_write_string(_lcd_info, clock_getTimeString());
 }
-void decreaseAgendaNewTime(void){
+void decrease_agenda_new_time(void){
     tempSelectedTime[1]--;
     if(tempSelectedTime[1] < 0) {
         tempSelectedTime[0]--;
@@ -501,7 +501,7 @@ void decreaseAgendaNewTime(void){
     i2c_lcd1602_move_cursor(_lcd_info, 8, 1);
     i2c_lcd1602_write_string(_lcd_info, selectedTimeString);
 }
-void increaseAgendaNewTime(void){
+void increase_agenda_new_time(void){
     tempSelectedTime[1]++;
     if(tempSelectedTime[1] > 59) {
         tempSelectedTime[0]++;
@@ -518,60 +518,60 @@ void increaseAgendaNewTime(void){
     i2c_lcd1602_write_string(_lcd_info, selectedTimeString);
 }
 
-void enterAgendaNewSound(void){
-    enterMenuItem();
+void enter_agenda_new_sound(void){
+    enter_menu_item();
 
-    displaySongs("SOUND");
+    display_songs("SOUND");
 }
-void previousAgendaNewSound(void){
+void previous_agenda_new_sound(void){
     songIndex--;
-    displaySongs("SOUND");
+    display_songs("SOUND");
 }
-void nextAgendaNewSound(void){
+void next_agenda_new_sound(void){
     songIndex++;
-    displaySongs("SOUND");
+    display_songs("SOUND");
 }
-void okPressAgendaNewSound(void){
+void ok_press_agenda_new_sound(void){
     // If a song was pressed set this as the selected song
     if(strcmp(songList[songIndex], "Back") != 0){
         tempSelectedSong = songList[songIndex];
     }
 
     // Return to New Agenda menu
-    gotoMenuItem(MENU_AGENDA_ID_4);
+    goto_menu_item(MENU_AGENDA_ID_4);
 }
-void leaveAgendaNewMenu(void){
+void leave_agenda_new_menu(void){
     // Reset temp variables
-    resetTempAgendaVariables();
+    reset_temp_agenda_variables();
 
     // Return to Agenda menu
-    gotoMenuItem(MENU_AGENDA_ID_0);
+    goto_menu_item(MENU_AGENDA_ID_0);
 }
-void AddAgendaNewMenu(void){
+void add_agenda_new_menu(void){
     // Add alarm to list
     alarm_add(tempSelectedTime, tempSelectedSong);
 
     // Reset temp variables
-    resetTempAgendaVariables();
+    reset_temp_agenda_variables();
 
     // Return to Agenda menu
-    gotoMenuItem(MENU_AGENDA_ID_0);
+    goto_menu_item(MENU_AGENDA_ID_0);
 }
-void ClearAgenda(void){
+void clear_agenda(void){
     // Clear agenda list
     clear_global_list();
 }
 
-void resetTempAgendaVariables(void){
+void reset_temp_agenda_variables(void){
     tempSelectedTime[0] = 0;
     tempSelectedTime[1] = 0;
 }
 
 // Goes to given menu item
-void gotoMenuItem(int menuItem){
+void goto_menu_item(int menuItem){
     _menu->currentMenuItemId = menuItem;
 
-    menu_displayScrollMenu(_menu);
+    menu_display_scroll_menu(_menu);
 
     if(_menu->menuItems[_menu->currentMenuItemId].fpOnMenuEntryEvent != NULL) {
         (*_menu->menuItems[_menu->currentMenuItemId].fpOnMenuEntryEvent)();
@@ -579,8 +579,8 @@ void gotoMenuItem(int menuItem){
 }
 
 // Settings volume enter event
-void enterSettingsVolume(void){
-    enterMenuItem();
+void enter_settings_volume(void){
+    enter_menu_item();
 
     char volumeStr[5];
     sprintf(volumeStr, "%03d", volume);
@@ -589,7 +589,7 @@ void enterSettingsVolume(void){
     i2c_lcd1602_write_string(_lcd_info, volumeStr);
 }
 // Volume right press event
-void increaseVolume(void){
+void increase_volume(void){
     volume++;
     if(volume > 100) volume = 100;
     char volumeStr[5];
@@ -598,10 +598,10 @@ void increaseVolume(void){
     i2c_lcd1602_move_cursor(_lcd_info, 9, 1);
     i2c_lcd1602_write_string(_lcd_info, volumeStr);
 
-    setVolume(volume);
+    set_volume(volume);
 }
 // Volume left press event
-void decreaseVolume(void){
+void decrease_volume(void){
     volume--;
     if(volume < 0) volume = 0;
     char volumeStr[5];
@@ -610,24 +610,24 @@ void decreaseVolume(void){
     i2c_lcd1602_move_cursor(_lcd_info, 9, 1);
     i2c_lcd1602_write_string(_lcd_info, volumeStr);
 
-    setVolume(volume);
+    set_volume(volume);
 }
 
-void menu_displayMic(void){
+void menu_display_mic(void){
     i2c_lcd1602_move_cursor(_lcd_info, 0, 1);
     i2c_lcd1602_write_custom_char(_lcd_info, I2C_LCD1602_INDEX_CUSTOM_0); //Mic character
 }
 
-void menu_clearMic(void){
+void menu_clear_mic(void){
     i2c_lcd1602_move_cursor(_lcd_info, 0, 1);
     i2c_lcd1602_write_char(_lcd_info, ' '); // Clear mic character
 }
 
 void menu_mic(bool listening){
     if(listening)
-        menu_displayMic();
+        menu_display_mic();
     else
-        menu_clearMic();
+        menu_clear_mic();
 
     isListening = listening;
 }

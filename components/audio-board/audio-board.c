@@ -151,18 +151,8 @@ int get_array_size(){
     return ESP_OK;
 }
 
-//Gets the pipeline object;
-audio_pipeline_handle_t getPipeline(){
-    return pipeline;
-}
-
-//Gets the current volume
-int getVolume(){
-    return volume; 
-}
-
 // Sets the new volume
-void setVolume(int newVolume){
+void set_volume(int newVolume){
     volume = newVolume;
 
     int player_volume;
@@ -219,9 +209,7 @@ static esp_err_t input_key_service_cb(periph_service_handle_t handle, periph_ser
                 ESP_LOGI(AUDIOBOARDTAG, "Start or stop mic");
 
                 if(!listenToMic)
-                {
                     start_listening();
-                }
               
                 break;
 
