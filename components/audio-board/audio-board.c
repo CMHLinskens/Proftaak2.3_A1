@@ -116,14 +116,27 @@ const char *radio_channels[AMOUNT_OF_RADIO_CHANNELS] = {
                         "https://icecast-qmusicnl-cdp.triple-it.nl/Qmusic_nl_live_96.mp3"
                         };
 
-static void goertzel_callback(struct goertzel_data_t* filter, float result);
-void startListening();
-void stopListening();
-void startSayingTime();
-void stopPipeline();
-void ExecuteMicCommand(int freqIndex);
+void start_listening();
+void stop_listening();
+void start_saying_time();
+void stop_pipeline();
+void execute_mic_command(int freqIndex);
 
-//Event handler for all the radio messages.
+audio_pipeline_handle_t get_pipeline(){
+    return pipeline;
+}
+
+int get_volume(){
+    return volume; 
+}
+
+int get_array_size(){
+    return array_index;
+}
+
+/**
+ * @brief  Callback that handles events for all the radio messages.
+ */
  int http_stream_event_handle(http_stream_event_msg_t *msg)
  {
     if (msg->event_id == HTTP_STREAM_RESOLVE_ALL_TRACKS) {
@@ -139,18 +152,9 @@ void ExecuteMicCommand(int freqIndex);
     return ESP_OK;
 }
 
-//Gets the pipeline object;
-audio_pipeline_handle_t get_pipeline(){
-    return pipeline;
-}
-
-//Gets the current volume
-int get_volume(){
-    ESP_LOGI(AUDIOBOARDTAG, "Volume: %d", volume);
-    return volume; 
-}
-
-//Handles touchpad events
+/**
+ * @brief  Callback that handles touchpad events
+ */
 static esp_err_t input_key_service_cb(periph_service_handle_t handle, periph_service_event_t *evt, void *ctx){
 
     //Touch pad init
@@ -193,21 +197,10 @@ static esp_err_t input_key_service_cb(periph_service_handle_t handle, periph_ser
                 ESP_LOGI(AUDIOBOARDTAG, "Start or stop mic");
 
                 if(!listenToMic)
-                    startListening();
-                // listenToMic = !listenToMic;
-                // char *url = NULL;
-
-                // //Stops music, terminates current pipeline and looks up the next audio file on the SD card
-                // audio_pipeline_stop(pipeline);
-                // audio_pipeline_wait_for_stop(pipeline);
-                // audio_pipeline_terminate(pipeline);
-                // sdcard_list_next(sdcard_list_handle, 1, &url);
-
-                // //Resets pipeline and starts the new audio file
-                // audio_element_set_uri(fatfs_stream_reader, url);
-                // audio_pipeline_reset_ringbuffer(pipeline);
-                // audio_pipeline_reset_elements(pipeline);
-                // audio_pipeline_run(pipeline);
+                {
+                    start_listening();
+                }
+              
                 break;
 
             //Volume up button is pressed
@@ -242,7 +235,39 @@ static esp_err_t input_key_service_cb(periph_service_handle_t handle, periph_ser
     return ESP_OK;
 }
 
-//Saves data to SD with given url
+/**
+ * @brief  Callback for the microphone.
+ */
+static void goertzel_callback(struct goertzel_data_t* filter, float result)
+{
+    goertzel_data_t* filt = (goertzel_data_t*)filter;
+    float logVal = 10.0f * log10f(result);
+
+    if (logVal > 13.0f)
+    {
+        ESP_LOGI(AUDIOBOARDTAG, "Callback Freq: %d Hz amplitude: %.2f", filt->target_frequency, 10.0f * log10f(result));
+        for(int i = 0; i < GOERTZEL_N_DETECTION; i++){
+            if(filt->target_frequency == GOERTZEL_DETECT_FREQUENCIES[i]){
+                GOERTZEL_DETECT_FREQUENCY_COUNTERS[i]++;
+                ESP_LOGW(AUDIOBOARDTAG, "Counter %d is now %d", GOERTZEL_DETECT_FREQUENCIES[i], GOERTZEL_DETECT_FREQUENCY_COUNTERS[i]);
+                if(GOERTZEL_DETECT_FREQUENCY_COUNTERS[i] > FREQ_COMMAND_THRESHOLD){
+                    listenToMic = false;
+                    execute_mic_command(i);
+                }
+            }
+        }
+        listenCounter++;
+        if(listenCounter > LISTEN_COMMAND_TIMEOUT && listenToMic){
+            ESP_LOGW(AUDIOBOARDTAG, "Reached listen timeout");
+            listenToMic = false;
+            stop_listening();
+        }
+    }
+}
+
+/**
+ * @brief  Callback used to save data to the SD card with the given url.
+ */
 void sdcard_url_save_cb(void *user_data, char *url){
 
     playlist_operator_handle_t sdcard_handle = (playlist_operator_handle_t)user_data;
@@ -254,21 +279,6 @@ void sdcard_url_save_cb(void *user_data, char *url){
     }
 }
 
-//Pauses audio
-void pause_sound(){
-
-    audio_pipeline_pause(pipeline);
-    ESP_LOGI(AUDIOBOARDTAG, "Paused");
-}
-
-//Resumes audio
-void resume_sound(){
-
-    audio_pipeline_resume(pipeline);
-    ESP_LOGI(AUDIOBOARDTAG, "Resumed");
-}
-
-//Plays audio with given ID/URL
 void play_song_with_ID(char* url, char *type){
     //Extends the URL so the SD card can find it
     char extended_url[80];
@@ -281,7 +291,7 @@ void play_song_with_ID(char* url, char *type){
         stop_radio();
     } else {
         //Stops audio, terminates current pipeline
-        stopPipeline();
+        stop_pipeline();
     }
 
     //Resets pipeline and starts the new audio file
@@ -294,7 +304,6 @@ void play_song_with_ID(char* url, char *type){
     ESP_LOGI(AUDIOBOARDTAG, "Song %s is playing", extended_url);
 }
 
-//Makes array of songs on the sd
 void get_all_songs_from_SDcard(char* type){
     //Init playlist and array
     sdcard_list_t *playlist = sdcard_list_handle->playlist;
@@ -343,11 +352,6 @@ void get_all_songs_from_SDcard(char* type){
     free(url);
 }
 
-int get_array_size(){
-    return array_index;
-}
-
-//Returns all the songs on the SD card
 char** get_song_list(){
     if(song_list == NULL){
         ESP_LOGE(AUDIOBOARDTAG, "Songlist not created yet!");
@@ -360,7 +364,6 @@ char** get_song_list(){
     }
 }
 
-// Starts the audio board
 void audio_start(){
 
     esp_err_t err = nvs_flash_init();
@@ -510,10 +513,6 @@ void audio_start(){
         if (ret != ESP_OK) {
             ESP_LOGE(AUDIOBOARDTAG, "Event interface error : %d", ret);
         }
-
-        // if(listenToMic) {
-        //     startListening();
-        // }
     }
 
     stop_audio();
@@ -521,7 +520,7 @@ void audio_start(){
 
 void stop_audio(void){
     ESP_LOGI(AUDIOBOARDTAG, "Stop audio_pipeline");
-    stopPipeline();
+    stop_pipeline();
 
     audio_pipeline_unregister(pipeline, mp3_decoder);
     audio_pipeline_unregister(pipeline, i2s_stream_writer);
@@ -553,7 +552,7 @@ void play_radio(int radioChannel){
     }
 
     // Stop playing audio
-    stopPipeline();
+    stop_pipeline();
 
     
     if(playing_radio == false) {      
@@ -578,7 +577,7 @@ void stop_radio(){
     playing_radio = false;
 
     // Stop playing 
-    stopPipeline();
+    stop_pipeline();
 
     // Change linkage to SD
     const char *link_tag[4] = {SD_READER, MP3_DECODER, SD_FILTER, I2S_WRITER};
@@ -587,38 +586,15 @@ void stop_radio(){
     vTaskDelay(2000 / portTICK_RATE_MS);
 }
 
-static void goertzel_callback(struct goertzel_data_t* filter, float result)
-{
-    goertzel_data_t* filt = (goertzel_data_t*)filter;
-    float logVal = 10.0f * log10f(result);
-
-    if (logVal > 13.0f)
-    {
-        ESP_LOGI(AUDIOBOARDTAG, "Callback Freq: %d Hz amplitude: %.2f", filt->target_frequency, 10.0f * log10f(result));
-        for(int i = 0; i < GOERTZEL_N_DETECTION; i++){
-            if(filt->target_frequency == GOERTZEL_DETECT_FREQUENCIES[i]){
-                GOERTZEL_DETECT_FREQUENCY_COUNTERS[i]++;
-                ESP_LOGW(AUDIOBOARDTAG, "Counter %d is now %d", GOERTZEL_DETECT_FREQUENCIES[i], GOERTZEL_DETECT_FREQUENCY_COUNTERS[i]);
-                if(GOERTZEL_DETECT_FREQUENCY_COUNTERS[i] > FREQ_COMMAND_THRESHOLD){
-                    listenToMic = false;
-                    ExecuteMicCommand(i);
-                }
-            }
-        }
-        listenCounter++;
-        if(listenCounter > LISTEN_COMMAND_TIMEOUT && listenToMic){
-            ESP_LOGW(AUDIOBOARDTAG, "Reached listen timeout");
-            listenToMic = false;
-            stopListening();
-        }
-    }
-}
-
-void startListening(){
+/**
+ * @brief  Starts the audio input through the microphone. 
+ *         Detects frequencies through the mic.
+ */
+void start_listening(){
     listenToMic = true;
 
     // Stop playing audio
-    stopPipeline();
+    stop_pipeline();
 
     const char *link_tag[3] = {I2S_READER, MIC_FILTER, RAW_READER};
     audio_pipeline_link(pipeline, &link_tag[0], 3);
@@ -654,8 +630,11 @@ void startListening(){
     memset(GOERTZEL_DETECT_FREQUENCY_COUNTERS, 0, sizeof(GOERTZEL_DETECT_FREQUENCY_COUNTERS));
 }
 
-void stopListening(){
-    stopPipeline();
+/**
+ * @brief  Stops the audio input through the microphone. 
+ */
+void stop_listening(){
+    stop_pipeline();
     
     if(playing_radio){
         // Change linkage to radio
@@ -672,8 +651,11 @@ void stopListening(){
     audio_pipeline_reset_elements(pipeline);
 }
 
-void startSayingTime(){
-    stopPipeline();
+/**
+ * @brief  Sets the pipeline to sd card so that it can tell the time.
+ */
+void start_saying_time(){
+    stop_pipeline();
 
     // Change linkage to SD
     const char *link_tag[4] = {SD_READER, MP3_DECODER, SD_FILTER, I2S_WRITER};
@@ -687,21 +669,29 @@ void startSayingTime(){
     sayTime();
 }
 
-void ExecuteMicCommand(int freqIndex){
+/**
+ * @brief  Executes commands based on the frequency. 
+ * @note   If the frequency is not in the list of freqencies then it doens't activate a command.
+ * @param  freqIndex: The frequency which is came through the mic.
+ */
+void execute_mic_command(int freqIndex){
     ESP_LOGI(AUDIOBOARDTAG, "Do command with freq %d", GOERTZEL_DETECT_FREQUENCIES[freqIndex]);
     switch(freqIndex){
         case 2:
-            startSayingTime();
+            start_saying_time();
         break;
         default:
-        ESP_LOGW(AUDIOBOARDTAG, "No command found with given frequency. (ExecuteMicCommand())");
+        ESP_LOGW(AUDIOBOARDTAG, "No command found with given frequency. (execute_mic_command())");
         break;
     }
     
-    stopListening();
+    stop_listening();
 }
 
-void stopPipeline(){
+/**
+ * @brief  Base method which stops the pipeline.
+ */
+void stop_pipeline(){
     audio_pipeline_stop(pipeline);
     audio_pipeline_wait_for_stop(pipeline);
     audio_pipeline_terminate(pipeline);

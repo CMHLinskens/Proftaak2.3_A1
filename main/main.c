@@ -117,7 +117,7 @@ char * toString(int number) {
 }
 
 /*
- * This method handles the key event "OK", this is necessary for navigating through the menu.
+ * This method handles the key event "OK" (onButtonClicked), this is necessary for navigating through the menu.
  */
 void clicked(void){
     ESP_LOGI(MAINTAG, "clicked rotary encoder");
@@ -125,14 +125,14 @@ void clicked(void){
 }
 
 /*
- *  This method is only here for not getting the error of the presed function. can be fixed by deleting the pressed method out of the struct.
+ *  This method is not used. Its a placeholder method (onButtonPressed).
  */
 void pressed(void){
     ESP_LOGI(MAINTAG, "pressed rotary encoder");
 }
 
 /*
- *  This method handles the key event for going left or right. This is necessary for navigating through the menu, cause this is the scrolling event.
+ *  This method handles the key event turning left and right (onMoved). This is necessary for navigating through the menu, cause this is the scrolling event.
  */
 void onMove(int16_t move_value){
     if(move_value > 0){
@@ -171,11 +171,11 @@ void app_main()
     xTaskCreate(&audio_task, "audio task", 4096, NULL, 5, NULL);
     vTaskDelay(1000);
 
-    // // //I^2C initialization + the I^2C port
+    //I^2C initialization + the I^2C port
     i2c_master_init();
     i2c_num = I2C_MASTER_NUM;
 
-    // // //initialize the components
+    //initialize the components
     component_init();
 
     xTaskCreate(&menu_task, "menu_task", 4096, NULL, 5, NULL);
