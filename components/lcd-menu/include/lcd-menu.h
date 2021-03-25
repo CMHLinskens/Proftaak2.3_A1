@@ -31,27 +31,28 @@
 #define MENU_MAIN_ID_1 1
 #define MENU_MAIN_ID_2 2
 #define MENU_MAIN_ID_3 3
-#define MENU_MAIN_ID_4 4
 
-#define MENU_RADIO_ID_0 5
-#define MENU_RADIO_ID_1 6
-#define MENU_RADIO_ID_2 7
-#define MENU_RADIO_ID_3 8
-#define MENU_RADIO_ID_4 9
+#define MENU_RADIO_ID_0 4
+#define MENU_RADIO_ID_1 5
+#define MENU_RADIO_ID_2 6
 
-#define MENU_SD_ID_0 10
-#define MENU_SD_ID_1 11
-#define MENU_SD_ID_2 12
+#define MENU_SD_ID_0 7
+#define MENU_SD_ID_1 8
+#define MENU_SD_ID_2 9
 
-#define MENU_AGENDA_ID_0 13
-#define MENU_AGENDA_ID_1 14
-#define MENU_AGENDA_ID_2 15
-#define MENU_AGENDA_ID_3 16
-#define MENU_AGENDA_ID_4 17
-#define MENU_AGENDA_ID_5 18
-#define MENU_AGENDA_ID_6 19
-#define MENU_AGENDA_ID_7 20
-#define MENU_AGENDA_ID_8 21
+#define MENU_AGENDA_ID_0 10
+#define MENU_AGENDA_ID_1 11
+#define MENU_AGENDA_ID_2 12
+#define MENU_AGENDA_ID_3 13
+#define MENU_AGENDA_ID_4 14
+#define MENU_AGENDA_ID_5 15
+#define MENU_AGENDA_ID_6 16
+#define MENU_AGENDA_ID_7 17
+#define MENU_AGENDA_ID_8 18
+
+#define MENU_SETTINGS_ID_0 19
+#define MENU_SETTINGS_ID_1 20
+#define MENU_SETTINGS_ID_2 21
 
 typedef struct {
     unsigned int id;
