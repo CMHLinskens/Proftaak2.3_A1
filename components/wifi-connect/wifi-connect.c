@@ -1,12 +1,3 @@
-/* Common functions for protocol examples, to establish Wi-Fi or Ethernet connection.
-
-   This example code is in the Public Domain (or CC0 licensed, at your option.)
-
-   Unless required by applicable law or agreed to in writing, this
-   software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-   CONDITIONS OF ANY KIND, either express or implied.
- */
-
 #include <string.h>
 #include "wifi-connect.h"
 #include "sdkconfig.h"
@@ -47,7 +38,9 @@ static bool is_our_netif(const char *prefix, esp_netif_t *netif)
     return strncmp(prefix, esp_netif_get_desc(netif), strlen(prefix)-1) == 0;
 }
 
-/* set up connection, Wi-Fi and/or Ethernet */
+/**
+ * @brief set up Wi-Fi connection.
+ */
 static void start(void)
 {
 
@@ -58,7 +51,9 @@ static void start(void)
     s_semph_get_ip_addrs = xSemaphoreCreateCounting(NR_OF_IP_ADDRESSES_TO_WAIT_FOR, 0);
 }
 
-/* tear down connection, release resources */
+/**
+ * @brief  Used to tear down the wifi connection and release used resources.
+ */
 static void stop(void)
 {
 #if CONFIG_CONNECT_WIFI
@@ -67,6 +62,10 @@ static void stop(void)
 #endif
 }
 
+/**
+ * @brief  Callback to get the IPv4 event 
+ * @note   Parameters do not need to be filled. Only used in esp_event_handler_register.
+ */
 static void on_got_ip(void *arg, esp_event_base_t event_base,
                       int32_t event_id, void *event_data)
 {
@@ -119,6 +118,10 @@ esp_err_t wifi_disconnect(void)
 
 #ifdef CONFIG_CONNECT_WIFI
 
+/**
+ * @brief  Callback used to reconnect if the wifi is disconnected.
+ * @note   Parameters do not need to be filled. Only used in esp_event_handler_register.
+ */
 static void on_wifi_disconnect(void *arg, esp_event_base_t event_base,
                                int32_t event_id, void *event_data)
 {
@@ -130,6 +133,10 @@ static void on_wifi_disconnect(void *arg, esp_event_base_t event_base,
     ESP_ERROR_CHECK(err);
 }
 
+/**
+ * @brief  Static method used to start the wifi. 
+ * @return esp_netif_t 
+ */
 static esp_netif_t* wifi_start(void)
 {
     char *desc;
@@ -137,8 +144,6 @@ static esp_netif_t* wifi_start(void)
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
     esp_netif_inherent_config_t esp_netif_config = ESP_NETIF_INHERENT_DEFAULT_WIFI_STA();
-    // Prefix the interface description with the module WIFITAG
-    // Warning: the interface desc is used in tests to capture actual connection details (IP, gw, mask)
     asprintf(&desc, "%s: %s", WIFITAG, esp_netif_config.if_desc);
     esp_netif_config.if_desc = desc;
     esp_netif_config.route_prio = 128;
@@ -148,10 +153,6 @@ static esp_netif_t* wifi_start(void)
 
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &on_wifi_disconnect, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &on_got_ip, NULL));
-#ifdef CONFIG_CONNECT_IPV6
-    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_CONNECTED, &on_wifi_connect, netif));
-    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_GOT_IP6, &on_got_ipv6, NULL));
-#endif
 
     ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
     wifi_config_t wifi_config = {
@@ -168,6 +169,9 @@ static esp_netif_t* wifi_start(void)
     return netif;
 }
 
+/**
+ * @brief  Static method used to stop the wifi connection.
+ */
 static void wifi_stop(void)
 {
     esp_netif_t *wifi_netif = get_netif_from_desc("sta");

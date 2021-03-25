@@ -5,6 +5,8 @@
    Unless required by applicable law or agreed to in writing, this
    software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
    CONDITIONS OF ANY KIND, either express or implied.
+
+   Edited by A1
  */
 
 #ifdef __cplusplus
@@ -24,17 +26,11 @@ extern "C" {
 esp_err_t wifi_connect(void);
 
 /**
- * Counterpart to connect, de-initializes Wi-Fi or Ethernet
+ * Counterpart to connect, de-initializes Wi-Fi
+ *  
+ * @return ESP_OK on successful disconnect
  */
 esp_err_t wifi_disconnect(void);
-
-/**
- * @brief Configure stdin and stdout to use blocking I/O
- *
- * This helper function is used in ASIO examples. It wraps installing the
- * UART driver and configuring VFS layer to use UART driver for console I/O.
- */
-esp_err_t example_configure_stdin_stdout(void);
 
 /**
  * @brief Returns esp-netif pointer created by connect()
@@ -42,6 +38,8 @@ esp_err_t example_configure_stdin_stdout(void);
  * @note If multiple interfaces active at once, this API return NULL
  * In that case the get_netif_from_desc() should be used
  * to get esp-netif pointer based on interface description
+ * 
+ * @return esp_netif_t
  */
 esp_netif_t *get_netif(void);
 
@@ -52,6 +50,7 @@ esp_netif_t *get_netif(void);
  * @param desc Textual interface of created network interface, for example "sta"
  * indicate default WiFi station, "eth" default Ethernet interface.
  *
+ * @return esp_netif_t from description
  */
 esp_netif_t *get_netif_from_desc(const char *desc);
 
