@@ -71,13 +71,13 @@ typedef struct {
 
 void i2c_master_init(void);
 i2c_lcd1602_info_t * lcd_init(void);
-menu_t *menu_createMenu(void);
-void menu_freeMenu(menu_t *menu);
-void menu_displayTime(char *time);
-void menu_displayWelcomeMessage(menu_t *menu);
-void menu_displayScrollMenu(menu_t *menu);
-void menu_displayMenuItem(menu_t *menu, int menuItemId);
-void menu_handleKeyEvent(menu_t *menu, int key);
+menu_t *menu_create_menu(void);
+void menu_free_menu(menu_t *menu);
+void menu_display_time(char *time);
+void menu_display_welcome_message(menu_t *menu);
+void menu_display_scroll_menu(menu_t *menu);
+void menu_display_menu_item(menu_t *menu, int menuItemId);
+void menu_handle_key_event(menu_t *menu, int key);
 
 void menu_mic(bool listening);
 

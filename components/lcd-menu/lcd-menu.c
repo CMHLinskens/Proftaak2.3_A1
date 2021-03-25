@@ -14,44 +14,44 @@
 #define MENUTAG "menu"
 
 // Default menu event functions
-void enterMenuItem(void);
-void exitMenuItem(void);
+void enter_menu_item(void);
+void exit_menu_item(void);
 
 // Radio menu event functions
-void enterRadioChannel(void);
-void nextChannel(void);
-void previousChannel(void);
-void okPressRadioChannel(void);
+void enter_radio_channel(void);
+void next_channel(void);
+void previous_channel(void);
+void ok_press_radio_channel(void);
 
 // SD menu event functions
-void enterSDPlay(void);
-void nextSong(void);
-void previousSong(void);
-void okPressSDPlay(void);
+void enter_SD_play(void);
+void next_song(void);
+void previous_song(void);
+void ok_press_SD_play(void);
 
 // Agenda menu event functions
-void enterAgendaNewTime(void);
-void decreaseAgendaNewTime(void);
-void increaseAgendaNewTime(void);
-void enterAgendaNewSound(void);
-void previousAgendaNewSound(void);
-void nextAgendaNewSound(void);
-void okPressAgendaNewSound(void);
-void leaveAgendaNewMenu(void);
-void AddAgendaNewMenu(void);
-void ClearAgenda(void);
+void enter_agenda_new_time(void);
+void decrease_agenda_new_time(void);
+void increase_agenda_new_time(void);
+void enter_agenda_new_sound(void);
+void previous_agenda_new_sound(void);
+void next_agenda_new_sound(void);
+void ok_press_agenda_new_sound(void);
+void leave_agenda_new_menu(void);
+void add_agenda_new_menu(void);
+void clear_agenda(void);
 
 // Settings menu event funtions
-void enterSettingsVolume(void);
-void increaseVolume(void);
-void decreaseVolume(void);
+void enter_settings_volume(void);
+void increase_volume(void);
+void decrease_volume(void);
 
 void create_custom_characters(void);
-void gotoMenuItem(int menuItem);
-void resetTempAgendaVariables(void);
+void goto_menu_item(int menuItem);
+void reset_temp_agenda_variables(void);
 
-void menu_displayMic();
-void menu_clearMic();
+void menu_display_mic();
+void menu_clear_mic();
 
 // Placeholder variables
 static int volume = 0;
@@ -297,7 +297,7 @@ void menu_displayScrollMenu(menu_t *menu)
     i2c_lcd1602_move_cursor(menu->lcd_info, 17, 2);
     i2c_lcd1602_write_string(menu->lcd_info, cursor);
 
-    
+
 }
 
 // Handles key press by switching to new item or doing an onKeyEvent
