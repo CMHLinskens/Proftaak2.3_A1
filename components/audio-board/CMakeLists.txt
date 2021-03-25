@@ -10,5 +10,8 @@ set(COMPONENT_REQUIRES  audio_hal
                         input_key_service 
                         playlist
                         goertzel
-                        clock-sync)
+                        clock-sync
+                        lcd-menu 
+                        esp32-i2c-lcd1602 
+                        esp32-smbus)
 register_component()

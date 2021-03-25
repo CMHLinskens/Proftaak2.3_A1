@@ -79,4 +79,6 @@ void menu_displayScrollMenu(menu_t *menu);
 void menu_displayMenuItem(menu_t *menu, int menuItemId);
 void menu_handleKeyEvent(menu_t *menu, int key);
 
+void menu_mic(bool listening);
+
 #endif // lcd-menu

@@ -50,6 +50,9 @@ void create_custom_characters(void);
 void gotoMenuItem(int menuItem);
 void resetTempAgendaVariables(void);
 
+void menu_displayMic();
+void menu_clearMic();
+
 // Placeholder variables
 static int volume = 0;
 
@@ -63,6 +66,8 @@ int channelIndex = 0;
 // Variables for Agenda menu
 int *tempSelectedTime;
 char *tempSelectedSong;
+
+bool isListening = false;
 
 
 static i2c_lcd1602_info_t *_lcd_info;
@@ -291,6 +296,8 @@ void menu_displayScrollMenu(menu_t *menu)
     const char *cursor = "<";
     i2c_lcd1602_move_cursor(menu->lcd_info, 17, 2);
     i2c_lcd1602_write_string(menu->lcd_info, cursor);
+
+    
 }
 
 // Handles key press by switching to new item or doing an onKeyEvent
@@ -402,6 +409,9 @@ void displayRadioChannels(){
 
 // Default enter event, displays time
 void enterMenuItem(void) {
+    if(isListening)
+        menu_displayMic();
+
     // menu_displayTemperature(http_request_get_response());
     menu_displayTime(clock_getTimeString());
 }
@@ -611,4 +621,13 @@ void menu_displayMic(void){
 void menu_clearMic(void){
     i2c_lcd1602_move_cursor(_lcd_info, 0, 1);
     i2c_lcd1602_write_char(_lcd_info, ' '); // Clear mic character
+}
+
+void menu_mic(bool listening){
+    if(listening)
+        menu_displayMic();
+    else
+        menu_clearMic();
+
+    isListening = listening;
 }
