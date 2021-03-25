@@ -16,8 +16,13 @@ char *radioChannelNames[AMOUNT_OF_RADIO_CHANNELS + 1];
  * @return pipeline
  */
 audio_pipeline_handle_t get_pipeline(void);
-int getVolume(void);
-void setVolume(int newVolume);
+
+
+/**
+ * @brief Sets a new volume.
+ * @param newVolume volume to be set
+ */
+void set_volume(int newVolume);
 
 /**
  * @brief Gets the current volume.

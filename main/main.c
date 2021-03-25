@@ -91,10 +91,10 @@ static void component_init(void){
 
 void menu_task(void * pvParameter)
 {
-    menu = menu_createMenu();
+    menu = menu_create_menu();
 
-    menu_displayWelcomeMessage(menu);
-    menu_displayScrollMenu(menu);
+    menu_display_welcome_message(menu);
+    menu_display_scroll_menu(menu);
 
     qwiic_twist_start_task(qwiic_twist_rotary);
 
@@ -104,7 +104,7 @@ void menu_task(void * pvParameter)
         vTaskDelay(2500 / portTICK_RATE_MS);
     }
 
-    menu_freeMenu(menu);
+    menu_free_menu(menu);
     vTaskDelete(NULL);
 }
 
@@ -120,7 +120,7 @@ char * toString(int number) {
  */
 void clicked(void){
     ESP_LOGI(MAINTAG, "clicked rotary encoder");
-    menu_handleKeyEvent(menu, MENU_KEY_OK);
+    menu_handle_key_event(menu, MENU_KEY_OK);
 }
 
 /*
@@ -135,10 +135,10 @@ void pressed(void){
  */
 void onMove(int16_t move_value){
     if(move_value > 0){
-        menu_handleKeyEvent(menu, MENU_KEY_RIGHT);
+        menu_handle_key_event(menu, MENU_KEY_RIGHT);
     }
     else if(move_value < 0){
-        menu_handleKeyEvent(menu, MENU_KEY_LEFT);
+        menu_handle_key_event(menu, MENU_KEY_LEFT);
     }
 }
 
@@ -180,6 +180,6 @@ void app_main()
     xTaskCreate(&menu_task, "menu_task", 4096, NULL, 5, NULL);
     xTaskCreate(&clock_task, "clock_task", 4096, NULL, 5, NULL);
     xTaskCreate(&alarm_task, "alarm_task", 4096, NULL, 5, NULL);
-    xTaskCreate(&http_get_task, "http_get_task", 4096, NULL, 5, NULL);
+    // xTaskCreate(&http_get_task, "http_get_task", 4096, NULL, 5, NULL);
 }
 

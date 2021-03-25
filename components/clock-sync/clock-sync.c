@@ -80,7 +80,7 @@ void clock_task(void*pvParameter){
         timeString = strftime_buf;
         dateString = strftime_buf2;
 
-        menu_displayTime(timeString);
+        menu_display_time(timeString);
 
         vTaskDelay(60000 / portTICK_PERIOD_MS);
     }
