@@ -46,6 +46,7 @@ void enter_settings_volume(void);
 void increase_volume(void);
 void decrease_volume(void);
 
+// Helper functions
 void create_custom_characters(void);
 void goto_menu_item(int menuItem);
 void reset_temp_agenda_variables(void);
@@ -53,7 +54,7 @@ void reset_temp_agenda_variables(void);
 void menu_display_mic();
 void menu_clear_mic();
 
-// Placeholder variables
+// Variables for Settings menu
 static int volume = 0;
 
 // Variables for SD menu 
@@ -67,9 +68,8 @@ int channelIndex = 0;
 int *tempSelectedTime;
 char *tempSelectedSong;
 
+// Variables for all menu's
 bool isListening = false;
-
-
 static i2c_lcd1602_info_t *_lcd_info;
 static menu_t *_menu;
 
@@ -106,9 +106,11 @@ i2c_lcd1602_info_t * lcd_init()
 // Creates and returnes a pointer to the menu 
 menu_t *menu_create_menu()
 {
+    // Allocate the memory for the menu_t struct
     menu_t *menuPointer = malloc(sizeof(menu_t));
 
-    // Temporary array of menu items to copy from
+    // We build the array of menu items with a pointer on the stack
+    // so we can later copy this to the menu_t struct
     menu_item_t menuItems[MAX_MENU_ITEMS] = {
         {MENU_MAIN_ID_0, {MENU_RADIO_ID_0, MENU_MAIN_ID_3, MENU_MAIN_ID_1}, {"MAIN MENU", "Radio"}, {NULL, NULL, NULL}, enter_menu_item, NULL},
         {MENU_MAIN_ID_1, {MENU_SD_ID_0, MENU_MAIN_ID_0, MENU_MAIN_ID_2}, {"MAIN MENU", "SD"}, {NULL, NULL, NULL}, enter_menu_item, NULL},
@@ -143,6 +145,7 @@ menu_t *menu_create_menu()
         {MENU_SETTINGS_ID_2, {MENU_SETTINGS_ID_0, MENU_SETTINGS_ID_2, MENU_SETTINGS_ID_2}, {"VOLUME", " ", "", ""}, {NULL, decrease_volume, increase_volume}, enter_settings_volume, NULL}
     };
     
+    // Init lcd
     _lcd_info = lcd_init();
     
     // If allocation is succesful, set all values
@@ -153,7 +156,8 @@ menu_t *menu_create_menu()
         menuPointer->menuItems = calloc(MAX_MENU_ITEMS, sizeof(menu_item_t));
         memcpy(menuPointer->menuItems, menuItems, MAX_MENU_ITEMS * sizeof(menu_item_t));
         menuPointer->currentMenuItemId = MENU_MAIN_ID_0;
-
+        
+        // Set global variable
         _menu = menuPointer;
 
         ESP_LOGD(MENUTAG, "malloc menu_t %p", menuPointer);
@@ -178,11 +182,13 @@ menu_t *menu_create_menu()
     tempSelectedTime[0] = 0;
     tempSelectedTime[1] = 0;
 
+    // Add custom character to the lcd
     create_custom_characters();
 
     return menuPointer;
 }
 
+// Creates a custom mic icon for the lcd menu
 void create_custom_characters(){
 
   uint8_t mic[8] = {
@@ -202,12 +208,23 @@ void create_custom_characters(){
 // Frees memory used by menu pointer
 void menu_free_menu(menu_t *menu)
 {
+    // Free menu
     free(menu->lcd_info);
     menu->lcd_info = NULL;
     free(menu->menuItems);
     menu->menuItems = NULL;
     free(menu);
     menu = NULL;
+
+    // Free song list
+    free(songList);
+    songList = NULL;
+
+    // Free temp variables
+    free(tempSelectedSong);
+    tempSelectedSong = NULL;
+    free(tempSelectedTime);
+    tempSelectedTime = NULL;
 }
 
 // Displays a welcome message on lcd
@@ -231,6 +248,7 @@ void menu_display_time(char *time)
     i2c_lcd1602_write_string(_lcd_info, time);
 }
 
+// Displays temperature in top left corner of lcd
 void menu_display_temperature(char* response){
     if(response == NULL)
         return;
@@ -254,6 +272,7 @@ void menu_display_menu_item(menu_t *menu, int menuItemId)
 {
     i2c_lcd1602_clear(menu->lcd_info);
 
+    // Dump all text of the menu item underneath each other
     for (size_t line = 0; line < MAX_LCD_LINES; line++) {
         const char* menuText = menu->menuItems[menuItemId].menuText[line];
         int textPosition = 10 - ((strlen(menuText) + 1) / 2);
@@ -262,10 +281,13 @@ void menu_display_menu_item(menu_t *menu, int menuItemId)
     }
 }
 
-// Writes an menu item on given line
+// Writes an menu item on given line in the center of the lcd
 void menu_write_scroll_menu_item(i2c_lcd1602_info_t *lcd_info, char* text, int line)
 {
+    // Get center position
     int textPosition = 10 - ((strlen(text) + 1) / 2);
+
+    // Write text
     i2c_lcd1602_move_cursor(lcd_info, textPosition, line);
     i2c_lcd1602_write_string(lcd_info, text);
 }
@@ -296,8 +318,6 @@ void menu_display_scroll_menu(menu_t *menu)
     const char *cursor = "<";
     i2c_lcd1602_move_cursor(menu->lcd_info, 17, 2);
     i2c_lcd1602_write_string(menu->lcd_info, cursor);
-
-
 }
 
 // Handles key press by switching to new item or doing an onKeyEvent
@@ -332,71 +352,36 @@ void menu_handle_key_event(menu_t *menu, int key)
     }
 }
 
-// Displays songsList in a scroll menu form
-void display_songs(char *titleText){
+// Displays a list of items and updates the index 
+void display_selectable_menu_items(char* menuHeader, int* index, char** itemList, int itemlistSize){
     i2c_lcd1602_clear(_lcd_info);
 
     // Display scroll menu title
-    char *menuText = titleText;
-    menu_write_scroll_menu_item(_lcd_info, menuText, 0);
-
-    // Loop back around if songIndex exeeds songList size
-    if(songIndex + 1 > get_array_size() + 1){
-        songIndex = 0;
-    } else if (songIndex - 1 < -1) {
-        songIndex = get_array_size();
-    }
-
-    // Get the song index before current selected song
-    // if below 0 loop back to top
-    int previousSongIndex = songIndex - 1 < 0? get_array_size() : songIndex - 1;
-    menuText = songList[previousSongIndex];
-    menu_write_scroll_menu_item(_lcd_info, menuText, 1);
-
-    menuText = songList[songIndex];
-    menu_write_scroll_menu_item(_lcd_info, menuText, 2);
-
-    // Get the song index after current selected song
-    // if after 24 loop back to beginning
-    int nextSongIndex = songIndex + 1 > get_array_size()? 0 : songIndex + 1;
-    menuText = songList[nextSongIndex];
-    menu_write_scroll_menu_item(_lcd_info, menuText, 3);  
-    
-    // Display cursor
-    const char *cursor = "<";
-    i2c_lcd1602_move_cursor(_lcd_info, 17, 2);
-    i2c_lcd1602_write_string(_lcd_info, cursor);
-
-    enter_menu_item();
-}
-
-void display_radio_channels(){
-    i2c_lcd1602_clear(_lcd_info);
-
-    // Display scroll menu title
-    char *menuText = "CHANNEL";
-    menu_write_scroll_menu_item(_lcd_info, menuText, 0);
+    menu_write_scroll_menu_item(_lcd_info, menuHeader, 0);
 
     // Loop back around if radioIndex exeeds AMOUNT_OF_RADIO_CHANNELS size
-    if(channelIndex + 1 > AMOUNT_OF_RADIO_CHANNELS + 1){
-        channelIndex = 0;
-    } else if (channelIndex - 1 < -1) {
-        channelIndex = AMOUNT_OF_RADIO_CHANNELS;
+    if(*index + 1 > itemlistSize + 1){
+        *index = 0;
+    } else if (*index - 1 < -1) {
+        *index = itemlistSize;
     }
 
-    // Get the channel index before current selected song
+    // Get the item index before current selected song
     // if below 0 loop back to top
-    int previousChannelIndex = channelIndex - 1 < 0? AMOUNT_OF_RADIO_CHANNELS : channelIndex - 1;
-    menuText = radioChannelNames[previousChannelIndex];
+    int previousItemIndex = *index - 1 < 0? itemlistSize : *index - 1;
+    char *menuText = itemList[previousItemIndex];
+    // Display item with index - 1
     menu_write_scroll_menu_item(_lcd_info, menuText, 1);
 
-    menuText = radioChannelNames[channelIndex];
+    // Display item with index
+    menuText = itemList[*index];
     menu_write_scroll_menu_item(_lcd_info, menuText, 2);
 
-    // Get the channel index after current selected song
-    // if after AMOUNT_OF_RADIO_CHANNELS loop back to beginning
-    int nextChannelIndex = channelIndex + 1 > AMOUNT_OF_RADIO_CHANNELS? 0 : channelIndex + 1;
-    menuText = radioChannelNames[nextChannelIndex];
+    // Get the item index after current selected song
+    // if after itemListSize loop back to beginning
+    int nextItemIndex = *index + 1 > itemlistSize? 0 : *index + 1;
+    menuText = itemList[nextItemIndex];
+    // Display item with index + 1
     menu_write_scroll_menu_item(_lcd_info, menuText, 3);  
     
     // Display cursor
@@ -404,6 +389,7 @@ void display_radio_channels(){
     i2c_lcd1602_move_cursor(_lcd_info, 17, 2);
     i2c_lcd1602_write_string(_lcd_info, cursor);
 
+    // Default menu enter event
     enter_menu_item();
 }
 
@@ -412,7 +398,6 @@ void enter_menu_item(void) {
     if(isListening)
         menu_display_mic();
 
-    // menu_displayTemperature(http_request_get_response());
     menu_display_time(clock_getTimeString());
 }
 
@@ -420,17 +405,17 @@ void enter_menu_item(void) {
 void enter_radio_channel(void){
     enter_menu_item();
 
-    display_radio_channels();
+    display_selectable_menu_items("CHANNEL", &channelIndex, radioChannelNames, AMOUNT_OF_RADIO_CHANNELS);
 }
 // Radio channel right press event
 void next_channel(void){
     channelIndex++;
-    display_radio_channels();
+    display_selectable_menu_items("CHANNEL", &channelIndex, radioChannelNames, AMOUNT_OF_RADIO_CHANNELS);
 }
 // Radio channel left press event
 void previous_channel(void){
     channelIndex--;
-    display_radio_channels();
+    display_selectable_menu_items("CHANNEL", &channelIndex, radioChannelNames, AMOUNT_OF_RADIO_CHANNELS);
 }
 void ok_press_radio_channel(){
     // User pressed back
@@ -454,17 +439,17 @@ void ok_press_radio_channel(){
 void enter_SD_play(void){
     enter_menu_item();
 
-    display_songs("SD");
+    display_selectable_menu_items("SD", &songIndex, songList, get_array_size());
 }
 // SD play right press event 
 void next_song(void){
     songIndex++;
-    display_songs("SD");
+    display_selectable_menu_items("SD", &songIndex, songList, get_array_size());
 }
 // SD play left press event
 void previous_song(void){
     songIndex--;
-    display_songs("SD");
+    display_selectable_menu_items("SD", &songIndex, songList, get_array_size());
 }
 // SD play ok press event
 void ok_press_SD_play(){
@@ -477,6 +462,7 @@ void ok_press_SD_play(){
     }
 }
 
+// Agenda new time enter event
 void enter_agenda_new_time(void){
     enter_menu_item();
 
@@ -485,7 +471,9 @@ void enter_agenda_new_time(void){
     i2c_lcd1602_move_cursor(_lcd_info, 8, 1);
     i2c_lcd1602_write_string(_lcd_info, clock_getTimeString());
 }
+// Agenda new time left event
 void decrease_agenda_new_time(void){
+    // Remove a minute and remove an hour if necessary
     tempSelectedTime[1]--;
     if(tempSelectedTime[1] < 0) {
         tempSelectedTime[0]--;
@@ -500,8 +488,12 @@ void decrease_agenda_new_time(void){
 
     i2c_lcd1602_move_cursor(_lcd_info, 8, 1);
     i2c_lcd1602_write_string(_lcd_info, selectedTimeString);
+
+    free(selectedTimeString);
 }
+// Agenda new time right event
 void increase_agenda_new_time(void){
+    // Add a minute and add an hour if necessary 
     tempSelectedTime[1]++;
     if(tempSelectedTime[1] > 59) {
         tempSelectedTime[0]++;
@@ -516,21 +508,26 @@ void increase_agenda_new_time(void){
 
     i2c_lcd1602_move_cursor(_lcd_info, 8, 1);
     i2c_lcd1602_write_string(_lcd_info, selectedTimeString);
-}
 
+    free(selectedTimeString);
+}
+// Agenda new sound enter event
 void enter_agenda_new_sound(void){
     enter_menu_item();
 
-    display_songs("SOUND");
+    display_selectable_menu_items("SOUND", &songIndex, songList, get_array_size());
 }
+// Agenda new sound left event
 void previous_agenda_new_sound(void){
     songIndex--;
-    display_songs("SOUND");
+    display_selectable_menu_items("SOUND", &songIndex, songList, get_array_size());
 }
+// Agenda new sound right event
 void next_agenda_new_sound(void){
     songIndex++;
-    display_songs("SOUND");
+    display_selectable_menu_items("SOUND", &songIndex, songList, get_array_size());
 }
+// Agenda new sound ok press event
 void ok_press_agenda_new_sound(void){
     // If a song was pressed set this as the selected song
     if(strcmp(songList[songIndex], "Back") != 0){
@@ -540,6 +537,7 @@ void ok_press_agenda_new_sound(void){
     // Return to New Agenda menu
     goto_menu_item(MENU_AGENDA_ID_4);
 }
+// Agenda new leave event
 void leave_agenda_new_menu(void){
     // Reset temp variables
     reset_temp_agenda_variables();
@@ -547,6 +545,7 @@ void leave_agenda_new_menu(void){
     // Return to Agenda menu
     goto_menu_item(MENU_AGENDA_ID_0);
 }
+// Agenda add ok press event
 void add_agenda_new_menu(void){
     // Add alarm to list
     alarm_add(tempSelectedTime, tempSelectedSong);
@@ -557,11 +556,12 @@ void add_agenda_new_menu(void){
     // Return to Agenda menu
     goto_menu_item(MENU_AGENDA_ID_0);
 }
+// Clears list in agenda.c
 void clear_agenda(void){
-    // Clear agenda list
     clear_global_list();
 }
 
+// Resets temp agenda variables for adding new alarms
 void reset_temp_agenda_variables(void){
     tempSelectedTime[0] = 0;
     tempSelectedTime[1] = 0;
@@ -573,6 +573,7 @@ void goto_menu_item(int menuItem){
 
     menu_display_scroll_menu(_menu);
 
+    // Call entry event
     if(_menu->menuItems[_menu->currentMenuItemId].fpOnMenuEntryEvent != NULL) {
         (*_menu->menuItems[_menu->currentMenuItemId].fpOnMenuEntryEvent)();
     }
@@ -613,16 +614,19 @@ void decrease_volume(void){
     set_volume(volume);
 }
 
+// Displays mic icon on screen
 void menu_display_mic(void){
     i2c_lcd1602_move_cursor(_lcd_info, 0, 1);
     i2c_lcd1602_write_custom_char(_lcd_info, I2C_LCD1602_INDEX_CUSTOM_0); //Mic character
 }
 
+// Removes mic icon from screen
 void menu_clear_mic(void){
     i2c_lcd1602_move_cursor(_lcd_info, 0, 1);
     i2c_lcd1602_write_char(_lcd_info, ' '); // Clear mic character
 }
 
+// Notifies this file that the board has started or stopped listening
 void menu_mic(bool listening){
     if(listening)
         menu_display_mic();

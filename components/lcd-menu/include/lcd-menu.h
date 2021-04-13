@@ -3,9 +3,8 @@
 
 #include "i2c-lcd1602.h"
 
-//init
+// i2c init
 #undef USE_STDIN
-
 #define I2C_MASTER_NUM           I2C_NUM_0
 #define I2C_MASTER_TX_BUF_LEN    0                     // disabled
 #define I2C_MASTER_RX_BUF_LEN    0                     // disabled
@@ -54,6 +53,8 @@
 #define MENU_SETTINGS_ID_1 20
 #define MENU_SETTINGS_ID_2 21
 
+// Struct that contains a list of other IDs and funciton pointers
+// that get called with the pre-defined key presses above
 typedef struct {
     unsigned int id;
     unsigned int otherIds[MAX_MENU_KEYS];
@@ -63,6 +64,8 @@ typedef struct {
     void (*fpOnMenuExitEvent)(void);
 } menu_item_t;
 
+// Struct that contains a list of the menu item structs and a current
+// id to keep track of where we are in the menu
 typedef struct {
     i2c_lcd1602_info_t *lcd_info;
     menu_item_t *menuItems;
